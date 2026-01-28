@@ -4,8 +4,6 @@
 enum IdentityState {
     NOT_AUTHENTICATED = "Not Authenticated",
     AUTHENTICATED = "Authenticated",
-    NOT_AUTHORIZED = "Not Authorized",
-    AUTHORIZED = "Authorized"
 }
 
 enum Action {

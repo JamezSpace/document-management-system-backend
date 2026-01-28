@@ -6,14 +6,6 @@ import {IdentityState} from "./IdentityState.js";
  * This class contains methods that states business rules for identity and authority. This enforces state transition rules highlighted in the "state machine". Refer to the "state machine" for more info.
  */
 class IdentityTransition {
-	static assertIsAuthorized(currentState: IdentityState) {
-		if (currentState !== IdentityState.AUTHORIZED)
-			throw new DomainError(DomainErrorTypes.USER_NOT_AUTHORIZED, {
-				currentState,
-				targetState: IdentityState.AUTHORIZED,
-			});
-	}
-
 	static assertCanAuthenticate(currentState: IdentityState) {
 		if (currentState === IdentityState.AUTHENTICATED)
 			throw new DomainError(DomainErrorTypes.USER_ALREADY_AUTHENTICATED, {
@@ -23,10 +15,7 @@ class IdentityTransition {
 	}
 
 	static assertIsAuthenticated(currentState: IdentityState) {
-		if (
-			currentState !== IdentityState.AUTHENTICATED &&
-			currentState !== IdentityState.AUTHORIZED
-		)
+		if (currentState !== IdentityState.AUTHENTICATED)
 			throw new DomainError(DomainErrorTypes.USER_NOT_AUTHENTICATED, {
 				currentState,
 				targetState: IdentityState.AUTHENTICATED,

@@ -1,72 +1,46 @@
 import DomainError from "../../shared/errors/DomainError.js";
 import DomainErrorTypes from "../../shared/errors/types/DomainErrorTypes.js";
-import {IdentityState, Action} from "./IdentityState.js";
+import { IdentityState, Action } from "./IdentityState.js";
 import IdentityTransition from "./IdentityStateTransition.js";
 
-
 interface IdentityDTO {
-    userId: string;
-    roles: string[];
-    initialState: IdentityState;
+	userId: string;
+	roles: string[];
+	initialState: IdentityState;
 }
 
 class Identity {
-    readonly userId: string;
-    readonly roles: Set<string>;
-    readonly createdAt: Date;
-    private state: IdentityState;
+	readonly userId: string;
+	readonly roles: Set<string>;
+	readonly createdAt: Date;
+	private state: IdentityState;
 
-    constructor(identity : IdentityDTO) {
-        this.userId = identity.userId;
-        this.roles = new Set(identity.roles);
-        this.createdAt = new Date();
-        this.state = identity.initialState;
-    }
+	constructor(identity: IdentityDTO) {
+		this.userId = identity.userId;
+		this.roles = new Set(identity.roles);
+		this.createdAt = new Date();
+		this.state = identity.initialState;
+	}
 
-    public getState(): IdentityState {
-        return this.state;
-    }
+	public getState(): IdentityState {
+		return this.state;
+	}
 
-    public authenticate()  {
-        IdentityTransition.assertCanAuthenticate(this.state);
-        
-        this.state = IdentityState.AUTHENTICATED;
-    }
+	public authenticate() {
+		IdentityTransition.assertCanAuthenticate(this.state);
 
-    private canPerformAction(action: Action): boolean {
+		this.state = IdentityState.AUTHENTICATED;
+	}
 
-        // this prevents user from approving or rejecting documents if they are only editors, that is, they can only submit and view documents
-        if (this.roles.has("editor") && (action === Action.SUBMIT_DOCUMENT || action !== Action.VIEW_DOCUMENT)) {
-            return true;
-        }
+	// this is for implicit authorization. Implicit authorization means that the user is authorized by virtue of being authenticated, take note, it is not resource specific. Classic example is access to a dashboard after login but contextual authroization is required to access specific resources within the dashboard and that demands a Policy evaluation
 
-        // this prevents user from submitting documents if they are only approvers, that is, they can only view, approve and reject documents
-        if(this.roles.has("approver") && [Action.VIEW_DOCUMENT, Action.APPROVE_DOCUMENT, Action.REJECT_DOCUMENT].includes(action)) {
-            return true
-        }
+	public isAuthenticated(): boolean {
+		return this.state === IdentityState.AUTHENTICATED;
+	}
 
-
-        if (this.roles.has("admin")) return true;
-
-        return false;
-    }
-
-    public authorize(action: Action) {
-        IdentityTransition.assertIsAuthenticated(this.state);
-
-        if(!this.canPerformAction(action)) {
-            throw new DomainError(DomainErrorTypes.USER_NOT_AUTHORIZED, {
-                currentState: this.state,
-                targetState: IdentityState.AUTHORIZED,
-                details: {
-                    attemptedAction: action,
-                    userRoles: Array.from(this.roles)
-                }
-            });
-        }
-        
-        this.state = IdentityState.AUTHORIZED;
-    }
+	public hasRole(role: string): boolean {
+		return this.roles.has(role);
+	}
 }
 
 export default Identity;

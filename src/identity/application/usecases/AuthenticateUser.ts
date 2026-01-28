@@ -3,8 +3,12 @@ import ApplicationErrorTypes from "../../../shared/errors/types/ApplicationError
 import type { IdentityRepositoryPort } from "../ports/IdentityRepository.port.js";
 import type { IdentityEventsPort } from "../ports/IdentityEvents.port.js";
 
-interface ExternalAuthResponse {
+interface AuthenticatedExternalUser {
     externalAuthId: string;
+}
+
+interface AuthenticateUserInput {
+  externalUser: AuthenticatedExternalUser;
 }
 
 class AuthenticateUser {
@@ -16,13 +20,13 @@ class AuthenticateUser {
         this.identityEvents = identityEventBus;
     }
 
-    async authenticateUser(externalAuthResponse: ExternalAuthResponse){
+    async authenticateUser(input: AuthenticateUserInput){
         // pull user's identity from repo after authentication with external provider
-        const userIdentity = await this.identityRepository.findIdentityByExternalAuthId(externalAuthResponse.externalAuthId);
+        const userIdentity = await this.identityRepository.findIdentityByExternalAuthId(input.externalUser.externalAuthId);
         if(!userIdentity) throw new ApplicationError(ApplicationErrorTypes.IDENTITY_NOT_FOUND, {
             message:"User authenticated externally but has no system identity",
             details: {
-                externalAuthId: externalAuthResponse.externalAuthId
+                externalAuthId: input.externalUser.externalAuthId
             }
         })
 
@@ -32,13 +36,13 @@ class AuthenticateUser {
         // persist identity state
         await this.identityRepository.save(userIdentity);
 
-        // emit facts
+        // emit user authenticated event
         await this.identityEvents.userAuthenticated({
             userId: userIdentity.userId,
             roles: Array.from(userIdentity.roles)
         });
         
-        // return userId to create session
+        // return userId
         return userIdentity.userId;
     }
 }
