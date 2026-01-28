@@ -27,23 +27,47 @@ class IdentityEventAdapter implements IdentityEventsPort {
         })
     }
 
-    async authorizationDenied(payload: { userId: string; action: Action; resource: AuthorizationResource; }): Promise<void> {
-        await this.eventBus.emit({
-            eventName: EventTypes.AUTHORIZATION_DENIED,
-            occurredAt: new Date(),
-            payload: {
-                userId: payload.userId,
-                action: payload.action,
-                resource: payload.resource
-            }
-        })
-    }
-
-    async authorizationGranted(payload: { userId: string; action: Action; resource: AuthorizationResource; }): Promise<void> {
+    async implicitAuthorizationGranted(payload: { userId: string; }): Promise<void> {
         await this.eventBus.emit({
             eventName: EventTypes.AUTHORIZATION_GRANTED,
             occurredAt: new Date(),
             payload: {
+                type: 'implicit',
+                userId: payload.userId
+            }
+        })
+    }
+
+    async implicitAuthorizationDenied(payload: { userId: string; }): Promise<void> {
+        await this.eventBus.emit({
+            eventName: EventTypes.AUTHORIZATION_DENIED,
+            occurredAt: new Date(),
+            payload: {
+                type: 'implicit',
+                userId: payload.userId
+            }
+        })
+    }
+
+    async contextualAuthorizationGranted(payload: { userId: string; action: Action; resource: AuthorizationResource; }): Promise<void> {
+            await this.eventBus.emit({
+            eventName: EventTypes.AUTHORIZATION_GRANTED,
+            occurredAt: new Date(),
+            payload: {
+                type: 'contextual',
+                userId: payload.userId,
+                action: payload.action,
+                resource: payload.resource
+            }
+        })    
+    }
+
+    async contextualAuthorizationDenied(payload: { userId: string; action: Action; resource: AuthorizationResource; }): Promise<void> {
+            await this.eventBus.emit({
+            eventName: EventTypes.AUTHORIZATION_GRANTED,
+            occurredAt: new Date(),
+            payload: {
+                type: 'contextual',
                 userId: payload.userId,
                 action: payload.action,
                 resource: payload.resource

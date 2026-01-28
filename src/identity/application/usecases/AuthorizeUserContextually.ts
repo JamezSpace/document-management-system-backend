@@ -33,7 +33,7 @@ class AuthorizeUserContextually {
 
         // deny authorization if not allowed
 		if (!allowed) {
-			await this.identityEvents.authorizationDenied({
+			await this.identityEvents.contextualAuthorizationDenied({
 				userId: userIdentity.userId,
 				action,
 				resource,
@@ -53,7 +53,7 @@ class AuthorizeUserContextually {
 		}
 
         // grant authorization if allowed
-		await this.identityEvents.authorizationGranted({
+		await this.identityEvents.contextualAuthorizationGranted({
 			userId: userIdentity.userId,
 			action,
 			resource,

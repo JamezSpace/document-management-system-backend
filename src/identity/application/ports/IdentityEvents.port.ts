@@ -10,13 +10,21 @@ interface IdentityEventsPort {
         roles: string[];
     }): Promise<void>;
 
-	authorizationGranted(payload: {
+	implicitAuthorizationGranted(payload: {
+        userId: string;
+    }): Promise<void>;
+
+    contextualAuthorizationGranted(payload: {
         userId: string;
         action: Action;
         resource: AuthorizationResource;
     }): Promise<void>;
 
-	authorizationDenied(payload: {
+    implicitAuthorizationDenied(payload: {
+        userId: string;
+    }): Promise<void>;
+
+	contextualAuthorizationDenied(payload: {
         userId: string;
         action: Action;
         resource: AuthorizationResource;
