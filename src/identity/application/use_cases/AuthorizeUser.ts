@@ -4,17 +4,17 @@ import ApplicationErrorTypes from "../../../shared/errors/types/ApplicationError
 import DomainErrorTypes from "../../../shared/errors/types/DomainErrorTypes.js";
 import type Identity from "../../domain/Identity.js";
 import { Action, IdentityState } from "../../domain/IdentityState.js";
-import type { IdentityRepository } from "../../infrastructure/IdentityRepository.type.js";
-import type { IdentityEvents } from "../events/IdentityEvents.type.js";
-import type { AuthorizationResource } from "../types/AuthorizationResource.js";
+import type { AuthorizationResource } from "../types/AuthorizationResource.type.js";
+import type { IdentityRepositoryPort } from "../ports/IdentityRepository.port.js";
+import type { IdentityEventsPort } from "../ports/IdentityEvents.port.js";
 
 class AuthorizeUser {
-	private readonly identityRepo: IdentityRepository;
-	private readonly identityEvents: IdentityEvents;
-
-	constructor(
-		identityRepo: IdentityRepository,
-		identityEvents: IdentityEvents,
+	private readonly identityRepo: IdentityRepositoryPort;
+	private readonly identityEvents: IdentityEventsPort;
+	
+    constructor(
+		identityRepo: IdentityRepositoryPort,
+		identityEvents: IdentityEventsPort,
 	) {
 		this.identityRepo = identityRepo;
 		this.identityEvents = identityEvents;

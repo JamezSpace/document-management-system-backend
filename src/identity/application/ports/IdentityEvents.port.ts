@@ -1,10 +1,10 @@
 import type { Action } from "../../domain/IdentityState.js";
-import type { AuthorizationResource } from "../types/AuthorizationResource.js";
+import type { AuthorizationResource } from "../types/AuthorizationResource.type.js";
 
 /**
  * These wraps all events that would get triggered in the identity & authoiry subsystem
  */
-interface IdentityEvents {
+interface IdentityEventsPort {
 	userAuthenticated(payload: {
         userId: string;
         roles: string[];
@@ -23,4 +23,4 @@ interface IdentityEvents {
     }): Promise<void>;
 }
 
-export type { IdentityEvents };
+export type { IdentityEventsPort };

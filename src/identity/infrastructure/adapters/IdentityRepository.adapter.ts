@@ -1,6 +1,6 @@
-import Identity from "../domain/Identity.js";
-import type { IdentityRepository } from "./IdentityRepository.type.js";
-import type { UserDetails } from "./types/UserDetails.type.js";
+import Identity from "../../domain/Identity.js";
+import type { IdentityRepositoryPort } from "../../application/ports/IdentityRepository.port.js";
+import type { UserDetails } from "../../application/types/UserDetails.type.js";
 
 
 /**
@@ -8,16 +8,12 @@ import type { UserDetails } from "./types/UserDetails.type.js";
  * 
  * By default, this is an in-memory implementation (data is stored in the store variable as a map).
  */
-class InMemoryIdentityRepoImpl implements IdentityRepository {
+class InMemoryIdentityRepoAdapter implements IdentityRepositoryPort {
     private store = new Map<string, Identity>();
     private userStore = new Map<string, UserDetails>;
 
     async findByCredentials(email: string, password: string): Promise<UserDetails | null> {
         return this.userStore.get(email) ?? null;
-    }
-
-    async findBySessionId(sessionId: string): Promise<Identity | null> {
-        return this.store.get(sessionId) ?? null;
     }
 
     async findIdentityByExternalAuthId(externalAuthId: string): Promise<Identity | null> {
@@ -29,4 +25,4 @@ class InMemoryIdentityRepoImpl implements IdentityRepository {
     }
 }
 
-export default InMemoryIdentityRepoImpl;
+export default InMemoryIdentityRepoAdapter;

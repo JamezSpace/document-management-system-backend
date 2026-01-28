@@ -1,17 +1,17 @@
 import ApplicationError from "../../../shared/errors/ApplicationError.js";
 import ApplicationErrorTypes from "../../../shared/errors/types/ApplicationErrorTypes.js";
-import type { IdentityRepository } from "../../infrastructure/IdentityRepository.type.js";
-import type { IdentityEvents } from "../events/IdentityEvents.type.js";
+import type { IdentityRepositoryPort } from "../ports/IdentityRepository.port.js";
+import type { IdentityEventsPort } from "../ports/IdentityEvents.port.js";
 
 interface ExternalAuthResponse {
     externalAuthId: string;
 }
 
 class AuthenticateUser {
-    private readonly identityRepository: IdentityRepository;
-    private readonly identityEvents: IdentityEvents
+    private readonly identityRepository: IdentityRepositoryPort;
+    private readonly identityEvents: IdentityEventsPort
 
-    constructor(private repoInstance: IdentityRepository, private identityEventBus: IdentityEvents) {
+    constructor(private repoInstance: IdentityRepositoryPort, private identityEventBus: IdentityEventsPort) {
         this.identityRepository = repoInstance;
         this.identityEvents = identityEventBus;
     }

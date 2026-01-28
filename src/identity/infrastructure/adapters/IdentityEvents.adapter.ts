@@ -1,15 +1,15 @@
 import type { EventBus } from "../../../shared/application/EventBus.js";
 import { EventTypes } from "../../../shared/application/types/EventTypes.js";
 import type { Action } from "../../domain/IdentityState.js";
-import type { AuthorizationResource } from "../types/AuthorizationResource.js";
-import type { IdentityEvents } from "./IdentityEvents.type.js";
+import type { AuthorizationResource } from "../../application/types/AuthorizationResource.type.js";
+import type { IdentityEventsPort } from "../../application/ports/IdentityEvents.port.js";
 
 
 
 /**
  * This is a wrapper class implementation of the identity & authority event types. This class establishes communication between the subsystem and the eventBus
  */
-class IdentityEventImplementation implements IdentityEvents {
+class IdentityEventAdapter implements IdentityEventsPort {
     private readonly eventBus: EventBus
 
     constructor(private eventBusInstance: EventBus) {
@@ -52,4 +52,4 @@ class IdentityEventImplementation implements IdentityEvents {
     }
 }
 
-export default IdentityEventImplementation;
+export default IdentityEventAdapter;
