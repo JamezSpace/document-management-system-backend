@@ -1,6 +1,4 @@
-import DomainError from "../../shared/errors/DomainError.js";
-import DomainErrorTypes from "../../shared/errors/types/DomainErrorTypes.js";
-import { IdentityState, Action } from "./IdentityState.js";
+import { IdentityState } from "./IdentityState.js";
 import IdentityTransition from "./IdentityStateTransition.js";
 
 interface IdentityDTO {
@@ -31,8 +29,6 @@ class Identity {
 
 		this.state = IdentityState.AUTHENTICATED;
 	}
-
-	// this is for implicit authorization. Implicit authorization means that the user is authorized by virtue of being authenticated, take note, it is not resource specific. Classic example is access to a dashboard after login but contextual authroization is required to access specific resources within the dashboard and that demands a Policy evaluation
 
 	public isAuthenticated(): boolean {
 		return this.state === IdentityState.AUTHENTICATED;

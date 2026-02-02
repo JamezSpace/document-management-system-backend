@@ -11,7 +11,7 @@ interface AuthenticateUserInput {
   externalUser: AuthenticatedExternalUser;
 }
 
-class AuthenticateUser {
+class Authentication {
     private readonly identityRepository: IdentityRepositoryPort;
     private readonly identityEvents: IdentityEventsPort
 
@@ -39,7 +39,8 @@ class AuthenticateUser {
         // emit user authenticated event
         await this.identityEvents.userAuthenticated({
             userId: userIdentity.userId,
-            roles: Array.from(userIdentity.roles)
+            roles: Array.from(userIdentity.roles),
+            timestamp: new Date()
         });
         
         // return userId
@@ -47,4 +48,4 @@ class AuthenticateUser {
     }
 }
 
-export default AuthenticateUser;
+export default Authentication;

@@ -6,11 +6,4 @@ enum IdentityState {
     AUTHENTICATED = "Authenticated",
 }
 
-enum Action {
-    VIEW_DOCUMENT = "View Document",
-    SUBMIT_DOCUMENT = "Submit Document",
-    APPROVE_DOCUMENT = "Approve Document",
-    REJECT_DOCUMENT = "Reject Document"
-}
-
-export { IdentityState, Action };
+export { IdentityState };

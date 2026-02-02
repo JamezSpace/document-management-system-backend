@@ -1,28 +1,28 @@
-import AuthenticateUser from "../../application/usecases/AuthenticateUser.js";
+import Authentication from "../../application/usecases/AuthenticateUser.js";
 import type { AuthenticateUserRequest } from "../types/AuthenticateUserRequest.js";
 import AuthorizeUserImplicitly from "../../application/usecases/AuthorizeUserImplicitly.js";
 import type AuthorizeUserContextually from "../../application/usecases/AuthorizeUserContextually.js";
 import type Identity from "../../domain/Identity.js";
-import type { Action } from "../../domain/IdentityState.js";
+import { ActionToBeAuthorized } from "../../domain/authorization/types/ActionToBeAuthorized.js";
 import type { AuthorizationResource } from "../../application/types/AuthorizationResource.type.js";
 
 class AuthController {
-	private readonly authenticateUser: AuthenticateUser;
+	private readonly authentication: Authentication;
 	private readonly implicitAuthority: AuthorizeUserImplicitly;
 	private readonly contextualAuthority: AuthorizeUserContextually;
 
 	constructor(
-		private unauthenticatedUser: AuthenticateUser,
+		private authInstance: Authentication,
 		private authorizeUserImplicit: AuthorizeUserImplicitly,
 		private authorizeUserContextual: AuthorizeUserContextually,
 	) {
-		this.authenticateUser = unauthenticatedUser;
+		this.authentication = authInstance;
 		this.implicitAuthority = authorizeUserImplicit;
 		this.contextualAuthority = this.authorizeUserContextual;
 	}
 
 	async authenticate(authenticateUser: AuthenticateUserRequest) {
-		const userId = await this.authenticateUser.authenticateUser({
+		const userId = await this.authentication.authenticateUser({
 			externalUser: {
 				externalAuthId: authenticateUser.externalAuthId,
 			},
@@ -41,7 +41,7 @@ class AuthController {
 
 	async authorizeContextually(
 		userIdentity: Identity,
-		action: Action,
+		action: ActionToBeAuthorized,
 		resource: AuthorizationResource,
 	) {
 		await this.contextualAuthority.authorizeUser(

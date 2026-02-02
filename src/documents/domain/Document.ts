@@ -1,10 +1,14 @@
 import DocumentState from "./DocumentState.js";
 import DocumentTransitions from "./DocumentTransition.js";
+import type { DocumentType } from "./types/DocumentType.js";
 
 interface DocumentDTO {
 	id: string;
 	ownerId: string;
+    documentType: DocumentType;
 	initialState: DocumentState;
+    metadata: Record<string, any>;
+    modifiedAt: Date | null;
 }
 
 /**
@@ -19,21 +23,34 @@ interface DocumentDTO {
 class Document {
 	readonly id: string;
 	readonly ownerId: string;
+    readonly documentType: DocumentType; 
 	private state: DocumentState;
 	readonly createdAt: Date;
+    readonly modifiedAt: Date | null;
+    readonly metadata: Record<string, any>;
 
 	constructor(document: DocumentDTO) {
 		this.id = document.id;
 		this.ownerId = document.ownerId;
+        this.documentType = document.documentType;
 		this.state = document.initialState;
+        this.metadata = document.metadata;
 		this.createdAt = new Date();
+        this.modifiedAt = document.modifiedAt;
 	}
-
     
     public getState() : DocumentState {
         return this.state;
     }
     
+    /**
+     * create verfies if the document transition to submit is allowed and performs action based on that
+     */
+    public create() {
+        DocumentTransitions.assertCanCreate(this.state)
+
+        this.state = DocumentState.DRAFT
+    }
 
     /**
      * submit verfies if the document transition to submit is allowed and performs action based on that
@@ -48,6 +65,7 @@ class Document {
      */
     public approve() {
         DocumentTransitions.assertCanApprove(this.state)
+
         this.state = DocumentState.APPROVED
     }
 
@@ -56,6 +74,7 @@ class Document {
      */
     public reject() {
         DocumentTransitions.assertCanReject(this.state)
+        
         this.state = DocumentState.REJECTED
     }
 
