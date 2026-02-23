@@ -1,7 +1,8 @@
-import DomainErrorTypes from "./types/DomainErrorTypes.js";
+import type { DomainErrorCode } from "./enum/domain.enum.js";
+
 
 interface StateDetails {
-    currentState: string, 
+    currentState: string | null, 
     targetState: string,
     details?: Record<string, any>
 }
@@ -10,10 +11,10 @@ interface StateDetails {
  * This is a global error class for all domains of all subsystems
  */
 class DomainError extends Error {
-    readonly code: DomainErrorTypes;
+    readonly code: DomainErrorCode;
     readonly context: StateDetails;
 
-    constructor(code: DomainErrorTypes, context: StateDetails) {
+    constructor(code: DomainErrorCode, context: StateDetails) {
         // constructor call to parent class 'Error'
         super(code);
 

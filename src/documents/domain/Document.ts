@@ -1,90 +1,144 @@
-import DocumentState from "./DocumentState.js";
+import type { DocumentSchemaType } from "../api/types/document.type.js";
 import DocumentTransitions from "./DocumentTransition.js";
-import type { DocumentType } from "./types/DocumentType.js";
-
-interface DocumentDTO {
-	id: string;
-	ownerId: string;
-    documentType: DocumentType;
-	initialState: DocumentState;
-    metadata: Record<string, any>;
-    modifiedAt: Date | null;
-}
+import { DocumentType } from "./enum/documentTypes.enum.js";
+import { LifecycleState } from "./enum/lifecycleState.enum.js";
+import type { LifecycleMetadata } from "./metadata/Lifecycle.metadata.js";
 
 /**
  * Represents the core Document entity in the system.
  * This is NOT a database model and NOT an API DTO.
- * 
+ *
  * Responsibilities:
  * - Holds the canonical state of a document
  * - Enforces invariants (what is always true)
  * - Exposes domain-level behaviors (submit, approve, reject)
  */
 class Document {
-	readonly id: string;
+	// document identity
+	//  NOTICE: id is not initialized at first, this is because the database handles the generation better implementing uuid v7 natively for faster queries
+	id!: string;
 	readonly ownerId: string;
-    readonly documentType: DocumentType; 
-	private state: DocumentState;
+	readonly title: string;
+	readonly documentType: DocumentType;
+	private version!: number;
+
+	// Governance Domains (Value Objects)
+	// classification: ClassificationMetadata;
+	// retention: RetentionMetadata;
+	// integrity: IntegrityMetadata;
+	readonly lifecycle: LifecycleMetadata;
+
+	// Audit
 	readonly createdAt: Date;
-    readonly modifiedAt: Date | null;
-    readonly metadata: Record<string, any>;
+	private modifiedAt: Date | null;
 
-	constructor(document: DocumentDTO) {
-		this.id = document.id;
-		this.ownerId = document.ownerId;
-        this.documentType = document.documentType;
-		this.state = document.initialState;
-        this.metadata = document.metadata;
+	// system flags
+	isLatestVersion!: boolean;
+	isEditable!: boolean;
+
+	// private domainEvents: DomainEvent[] = [];
+
+	constructor(payload: DocumentSchemaType) {
+		this.ownerId = payload.ownerId;
+		this.title = payload.title;
+		this.documentType = payload.documentType;
+
+		// this.classification = payload.classification;
+		// this.retention = payload.retention;
+		// this.integrity = payload.integrity;
+
+		this.lifecycle = {
+			currentState: payload.lifecycle.currentState,
+			stateEnteredAt: new Date(payload.lifecycle.enteredAt),
+			stateEnteredBy: payload.lifecycle.enteredBy,
+		} as LifecycleMetadata;
+		// this.stateEnteredAt = new Date();
+		// this.stateEnteredBy = payload.createdBy;
+
 		this.createdAt = new Date();
-        this.modifiedAt = document.modifiedAt;
+		this.modifiedAt = null;
 	}
-    
-    public getState() : DocumentState {
-        return this.state;
-    }
-    
-    /**
-     * create verfies if the document transition to submit is allowed and performs action based on that
-     */
-    public create() {
-        DocumentTransitions.assertCanCreate(this.state)
 
-        this.state = DocumentState.DRAFT
-    }
+	public getState(): LifecycleState | null {
+		return this.lifecycle.currentState;
+	}
 
-    /**
-     * submit verfies if the document transition to submit is allowed and performs action based on that
-     */
-    public submit() {
-        DocumentTransitions.assertCanSubmit(this.state)
-        this.state = DocumentState.SUBMITTED
-    }
+	private transitionTo(newState: LifecycleState) {
+		DocumentTransitions.transition(this.getState(), newState);
+	}
 
-    /**
-     * approve verfies if the document transition to approved is allowed and performs action based on that
-     */
-    public approve() {
-        DocumentTransitions.assertCanApprove(this.state)
+	public create() {
+		this.transitionTo(LifecycleState.DRAFT);
+	}
 
-        this.state = DocumentState.APPROVED
-    }
+	public createNewVersion(newContentUri: string) {
+		if (this.lifecycle.currentState === LifecycleState.DECLARED_RECORD) {
+			throw new Error("Records cannot be versioned.");
+		}
 
-    /**
-     * reject verfies if the document transition to rejected is allowed and performs action based on that
-     */
-    public reject() {
-        DocumentTransitions.assertCanReject(this.state)
-        
-        this.state = DocumentState.REJECTED
-    }
+		this.version += 1;
+		this.lifecycle.currentState = LifecycleState.DRAFT;
+		this.contentUri = newContentUri;
+	}
 
-    /**
-     * archive verifies if the document transition to archived is allowed
-     */
-    public archive() {
-        DocumentTransitions.assertCanArchive(this.state)
-        this.state = DocumentState.ARCHIVED
-    }
+	// // Lifecycle Behaviors
+	// public submit(actorId: string, policy: LifecyclePolicyEvaluator) {
+	// 	this.transition("SUBMIT", actorId, policy);
+	// }
+
+	// public approve(actorId: string, policy: LifecyclePolicyEvaluator) {
+	// 	this.transition("APPROVE", actorId, policy);
+	// }
+
+	// public reject(actorId: string, policy: LifecyclePolicyEvaluator) {
+	// 	this.transition("REJECT", actorId, policy);
+	// }
+
+	// public declareRecord(actorId: string, policy: LifecyclePolicyEvaluator) {
+	// 	this.transition("DECLARE_RECORD", actorId, policy);
+	// }
+
+	// public archive(actorId: string, policy: LifecyclePolicyEvaluator) {
+	// 	this.transition("ARCHIVE", actorId, policy);
+	// }
+
+	// public dispose(actorId: string, policy: LifecyclePolicyEvaluator) {
+	// 	this.transition("DISPOSE", actorId, policy);
+	// }
+
+	// // Core Transition Logic
+	// private transition(
+	// 	event: LifecycleEventType,
+	// 	actorId: string,
+	// 	policy: LifecyclePolicyEvaluator,
+	// ) {
+	// 	policy.assertTransitionAllowed({
+	// 		document: this,
+	// 		currentState: this.lifecycleState,
+	// 		event,
+	// 		actorId,
+	// 	});
+
+	// 	const newState = DocumentTransitions.getNextState(
+	// 		this.lifecycleState,
+	// 		event,
+	// 	);
+
+	// 	this.lifecycleState = newState;
+	// 	this.stateEnteredAt = new Date();
+	// 	this.stateEnteredBy = actorId;
+	// 	this.modifiedAt = new Date();
+
+	// 	this.domainEvents.push(
+	// 		new DocumentStateChangedEvent(this.id, event, newState),
+	// 	);
+	// }
+
+	// public pullDomainEvents(): DomainEvent[] {
+	// 	const events = this.domainEvents;
+	// 	this.domainEvents = [];
+	// 	return events;
+	// }
 }
 
 export default Document;

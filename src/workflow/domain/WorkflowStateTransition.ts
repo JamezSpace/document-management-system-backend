@@ -1,4 +1,5 @@
 import DomainError from "../../shared/errors/DomainError.js";
+import { GlobalDomainErrors } from "../../shared/errors/enum/domain.enum.js";
 import WorkflowState from "./WorkflowState.js";
 
 /**
@@ -14,7 +15,7 @@ class WorkflowTransition {
 				WorkflowState.STALLED,
 			].includes(currentState)
 		)
-			throw new DomainError("INVALID_WORKFLOW_STATE", {
+			throw new DomainError(GlobalDomainErrors.workflow.INVALID_WORKFLOW_STATE, {
 				currentState,
 				targetState: WorkflowState.ACTIVE,
 			});
@@ -22,7 +23,7 @@ class WorkflowTransition {
 
 	static assertCanWait(currentState: WorkflowState) {
 		if (currentState !== WorkflowState.ACTIVE)
-			throw new DomainError("INVALID_WORKFLOW_STATE", {
+			throw new DomainError(GlobalDomainErrors.workflow.INVALID_WORKFLOW_STATE, {
 				currentState,
 				targetState: WorkflowState.WAITING,
 			});
@@ -30,7 +31,7 @@ class WorkflowTransition {
 
 	static assertCanAdvance(currentState: WorkflowState) {
 		if (currentState !== WorkflowState.WAITING)
-			throw new DomainError("INVALID_WORKFLOW_STATE", {
+			throw new DomainError(GlobalDomainErrors.workflow.INVALID_WORKFLOW_STATE, {
 				currentState,
 				targetState: WorkflowState.ADVANCED,
 			});
@@ -38,7 +39,7 @@ class WorkflowTransition {
 
 	static assertCanComplete(currentState: WorkflowState) {
 		if (currentState !== WorkflowState.ACTIVE)
-			throw new DomainError("INVALID_WORKFLOW_STATE", {
+			throw new DomainError(GlobalDomainErrors.workflow.INVALID_WORKFLOW_STATE, {
 				currentState,
 				targetState: WorkflowState.COMPLETED,
 			});
@@ -46,7 +47,7 @@ class WorkflowTransition {
 
 	static assertCanStall(currentState: WorkflowState) {
 		if (currentState !== WorkflowState.ACTIVE)
-			throw new DomainError("INVALID_WORKFLOW_STATE", {
+			throw new DomainError(GlobalDomainErrors.workflow.INVALID_WORKFLOW_STATE, {
 				currentState,
 				targetState: WorkflowState.STALLED,
 			});

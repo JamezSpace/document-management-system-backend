@@ -1,4 +1,5 @@
 import DomainError from "../../shared/errors/DomainError.js";
+import { GlobalDomainErrors } from "../../shared/errors/enum/domain.enum.js";
 import { ApprovalState, ApprovalSupersedeCause } from "./ApprovalState.js";
 import ApprovalStateTransition from "./ApprovalStateTransition.js";
 
@@ -40,7 +41,7 @@ class Approval {
 			approvalExpiryTime = this.createdAt.getTime() + this.expiresIn;
 
 		if (currentTime < approvalExpiryTime) {
-			throw new DomainError("EXPIRED_APPROVAL", {
+			throw new DomainError(GlobalDomainErrors.workflow.EXPIRED_APPROVAL, {
 				currentState: this.state,
 				targetState: ApprovalState.EXPIRED,
 			});

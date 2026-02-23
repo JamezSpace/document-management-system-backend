@@ -1,6 +1,6 @@
 # NexusFons System
 
-Authentication System: Firebase <br>
+AuthenticateUserUseCase System: Firebase <br>
 Database: Postgresql
 
 In login, the request with the user details never enters NexusFons server *first*. It enters Firebase server, firebase checks if user exists and if user does exist, firebase returns an authentication id (authId) that embeds the actual userId, this authId becomes the raw material for the NexusFons Identity System, which is, the Identity & Authority Subsystem.

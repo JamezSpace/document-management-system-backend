@@ -1,0 +1,49 @@
+import type { EventBus } from "../../../../shared/application/port/eventbus.port.js";
+import { GlobalEventTypes } from "../../../../shared/application/enum/event.enum.js";
+import type { AccessEventsPort } from "../../application/ports/AccessEvents.port.js";
+import type Role from "../../domain/role/Role.js";
+
+/**
+ * This is a wrapper class implementation of the authority event types. This class establishes communication between the subsystem and the eventBus
+ */
+class AccessEventsAdapter implements AccessEventsPort {
+	constructor(private readonly eventBus: EventBus) {}
+
+	async officialRoleAssigned(payload: {
+		userId: string;
+		role: Role;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.identity_authority.access.OFFICIAL_ROLE_ASSIGNED,
+			occurredAt: new Date(),
+			payload
+		});
+	}
+
+	async roleDelegated(payload: {
+		userId: string;
+		role: Role;
+		delegatedBy: string;
+		validTo: Date;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.identity_authority.access.ROLE_DELEGATED,
+			occurredAt: new Date(),
+			payload
+		});
+	}
+
+	async roleRevoked(payload: {
+		userId: string;
+		role: Role;
+		revokedBy: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.identity_authority.access.ROLE_REVOKED,
+			occurredAt: new Date(),
+			payload
+		});
+	}
+}
+
+export default AccessEventsAdapter;

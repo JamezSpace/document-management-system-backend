@@ -1,34 +1,55 @@
 interface DocumentEventsPort {
-    documentSubmitted(payload: {
-        documentId: string,
-        submittedBy: string,
-        timestamp: Date
-    }): Promise<void>
-
     documentCreated(payload: {
         documentId: string,
         createdBy: string,
-        metadata: Record<string, any>,
-        timestamp: Date
+        // metadata: Record<string, any>,
     }): Promise<void>
+    
+    documentSubmitted(payload: {
+        documentId: string,
+        submittedBy: string,
+    }): Promise<void>  
 
     documentApproved(payload: {
         documentId: string, 
         approvedBy: string,
-        timestamp: Date
     }): Promise<void>
 
     documentRejected(payload: {
         documentId: string, 
         rejectedBy: string,
         reason: string,
-        timestamp: Date
+    }): Promise<void>
+
+    documentCancelled(payload: {
+        documentId: string, 
+        cancelledBy: string,
+        reason: string,
+    }): Promise<void>
+
+    documentActivated(payload: {
+        documentId: string, 
+        activatedBy: string,
+    }): Promise<void>
+
+    documentDeclared(payload: {
+        documentId: string, 
+        declaredBy: string
     }): Promise<void>
 
     documentArchived(payload : {
         documentId: string, 
         archivedBy: string,
-        timestamp: Date
+    }): Promise<void>
+
+    documentDeleted(payload : {
+        documentId: string, 
+        deletedBy: string,
+    }): Promise<void>
+
+    documentDisposed(payload : {
+        documentId: string, 
+        disposedBy: string,
     }): Promise<void>
 }
 

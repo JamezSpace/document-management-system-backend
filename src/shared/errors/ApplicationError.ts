@@ -1,5 +1,4 @@
-import ApplicationErrorTypes from "./types/ApplicationErrorTypes.js";
-
+import type { ApplicationErrorEnum } from "./enum/application.enum.js";
 
 interface ErrorContext {
     message?: string;
@@ -10,10 +9,10 @@ interface ErrorContext {
  * This is a global error class for all application of all subsystems
  */
 class ApplicationError extends Error {
-    readonly code: ApplicationErrorTypes;
+    readonly code: ApplicationErrorEnum;
     readonly context: ErrorContext;
 
-    constructor(code: ApplicationErrorTypes, context: ErrorContext) {
+    constructor(code: ApplicationErrorEnum, context: ErrorContext) {
         // constructor call to parent class 'Error'
         super(code);
 

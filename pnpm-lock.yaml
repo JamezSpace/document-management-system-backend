@@ -29,6 +29,9 @@ importers:
       http-status-codes:
         specifier: ^2.3.0
         version: 2.3.0
+      pg:
+        specifier: ^8.18.0
+        version: 8.18.0
     devDependencies:
       '@types/node':
         specifier: ^25.0.10
