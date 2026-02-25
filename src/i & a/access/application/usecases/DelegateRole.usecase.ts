@@ -1,15 +1,15 @@
 import type Role from "../../domain/role/Role.js";
 import RoleAssignment from "../../domain/RoleAssignment.js";
 import type { AccessEventsPort } from "../ports/AccessEvents.port.js";
-import type { AccessRepositoryPort } from "../ports/AccessRepository.port.js";
+import type { RoleAssignmentRepositoryPort } from "../ports/RoleAssignmentsRepository.port.js";
 
 class DelegateRole {
 	private readonly authorityEvents: AccessEventsPort;
-	private readonly roleAssignmentRepo: AccessRepositoryPort;
+	private readonly roleAssignmentRepo: RoleAssignmentRepositoryPort;
 
 	constructor(
 		authorityEvents: AccessEventsPort,
-		accessRepo: AccessRepositoryPort,
+		accessRepo: RoleAssignmentRepositoryPort,
 	) {
 		this.authorityEvents = authorityEvents;
 		this.roleAssignmentRepo = accessRepo;

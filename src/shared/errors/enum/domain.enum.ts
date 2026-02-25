@@ -1,46 +1,89 @@
-enum IdentityModuleErrors {
-    USER_NOT_AUTHORIZED = "user_not_authorized",
-    USER_ALREADY_AUTHENTICATED = "user_already_authenticated",
-    USER_NOT_AUTHENTICATED = "user_not_authenticated",
-USER_NOT_ACTIVE = "user_not_active"
-}
+import { StatusCodes } from "http-status-codes";
 
-enum AccessModuleErrorscess {
-    OFFICIAL_ROLE_ALREADY_ASSIGNED = "official_role_already_Assigned",
-    PERMISSION_NOT_GRANTED = "permission_not_granted",
-    DELEGATED_ROLE_MISSING_EXPIRY = "delegated_role_missing_expiry",
-    UNKNOWN_PERMISSION = "unknown_permission",
-    UNKNOWN_ROLE = "unknown_role",
-    ROLE_NOT_ACTIVE = "role_not_active",
-    INVALID_ROLE_REVOCATION_DATE = "invalid_role_revocation_date",
-    ROLE_ALREADY_CLOSED = "role_already_closed",
-}
+export const IdentityDomainErrors = {
+    USER_NOT_ACTIVE: {
+        codeName: "user_not_active",
+        httpStatusCode: StatusCodes.FORBIDDEN
+    },
+    INVALID_STATE_TRANSITION: {
+        codeName: "invalid_state_transition",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    }
+} as const;
 
-enum Document {
-    INVALID_DOCUMENT_STATE = "invalid_document_state",
-}
+export const AccessDomainErrors = {
+    OFFICIAL_ROLE_ALREADY_ASSIGNED: {
+        codeName: "official_role_already_assigned",
+        httpStatusCode: StatusCodes.CONFLICT
+    },
+    PERMISSION_NOT_GRANTED: {
+        codeName: "permission_not_granted",
+        httpStatusCode: StatusCodes.FORBIDDEN
+    },
+    DELEGATED_ROLE_MISSING_EXPIRY: {
+        codeName: "delegated_role_missing_expiry",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    UNKNOWN_PERMISSION: {
+        codeName: "unknown_permission",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    UNKNOWN_ROLE: {
+        codeName: "unknown_role",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    ROLE_NOT_ACTIVE: {
+        codeName: "role_not_active",
+        httpStatusCode: StatusCodes.FORBIDDEN
+    },
+    INVALID_ROLE_REVOCATION_DATE: {
+        codeName: "invalid_role_revocation_date",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    ROLE_ALREADY_CLOSED: {
+        codeName: "role_already_closed",
+        httpStatusCode: StatusCodes.CONFLICT
+    }
+} as const;
 
-enum Workflow {
-    INVALID_WORKFLOW_STATE = "invalid_workflow_state",
-    INVALID_APPROVAL_STATE = "invalid_approval_state",
-    EXPIRED_APPROVAL = "expired_approval",
-}
+export const DocumentDomainErrors = {
+    INVALID_DOCUMENT_STATE: {
+        codeName: "invalid_document_state",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    }
+} as const;
+
+export const WorkflowDomainErrors = {
+    INVALID_WORKFLOW_STATE: {
+        codeName: "invalid_workflow_state",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    INVALID_APPROVAL_STATE: {
+        codeName: "invalid_approval_state",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    EXPIRED_APPROVAL: {
+        codeName: "expired_approval",
+        httpStatusCode: StatusCodes.GONE
+    }
+} as const;
 
 const GlobalDomainErrors = {
     identity_authority: {
-        identity: IdentityModuleErrors,
-        access: AccessModuleErrorscess
+        identity: IdentityDomainErrors,
+        access: AccessDomainErrors,
     },
-    workflow: Workflow,
-    document: Document
-}
+    workflow: WorkflowDomainErrors,
+    document: DocumentDomainErrors,
+} as const;
 
-type DomainErrorCode =
-	| IdentityModuleErrors
-	| AccessModuleErrorscess
-	| Document
-	| Workflow;
+type ValueOf<T> = T[keyof T];
 
+type DomainErrorType =
+    | ValueOf<typeof IdentityDomainErrors>
+    | ValueOf<typeof AccessDomainErrors>
+    | ValueOf<typeof DocumentDomainErrors>
+    | ValueOf<typeof WorkflowDomainErrors>;
 
-export { GlobalDomainErrors, type DomainErrorCode };
+export { GlobalDomainErrors, type DomainErrorType };
 

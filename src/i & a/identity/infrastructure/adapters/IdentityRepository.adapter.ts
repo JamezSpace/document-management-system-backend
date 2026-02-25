@@ -1,4 +1,4 @@
-import type { IdentityRepositoryPort } from "../../application/ports/IdentityRepository.port.js";
+import type { IdentityRepositoryPort } from "../../application/ports/repos/IdentityRepository.port.js";
 import Identity from "../../domain/Identity.js";
 
 

@@ -1,31 +1,31 @@
+import { fastifyPostgres } from "@fastify/postgres";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import fastify, {
-	type FastifyInstance,
-	type FastifyReply,
-	type FastifyRequest,
+    type FastifyInstance,
+    type FastifyReply,
+    type FastifyRequest,
 } from "fastify";
-import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
-import type { GenericError } from "./shared/errors/api/genericError.type.js";
 import DocumentSubsystem from "./documents/index.js";
+import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
 import IdentityAccessSubsystem from "./i & a/index.js";
+import type { NexusAppError } from "./shared/errors/api/nexusAppError.type.js";
+import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.config.js";
 
 const server: FastifyInstance = fastify({
 	logger: true,
 }).withTypeProvider<TypeBoxTypeProvider>();
 
 // load plugins (from the Fastify ecosystem) next
+server.register(fastifyPostgres, dbConfig)
 
 // load your plugins (your custom plugins) next
-server.register(IdentityAccessSubsystem, { prefix: "user" });
+server.register(IdentityAccessSubsystem, { prefix: "identity" });
 server.register(DocumentSubsystem, {prefix: 'document'});
 
 // load decorators next
-server.decorate('pg')
 
 // decorate fastify instance with user property
-server.decorateRequest("user", {
-	uid: "",
-});
+server.decorateRequest("user", null);
 
 // load hooks next
 server.addHook(
@@ -41,7 +41,7 @@ server.get("/", (request: FastifyRequest, reply: FastifyReply) => {
 
 // set global error handler
 server.setErrorHandler(
-	(error: GenericError, request: FastifyRequest, reply: FastifyReply) => {
+	(error: NexusAppError, request: FastifyRequest, reply: FastifyReply) => {
 		console.log("handler error:", error);
 
 		if (error)

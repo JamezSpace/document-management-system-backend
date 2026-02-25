@@ -8,6 +8,16 @@ import type { IdentityEventsPort } from "../../application/ports/events/Identity
 class IdentityEventsAdapter implements IdentityEventsPort {
 	constructor(private readonly eventBus: EventBus) {
 	}
+    
+    async userActivated(payload: { userId: string }): Promise<void> {
+        await this.eventBus.emit({
+            eventName: GlobalEventTypes.identity_authority.identity.USER_ACTIVATED,
+            occurredAt: new Date(),
+            payload: {
+                userId: payload.userId,
+            },
+        });
+    }
 
 	async userAuthenticated(payload: { userId: string }): Promise<void> {
 		await this.eventBus.emit({

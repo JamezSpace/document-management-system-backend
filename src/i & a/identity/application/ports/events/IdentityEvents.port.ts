@@ -13,6 +13,10 @@ interface IdentityEventsPort {
     userCreated(payload: {
         userId: string;
     }): Promise<void>
+
+    userActivated(payload: {
+        userId: string;
+    }): Promise<void>
 }
 
 export type { IdentityEventsPort };

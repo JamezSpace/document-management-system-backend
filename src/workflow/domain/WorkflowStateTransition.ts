@@ -1,4 +1,4 @@
-import DomainError from "../../shared/errors/DomainError.js";
+import DomainError from "../../shared/errors/DomainError.error.js";
 import { GlobalDomainErrors } from "../../shared/errors/enum/domain.enum.js";
 import WorkflowState from "./WorkflowState.js";
 

@@ -1,4 +1,4 @@
-const pool_config = {
+const dbConfig = {
 	host: process.env.db_host,
 	user: process.env.db_user,
 	password: process.env.db_password,
@@ -8,4 +8,5 @@ const pool_config = {
 	connectionTimeoutMillis: 0,
 };
 
-export { pool_config };
+export { dbConfig };
+

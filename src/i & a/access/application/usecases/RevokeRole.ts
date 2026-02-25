@@ -2,15 +2,15 @@ import DomainError from "../../../../shared/errors/enum/domain.enum.js";
 import AccessDomainError from "../../domain/errors/AccessDomainError.js";
 import Role from "../../domain/role/Role.js";
 import type { AccessEventsPort } from "../ports/AccessEvents.port.js";
-import type { AccessRepositoryPort } from "../ports/AccessRepository.port.js";
+import type { RoleAssignmentRepositoryPort } from "../ports/RoleAssignmentsRepository.port.js";
 
 class RevokeRole {
 	private readonly authorityEvents: AccessEventsPort;
-	private readonly roleAssignmentRepo: AccessRepositoryPort;
+	private readonly roleAssignmentRepo: RoleAssignmentRepositoryPort;
 
 	constructor(
 		authorityEvents: AccessEventsPort,
-		accessRepo: AccessRepositoryPort,
+		accessRepo: RoleAssignmentRepositoryPort,
 	) {
 		this.authorityEvents = authorityEvents;
 		this.roleAssignmentRepo = accessRepo;

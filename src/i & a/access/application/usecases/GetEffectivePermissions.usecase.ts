@@ -1,12 +1,12 @@
 import type Permission from "../../domain/permission/Permission.js";
 import type Role from "../../domain/role/Role.js";
 import type { AccessEventsPort } from "../ports/AccessEvents.port.js";
-import type { AccessRepositoryPort } from "../ports/AccessRepository.port.js";
+import type { RoleAssignmentRepositoryPort } from "../ports/RoleAssignmentsRepository.port.js";
 
 class GetEffectivePermissionsUseCase {
 	constructor(
 		private readonly authorityEvents: AccessEventsPort,
-		private readonly roleAssignmentRepo: AccessRepositoryPort
+		private readonly roleAssignmentRepo: RoleAssignmentRepositoryPort
 	) {}
 
 	async getEffectivePermissions(staffId: string) {

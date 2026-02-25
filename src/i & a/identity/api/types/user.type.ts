@@ -3,21 +3,26 @@ import { IdentityStatus } from "../../domain/IdentityStatus.js";
 
 const userSchema = Type.Object({
 	uid: Type.String(),
-	name: Type.String(),
 	email: Type.String(),
-	role: Type.String(),
 	status: Type.Enum(IdentityStatus),
+    authProvider: Type.String(),
+    authProviderId: Type.String(),
+	firstName: Type.String(),
+	lastName: Type.String(),
+	middleName: Type.String(),
 });
 
 const userSchemaForSignup = Type.Object({
-	uid: Type.String(),
-	name: Type.String(),
 	email: Type.String(),
-	role: Type.String(),
+    authProvider: Type.String(),
+    authProviderId: Type.String(),
+	firstName: Type.String(),
+	lastName: Type.String(),
+	middleName: Type.String(),
 });
 
 const userSchemaForLogin = Type.Object({
-	uid: Type.String(),
+	authProviderId: Type.String(),
 });
 
 type User = Static<typeof userSchema>;

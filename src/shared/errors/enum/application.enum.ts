@@ -1,9 +1,27 @@
-enum ApplicationErrorEnum {
-    INVALID_CREDENTIALS = "invalid_credentials",
-	ROLE_NOT_FOUND = "role_not_found",
-	IDENTITY_NOT_FOUND = "identity_not_found",
-	USER_NOT_AUTHENTICATED = "user_not_authenticated",
-	USER_NOT_AUTHORIZED = "user_not_authorized"
-}
+import { StatusCodes } from "http-status-codes";
 
-export {ApplicationErrorEnum};
+export const ApplicationErrorEnum = {
+    INVALID_CREDENTIALS: {
+        codeName: "invalid_credentials",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    ROLE_NOT_FOUND: {
+        codeName: "role_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    IDENTITY_NOT_FOUND: {
+        codeName: "identity_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    USER_NOT_AUTHENTICATED: {
+        codeName: "user_not_authenticated",
+        httpStatusCode: StatusCodes.UNAUTHORIZED
+    },
+    USER_NOT_AUTHORIZED: {
+        codeName: "user_not_authorized",
+        httpStatusCode: StatusCodes.FORBIDDEN
+    }
+} as const;
+
+export type ApplicationErrorType =
+    typeof ApplicationErrorEnum[keyof typeof ApplicationErrorEnum];

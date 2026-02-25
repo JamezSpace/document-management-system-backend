@@ -5,7 +5,9 @@ interface OrgUnitRepository {
 
     findOrgUnitById(id: string): Promise<OrganizationalUnit | null>;
 
-    findAllUnitsBySector(sector: string): Promise<OrganizationalUnit[]>
+    findAllUnitsBySector(sector: string): Promise<OrganizationalUnit[]>;
+
+    fetchAllUnits(): Promise<OrganizationalUnit[]>
 }
 
 export type {OrgUnitRepository};

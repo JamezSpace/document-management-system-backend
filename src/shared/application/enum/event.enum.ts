@@ -2,6 +2,7 @@ enum IdentityModuleEvents {
 	USER_CREATED = "user_created",
 	USER_AUTHENTICATED = "user_authenticated",
 	USER_AUTHENTICATION_FAILED = "user_authentication_failed",
+    USER_ACTIVATED = "user_activated"
 }
 
 enum AccessModuleEvents {

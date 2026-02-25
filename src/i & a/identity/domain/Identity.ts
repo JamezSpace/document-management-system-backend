@@ -1,43 +1,106 @@
-import type { User } from "../api/types/user.type.js";
 import { IdentityStatus } from "./IdentityStatus.js";
 import IdentityTransition from "./IdentityStatusTransition.js";
 
+/**
+ * Local interface defining the requirements for an Identity.
+ * This keeps the Domain independent of Application/API DTOs.
+ */
+interface IdentityPayload {
+	readonly uid: string;
+	readonly authProviderId: string;
+	readonly firstName: string;
+	readonly lastName: string;
+	readonly middleName: string;
+	readonly email: string;
+	readonly status: IdentityStatus;
+	readonly createdAt?: Date;
+	readonly updatedAt?: Date;
+}
 
 class Identity {
-	private readonly userId: string;
-    private readonly roleId: string;
+	private readonly uid: string;
+	private readonly authProviderId: string;
+	private readonly email: string;
+	private readonly firstName: string;
+	private readonly lastName: string;
+	private readonly middleName: string;
 	private readonly createdAt: Date;
+	private readonly updatedAt: Date;
 	private status: IdentityStatus;
 
-	constructor(payload: User) {
-		this.userId = payload.uid;
-        this.status = payload.status;
-        this.createdAt = new Date();
-        this.roleId = payload.role
+	constructor(payload: IdentityPayload) {
+		this.uid = payload.uid;
+		this.authProviderId = payload.authProviderId;
+		this.firstName = payload.firstName;
+		this.lastName = payload.lastName;
+		this.middleName = payload.middleName;
+		this.email = payload.email;
+		this.status = payload.status;
+
+		this.createdAt = payload.createdAt ?? new Date();
+		this.updatedAt = payload.updatedAt ?? this.createdAt;
 	}
 
-    getUserId():string {
-        return this.userId;
-    }
+	// getters
+	getUserId(): string {
+		return this.uid;
+	}
 
 	getStatus(): IdentityStatus {
 		return this.status;
 	}
 
+	getEmail(): string {
+		return this.email;
+	}
+
+	getCreatedAt(): Date {
+		return this.createdAt;
+	}
+
+	getUpdatedAt(): Date {
+		return this.updatedAt;
+	}
+
+	getAuthProviderId() {
+		return this.authProviderId;
+	}
+
+	getFirstName(): string {
+		return this.firstName;
+	}
+
+	getLastName(): string {
+		return this.lastName;
+	}
+
+	getMiddleName(): string {
+		return this.middleName;
+	}
+
 	activate() {
-		IdentityTransition.assertCanActivate(this.status)
+		IdentityTransition.assertCanActivate(this.status);
 		this.status = IdentityStatus.ACTIVE;
 	}
 
 	suspend() {
-        IdentityTransition.assertCanSuspend(this.status)
+		IdentityTransition.assertCanSuspend(this.status);
 		this.status = IdentityStatus.SUSPENDED;
+	}
+
+	retire() {
+		IdentityTransition.assertCanRetire(this.status);
+		this.status = IdentityStatus.RETIRED;
+	}
+
+	terminate() {
+		IdentityTransition.assertCanTerminate(this.status);
+		this.status = IdentityStatus.TERMINATED;
 	}
 
 	isActive(): boolean {
 		return this.status === IdentityStatus.ACTIVE;
 	}
-
 }
 
 export default Identity;
