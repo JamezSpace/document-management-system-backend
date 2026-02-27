@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import FirebaseAuthAdapter from "../../../infrastructure/auth/FirebaseAuth.adapter.js";
-import UnauthorizedError from "../../errors/UnauthorizedError.js";
 import type { MiddlewarePort } from "../port/AuthMiddleware.port.js";
+import UnauthorizedError from "../../errors/Unauthorizederror.error.js";
 
 class FirebaseMiddlewareAdapter implements MiddlewarePort {
 	authAdapter: FirebaseAuthAdapter;
@@ -10,10 +10,10 @@ class FirebaseMiddlewareAdapter implements MiddlewarePort {
 		this.authAdapter = new FirebaseAuthAdapter();
 	}
 
-    private extractToken(header: string) {
-        // asserting not null or undefined because that has been pre-handled in the main fuction
-        return header.split(' ')[1];
-    }
+	private extractToken(header: string) {
+		// asserting not null or undefined because that has been pre-handled in the main fuction
+		return header.split(" ")[1];
+	}
 
 	validateUserIsAuthenticated = async (
 		request: FastifyRequest,
@@ -26,31 +26,32 @@ class FirebaseMiddlewareAdapter implements MiddlewarePort {
 			throw new UnauthorizedError({
 				errorCode: "AUTH_MIDDLEWARE_01",
 				errorMessage: "Unauthenticated",
-				details: "Missing Authorization Header",
-        });
-		else if (!authHeader.startsWith("Bearer")) 
+				details: { reason: "Missing Authorization Header" },
+			});
+		else if (!authHeader.startsWith("Bearer"))
 			throw new UnauthorizedError({
-		        errorCode: "AUTH_MIDDLEWARE_01",
+				errorCode: "AUTH_MIDDLEWARE_01",
 				errorMessage: "Unauthenticated",
-				details: "No 'Bearer' Token provided",
-        });
+				details: { reason: "No 'Bearer' Token provided" },
+			});
 
-		const token = this.extractToken(authHeader)
-        
-        if(!token)
-            throw new UnauthorizedError({
-		        errorCode: "AUTH_MIDDLEWARE_01",
+		const token = this.extractToken(authHeader);
+
+		if (!token)
+			throw new UnauthorizedError({
+				errorCode: "AUTH_MIDDLEWARE_01",
 				errorMessage: "Unauthenticated",
-				details: "Broken/Incomplete token",})
-        
-        const user_id = await this.authAdapter.verifyIdToken(token);
+				details: { reason: "Broken/Incomplete token" },
+			});
+
+		const user_id = await this.authAdapter.verifyIdToken(token);
 
 		request.user = {
-            uid: user_id!
-        }
+			uid: user_id!,
+		};
 
 		return;
-	}
+	};
 }
 
 const firebaseMiddlewareAdapterInstance = new FirebaseMiddlewareAdapter();

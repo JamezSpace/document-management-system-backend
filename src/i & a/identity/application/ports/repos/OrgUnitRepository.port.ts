@@ -1,13 +1,14 @@
-import type OrganizationalUnit from "../../../domain/OrganizationalUnit.js";
+import type OrganizationalUnit from "../../../domain/unit/OrganizationalUnit.js";
 
-interface OrgUnitRepository {
-    save(orgUnit: OrganizationalUnit): Promise<OrganizationalUnit>;
+interface OrgUnitRepositoryPort {
+	save(orgUnit: OrganizationalUnit): Promise<OrganizationalUnit>;
 
-    findOrgUnitById(id: string): Promise<OrganizationalUnit | null>;
+	findOrgUnitById(id: string): Promise<OrganizationalUnit | null>;
 
-    findAllUnitsBySector(sector: string): Promise<OrganizationalUnit[]>;
+	findAllUnitsBySector(sector: string): Promise<OrganizationalUnit[]>;
 
-    fetchAllUnits(): Promise<OrganizationalUnit[]>
+	fetchAllUnits(): Promise<OrganizationalUnit[]>;
 }
 
-export type {OrgUnitRepository};
+export type { OrgUnitRepositoryPort };
+

@@ -1,6 +1,5 @@
 import { type Auth, getAuth } from "firebase-admin/auth";
 import firebaseApp from "./Firebase.config.js";
-import UnauthorizedError from "../../api/errors/UnauthorizedError.js";
 import type { AuthService } from "../../application/ports/AuthService.port.js";
 import InfrastructureError from "../../../../shared/errors/InfrastructureError.error.js";
 import { Category, GlobalInfrastructureErrors } from "../../../../shared/errors/enum/infrastructure.enum.js";

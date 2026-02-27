@@ -1,19 +1,14 @@
 import { Type, type Static } from "@sinclair/typebox";
 import { OrganizationalUnitSector } from "../../domain/enum/orgUnitSector.enum.js";
 
-const orgUnitSchema = Type.Recursive((Self) => 
-    Type.Object({
-        id: Type.String(),
-        name: Type.String(),
-        sector: Type.Enum(OrganizationalUnitSector),
-        unit: Type.String(),
-        // Self refers back to the orgUnitSchema itself
-        subunits: Type.Array(Self)
-    })
-);
+const createOrgUnitSchema = Type.Object({
+	code: Type.Optional(Type.String()),
+    fullName: Type.String(),
+    description: Type.String(),
+	sector: Type.Enum(OrganizationalUnitSector),
+	parentId: Type.Optional(Type.String()),
+});
 
-type OrgUnitType = Static<typeof orgUnitSchema>;
+type CreateOrgUnitType = Static<typeof createOrgUnitSchema>;
 
-export {
-    orgUnitSchema, type OrgUnitType
-};
+export { createOrgUnitSchema, type CreateOrgUnitType };

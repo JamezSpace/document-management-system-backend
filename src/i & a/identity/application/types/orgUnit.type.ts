@@ -1,5 +1,12 @@
-import type { OrgUnitType } from "../../api/types/orgUnit.type.js";
+import type { OrganizationalUnitSector } from "../../domain/enum/orgUnitSector.enum.js";
 
-interface OrgUnit extends OrgUnitType{}
+interface OrganizationalUnitTypeForCreation {
+	code?: string;
+	fullName: string;
+	description: string;
+	sector: OrganizationalUnitSector;
+	parentId?: string;
+}
 
-export type {OrgUnit};
+export type { OrganizationalUnitTypeForCreation };
+

@@ -1,5 +1,5 @@
 import { Type, type Static } from "@fastify/type-provider-typebox";
-import { IdentityStatus } from "../../domain/IdentityStatus.js";
+import { IdentityStatus } from "../../domain/user/IdentityStatus.js";
 
 const userSchema = Type.Object({
 	uid: Type.String(),
@@ -30,10 +30,6 @@ type UserSignUpType = Static<typeof userSchemaForSignup>;
 type UserLoginType = Static<typeof userSchemaForLogin>;
 
 export {
-	userSchema,
-	userSchemaForSignup,
-	userSchemaForLogin,
-	type User,
-    type UserSignUpType,
-	type UserLoginType,
+    userSchema, userSchemaForLogin, userSchemaForSignup, type User, type UserLoginType, type UserSignUpType
 };
+

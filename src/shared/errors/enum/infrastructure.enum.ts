@@ -13,6 +13,10 @@ const PersistenceErrors = {
     NOT_FOUND: {
         codeName: "not_found",
         httpStatusCode: StatusCodes.NOT_FOUND,
+    },
+    UNREGISTERED_ERROR: {
+        codeName: "unregistered_error",
+        httpStatusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     }
 } as const;
 

@@ -1,7 +1,7 @@
-interface OrgUnitEvents {
+interface OrgUnitEventsPort {
     unitCreated(payload: {
         unitId: string;
     }): Promise<void>
 }
 
-export type {OrgUnitEvents};
+export type {OrgUnitEventsPort};

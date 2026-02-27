@@ -1,4 +1,4 @@
-import Identity from "../../../domain/Identity.js";
+import Identity from "../../../domain/user/Identity.js";
 
 /**
  * This is an abstraction of the repository layer that lies within application layer and actual implementation layer.
@@ -18,9 +18,10 @@ interface IdentityRepositoryPort {
 	save(payload: {
 		authProvider: string;
 		identity: Identity;
-	}): Promise<Identity | null>;
+	}): Promise<Identity>;
 
     updateIdentityStatus(uid: string, status: string): Promise<Identity>;
 }
 
 export type { IdentityRepositoryPort };
+

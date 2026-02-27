@@ -1,31 +1,62 @@
 import type { FastifyInstance } from "fastify";
+import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
 import GetEffectivePermissionsUseCase from "./access/application/usecases/GetEffectivePermissions.usecase.js";
 import PostgresqlRoleAssignmentRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleAssignmentRepository.adapter.js";
 import PostgresqlRoleRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleRepository.adapter.js";
 import AccessEventsAdapter from "./access/infrastructure/queue/AccessEvents.adapter.js";
-import AuthenticationController from "./identity/api/controllers/Authentication.controller.js";
-import AuthorityController from "./identity/api/controllers/Authority.controller.js";
-import identityRoutes from "./identity/api/routes/identity.route.js";
-import ActivatePendingUserUseCase from "./identity/application/usecases/ActivatePendingUser.usercase.js";
-import AddNewUserUseCase from "./identity/application/usecases/AddNewUser.usecase.js";
-import AuthenticateUserUseCase from "./identity/application/usecases/AuthenticateUser.usecase.js";
-import IdentityEventsAdapter from "./identity/infrastructure/adapters/IdentityEvents.adapter.js";
-import UuidV7Generator from "./identity/infrastructure/adapters/Uuidv7Generator.adapter.js";
-import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/PostgresIdentityRepository.adapter.js";
+import OfficeController from "./identity/api/controllers/office/Office.controller.js";
+import OrgUnitController from "./identity/api/controllers/organizationalUnit/OrganizationUnit.controller.js";
+import AuthenticationController from "./identity/api/controllers/user/Authentication.controller.js";
+import AuthorityController from "./identity/api/controllers/user/Authority.controller.js";
+import orgUnitRoutes from "./identity/api/routes/unit/orgUnits.route.js";
+import identityRoutes from "./identity/api/routes/user/identity.route.js";
+import AddNewOfficeUseCase from "./identity/application/usecases/office/AddNewOffice.usecase.js";
+import GetAllOfficesUseCase from "./identity/application/usecases/office/GetAllOffices.usecase.js";
+import AddNewOrgUnitUseCase from "./identity/application/usecases/organizationalUnit/AddNewOrgUnit.usecase.js";
+import GetAllUnitsUseCase from "./identity/application/usecases/organizationalUnit/GetAllUnits.usecase.js";
+import ActivatePendingUserUseCase from "./identity/application/usecases/user/ActivatePendingUser.usercase.js";
+import AddNewUserUseCase from "./identity/application/usecases/user/AddNewUser.usecase.js";
+import AuthenticateUserUseCase from "./identity/application/usecases/user/AuthenticateUser.usecase.js";
+import OfficeEventsAdapter from "./identity/infrastructure/adapters/office/OfficeEvents.adapter.js";
+import OrgUnitsEventsAdapter from "./identity/infrastructure/adapters/unit/OrgUnitsEvents.adapter.js";
+import IdentityEventsAdapter from "./identity/infrastructure/adapters/user/IdentityEvents.adapter.js";
+import PostgresOfficeRepositoryAdapter from "./identity/infrastructure/persistence/office/PostgresOfficeRepository.adapter.js";
+import PostgresOrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/unit/PostgresOrgUnitRepository.adapter.js";
+import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresIdentityRepository.adapter.js";
+import officeRoutes from "./identity/api/routes/office/office.route.js";
+import AddNewOfficeDesignationUseCase from "./identity/application/usecases/office/AddNewDesignation.usecase.js";
+import PostgresOfficeDesignationRepositoryAdapter from "./identity/infrastructure/persistence/office/PostgresOfficeDesignationRepository.adapter.js";
+import OfficeDesignationEventsAdapter from "./identity/infrastructure/adapters/office/OfficeDesignationsEvents.adapter.js";
+import OfficeDesignationController from "./identity/api/controllers/office/OfficeDesignation.controller.js";
+import GetAllOfficeDesignationsUseCase from "./identity/application/usecases/office/GetAllOfficeDesignations.usecase.js";
+import officeDesignationRoutes from "./identity/api/routes/office/designation.route.js";
 
-export default async function IdentityAccessSubsystem(fastify: FastifyInstance) {
+export default async function IdentityAccessSubsystem(
+	fastify: FastifyInstance,
+) {
 	// infrastructure Layer
-    const postgres = fastify.pg;
+	const postgres = fastify.pg;
 
 	const globalEventBus = new InMemoryEventBusAdapter();
-    const idGenerator = new UuidV7Generator()
-    
-	const identityRepository = new PostgresqlIdentityRepositoryAdapter(postgres);
-	const identityEventsAdapter = new IdentityEventsAdapter(globalEventBus);
+	const idGenerator = new UuidV7Generator();
+
+	// all module repos in identity subsystem
+	const identityRepository = new PostgresqlIdentityRepositoryAdapter(
+		postgres,
+	);
+	const orgUnitRepository = new PostgresOrgUnitRepositoryAdapter(postgres);
 	const roleRepository = new PostgresqlRoleRepositoryAdapter();
 	const accessRepository = new PostgresqlRoleAssignmentRepositoryAdapter();
+	const officeRepository = new PostgresOfficeRepositoryAdapter(postgres);
+    const officeDesignationRepository = new PostgresOfficeDesignationRepositoryAdapter(postgres);
+
+	//  all module event adapters in identity subsystem
 	const accessEventsAdapter = new AccessEventsAdapter(globalEventBus);
+	const identityEventsAdapter = new IdentityEventsAdapter(globalEventBus);
+	const unitEventsAdapter = new OrgUnitsEventsAdapter(globalEventBus);
+	const officeEventsAdapter = new OfficeEventsAdapter(globalEventBus);
+	const designationEventsAdapter = new OfficeDesignationEventsAdapter(globalEventBus);
 
 	// application Layer
 	const authenticateUserUseCase = new AuthenticateUserUseCase(
@@ -44,20 +75,73 @@ export default async function IdentityAccessSubsystem(fastify: FastifyInstance) 
 		accessRepository,
 	);
 
-    const activatePendingUserUseCase = new ActivatePendingUserUseCase(
-        identityEventsAdapter,
-        identityRepository
+	const activatePendingUserUseCase = new ActivatePendingUserUseCase(
+		identityEventsAdapter,
+		identityRepository,
+	);
+
+	const addNewOrgUnitUseCase = new AddNewOrgUnitUseCase(
+		idGenerator,
+		unitEventsAdapter,
+		orgUnitRepository,
+	);
+
+	const getAllOrgUnitsUseCase = new GetAllUnitsUseCase(orgUnitRepository);
+
+	const addNewOfficeUseCase = new AddNewOfficeUseCase(
+		idGenerator,
+		officeEventsAdapter,
+		officeRepository,
+	);
+
+	const getAllOfficesUseCase = new GetAllOfficesUseCase(officeRepository);
+
+    const addNewDesignationUseCase = new AddNewOfficeDesignationUseCase(
+        idGenerator,
+        designationEventsAdapter,
+        officeDesignationRepository
     )
 
-	// controller Layer 
+    const getAllOfficeDesignationsUseCase = new GetAllOfficeDesignationsUseCase(officeDesignationRepository);
+
+
+	// controller Layer
 	const authenticationController = new AuthenticationController(
 		authenticateUserUseCase,
 		addNewUserUseCase,
-        activatePendingUserUseCase
+		activatePendingUserUseCase,
 	);
+
 	const authorityController = new AuthorityController(getEffectivePermissionsUseCase);
+
+	const orgUnitController = new OrgUnitController(
+		addNewOrgUnitUseCase,
+		getAllOrgUnitsUseCase,
+	);
+
+    const officeController = new OfficeController(
+        addNewOfficeUseCase,
+        getAllOfficesUseCase
+    )
+
+    const officeDesignationController = new OfficeDesignationController(
+        addNewDesignationUseCase,
+        getAllOfficeDesignationsUseCase
+    );
 
 	await fastify.register(identityRoutes, {
 		controller: [authenticationController, authorityController],
 	});
+
+	await fastify.register(orgUnitRoutes, {
+		controller: orgUnitController,
+	});
+
+    await fastify.register(officeRoutes, {
+        controller: officeController
+    });
+
+    await fastify.register(officeDesignationRoutes, {
+        controller: officeDesignationController
+    });
 }

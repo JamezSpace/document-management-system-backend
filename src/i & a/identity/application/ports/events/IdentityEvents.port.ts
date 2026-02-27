@@ -1,5 +1,5 @@
 /**
- * These wraps all events that would get triggered in the identity & authoiry subsystem
+ * These wraps all events that would get triggered in the identity & authority subsystem
  */
 interface IdentityEventsPort {
 	userAuthenticated(payload: {

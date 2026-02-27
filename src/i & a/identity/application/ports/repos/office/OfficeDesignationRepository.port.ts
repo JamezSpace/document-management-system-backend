@@ -1,0 +1,17 @@
+import type OfficeDesignation from "../../../../domain/office/OfficeDesignation.js";
+
+interface OfficeDesignationRepositoryPort {
+	save(office: OfficeDesignation): Promise<OfficeDesignation>;
+
+	findOfficeDesignationById(id: string): Promise<OfficeDesignation | null>;
+
+	fetchAll(): Promise<OfficeDesignation[]>;
+
+	fetchAllOfficesDesignations(
+		officeId: string,
+	): Promise<{ 
+        officeName: string;
+        designations: OfficeDesignation[] }>;
+}
+
+export type { OfficeDesignationRepositoryPort };

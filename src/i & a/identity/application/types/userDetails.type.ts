@@ -1,6 +1,6 @@
 // application level correspondence to api level User
 
-import type { IdentityStatus } from "../../domain/IdentityStatus.js";
+import type { IdentityStatus } from "../../domain/user/IdentityStatus.js";
 
 interface User {
     uid: string;
@@ -14,3 +14,4 @@ interface User {
 }
 
 export type { User };
+
