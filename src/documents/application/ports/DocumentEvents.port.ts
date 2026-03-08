@@ -1,8 +1,17 @@
 interface DocumentEventsPort {
-	documentCreated(payload: {
+	documentInitialized(payload: {
 		documentId: string;
 		createdBy: string;
-		// metadata: Record<string, any>,
+	}): Promise<void>;
+
+	documentVersionCreated(payload: {
+		documentId: string;
+		versionedBy: string;
+	}): Promise<void>;
+
+	documentVersionChanged(payload: {
+		documentId: string;
+		actorBy: string;
 	}): Promise<void>;
 
 	documentSubmitted(payload: {
