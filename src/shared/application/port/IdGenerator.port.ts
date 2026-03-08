@@ -1,4 +1,3 @@
-
 interface IdGeneratorPort {
   generate(): string;
 }

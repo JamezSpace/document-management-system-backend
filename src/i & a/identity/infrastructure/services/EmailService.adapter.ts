@@ -1,4 +1,4 @@
-import type { EmailServicePort } from "../../../../shared/application/port/emailService.port.js";
+import type { EmailServicePort } from "../../../../shared/application/port/services/emailService.port.js";
 import type { IdentityEmailServicePort } from "../../application/ports/services/EmailService.port.js";
 
 class IdentityEmailServiceAdapter implements IdentityEmailServicePort {

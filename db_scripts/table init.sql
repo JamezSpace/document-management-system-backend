@@ -4,7 +4,7 @@ drop table if exists identity.users cascade;
 drop table if exists identity.staff;
 drop type if exists identity.user_status;
 
--- IDENTITY SCHEMA
+-- IDENTITY SCHEMA TYPES
 CREATE TYPE identity.user_status AS ENUM (
     'pending','active','suspended', 'retired', 'resigned', 'terminated'
 );
@@ -16,6 +16,11 @@ CREATE TYPE identity.org_unit_sector AS ENUM(
 )
 CREATE TYPE identity.capability_class_category AS ENUM(
 	'leadership', 'professional officers', 'clerical & records', 'operational support'
+)
+
+-- DOCUMENT SCHEMA TYPES
+CREATE TYPE document.document_type AS ENUM(
+	'memo', 'letter'
 )
 
 -- identity table
@@ -221,4 +226,15 @@ CREATE TABLE documents.document_media_assets (
         FOREIGN KEY (media_id)
         REFERENCES media.media_assets(id)
         ON DELETE CASCADE
+);
+
+
+-- POLICY SCHEMA
+CREATE TABLE policy.documents (
+    id VARCHAR(50) PRIMARY KEY,
+    policy_version INT NOT NULL,
+    document_type document.document_type NOT NULL,
+    archival_required BOOLEAN NOT NULL,
+    retention_duration INT NOT NULL,
+    effective_from DATE NOT NULL
 );

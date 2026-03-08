@@ -1,7 +1,10 @@
+import type { PostgresDb } from "@fastify/postgres";
 import type { DocumentRepositoryPort } from "../../application/ports/DocumentRepository.port.js";
 import type Document from "../../domain/Document.js";
 
 class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
+    constructor(private readonly dbPool: PostgresDb) {}
+    
     save(document: Document): Promise<Document> {
         throw new Error("Method not implemented.");
     }

@@ -1,5 +1,5 @@
-import type { EmailServicePort } from "../../application/port/emailService.port.js";
 import nodemailer from "nodemailer";
+import type { EmailServicePort } from "../../application/port/services/emailService.port.js";
 
 class EmailServiceAdapter implements EmailServicePort{
     private readonly transporter = nodemailer.createTransport({
