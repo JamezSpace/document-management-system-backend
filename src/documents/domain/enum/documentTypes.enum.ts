@@ -1,7 +1,7 @@
 enum DocumentType {
-    INTERNAL_MEMO = "INTERNAL MEMORANDUM",
-    EXTERNAL_MEMO = "EXTERNAL MEMORANDUM",
-    LETTER = "LETTER"
+    MEMO = "MEMORANDUM",
+    LETTER = "LETTER",
+    REPORT = "REPORT"
 }
 
 export { DocumentType };

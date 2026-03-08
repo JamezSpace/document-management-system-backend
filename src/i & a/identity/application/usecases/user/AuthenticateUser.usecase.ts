@@ -1,16 +1,11 @@
 import ApplicationError from "../../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../../shared/errors/enum/application.enum.js";
-import type { IdentityEventsPort } from "../../ports/events/IdentityEvents.port.js";
-import type { IdentityRepositoryPort } from "../../ports/repos/IdentityRepository.port.js";
+import type { UserEventsPort } from "../../ports/events/user/UserEvents.port.js";
+import type { UserRepositoryPort } from "../../ports/repos/user/UserRepository.port.js";
 
 class AuthenticateUserUseCase {
-    private readonly identityRepository: IdentityRepositoryPort;
-    private readonly identityEvents: IdentityEventsPort
-
-    constructor(private repoInstance: IdentityRepositoryPort, private identityEventBus: IdentityEventsPort) {
-        this.identityRepository = repoInstance;
-        this.identityEvents = identityEventBus;
-    }
+    
+    constructor(private readonly identityRepository: UserRepositoryPort, private readonly identityEvents: UserEventsPort) { }
 
     async authenticateUser(authProviderId: string){
         // pull user's identity from repo after authentication with external provider

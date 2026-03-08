@@ -1,13 +1,13 @@
 import ApplicationError from "../../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../../shared/errors/enum/application.enum.js";
-import { IdentityStatus } from "../../../domain/user/IdentityStatus.js";
-import type { IdentityEventsPort } from "../../ports/events/IdentityEvents.port.js";
-import type { IdentityRepositoryPort } from "../../ports/repos/IdentityRepository.port.js";
+import { IdentityStatus } from "../../../domain/entities/user/IdentityStatus.js";
+import type { UserEventsPort } from "../../ports/events/user/UserEvents.port.js";
+import type { UserRepositoryPort } from "../../ports/repos/user/UserRepository.port.js";
 
 class ActivatePendingUserUseCase {
 	constructor(
-		private readonly identityEvents: IdentityEventsPort,
-		private readonly identityRepo: IdentityRepositoryPort,
+		private readonly identityEvents: UserEventsPort,
+		private readonly identityRepo: UserRepositoryPort,
 	) {}
 
 	async activatePendingUser(authProviderId: string) {

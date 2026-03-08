@@ -1,8 +1,19 @@
-import type { DocumentSchemaType } from "../api/types/document.type.js";
-import DocumentTransitions from "./DocumentTransition.js";
-import { DocumentType } from "./enum/documentTypes.enum.js";
+import DocumentVersion from "./DocumentVersion.js";
+import { DisposalAction } from "./enum/disposalAction.enum.js";
 import { LifecycleState } from "./enum/lifecycleState.enum.js";
-import type { LifecycleMetadata } from "./metadata/Lifecycle.metadata.js";
+import type { ClassificationMetadata } from "./metadata/Classification.metadata.js";
+import type { RetentionMetadata } from "./metadata/Retention.metadata.js";
+
+interface DocumentPayload {
+	id: string;
+	ownerId: string;
+	title: string;
+	version?: DocumentVersion | null;
+    referenceNumber?: string | null;
+
+	classification: ClassificationMetadata;
+	retention: RetentionMetadata;
+}
 
 /**
  * Represents the core Document entity in the system.
@@ -15,130 +26,122 @@ import type { LifecycleMetadata } from "./metadata/Lifecycle.metadata.js";
  */
 class Document {
 	// document identity
-	//  NOTICE: id is not initialized at first, this is because the database handles the generation better implementing uuid v7 natively for faster queries
-	id!: string;
+	readonly id: string;
 	readonly ownerId: string;
 	readonly title: string;
-	readonly documentType: DocumentType;
-	private version!: number;
+	private currentVersion: DocumentVersion | null;
+    readonly referenceNumber: string | null;
 
 	// Governance Domains (Value Objects)
-	// classification: ClassificationMetadata;
-	// retention: RetentionMetadata;
-	// integrity: IntegrityMetadata;
-	readonly lifecycle: LifecycleMetadata;
+	classification: ClassificationMetadata;
+	readonly retention: RetentionMetadata;
 
 	// Audit
 	readonly createdAt: Date;
 	private modifiedAt: Date | null;
 
 	// system flags
-	isLatestVersion!: boolean;
-	isEditable!: boolean;
+	// isLatestVersion!: boolean;
+	// isEditable!: boolean;
 
-	// private domainEvents: DomainEvent[] = [];
-
-	constructor(payload: DocumentSchemaType) {
+	constructor(payload: DocumentPayload) {
+		this.id = payload.id;
 		this.ownerId = payload.ownerId;
 		this.title = payload.title;
-		this.documentType = payload.documentType;
+		this.currentVersion = payload.version ?? null;
+        this.referenceNumber = payload.referenceNumber ?? null;
 
-		// this.classification = payload.classification;
-		// this.retention = payload.retention;
-		// this.integrity = payload.integrity;
-
-		this.lifecycle = {
-			currentState: payload.lifecycle.currentState,
-			stateEnteredAt: new Date(payload.lifecycle.enteredAt),
-			stateEnteredBy: payload.lifecycle.enteredBy,
-		} as LifecycleMetadata;
-		// this.stateEnteredAt = new Date();
-		// this.stateEnteredBy = payload.createdBy;
+		this.classification = payload.classification;
+		this.retention = payload.retention;
 
 		this.createdAt = new Date();
 		this.modifiedAt = null;
 	}
 
-	public getState(): LifecycleState | null {
-		return this.lifecycle.currentState;
+	getCurrentVersion(): DocumentVersion | null {
+		return this.currentVersion;
 	}
 
-	private transitionTo(newState: LifecycleState) {
-		DocumentTransitions.transition(this.getState(), newState);
+	public addVersion(mediaId: string, actorId: string): DocumentVersion {
+		const version = new DocumentVersion({
+			documentId: this.id,
+			versionNumber: this.currentVersion
+				? this.currentVersion.versionNumber + 1
+				: 1,
+			mediaId,
+			lifecycle: {
+				currentState: LifecycleState.DRAFT,
+				stateEnteredAt: new Date(),
+				stateEnteredBy: actorId,
+			},
+		});
+
+		this.currentVersion = version;
+		return version;
 	}
 
-	public create() {
-		this.transitionTo(LifecycleState.DRAFT);
-	}
+	public createNextVersion(mediaId: string): DocumentVersion {
+		if (!this.currentVersion) {
+			throw new Error("Document has no version yet.");
+		}
 
-	public createNewVersion(newContentUri: string) {
-		if (this.lifecycle.currentState === LifecycleState.DECLARED_RECORD) {
+		if (
+			this.currentVersion.lifecycle.currentState ===
+			LifecycleState.DECLARED_RECORD
+		) {
 			throw new Error("Records cannot be versioned.");
 		}
 
-		this.version += 1;
-		this.lifecycle.currentState = LifecycleState.DRAFT;
-		this.contentUri = newContentUri;
+		return new DocumentVersion({
+			documentId: this.id,
+			versionNumber: this.currentVersion.versionNumber + 1,
+			mediaId: mediaId,
+			lifecycle: {
+				currentState: LifecycleState.DRAFT,
+				stateEnteredAt: new Date(),
+				stateEnteredBy: this.ownerId,
+			},
+		});
 	}
 
-	// // Lifecycle Behaviors
-	// public submit(actorId: string, policy: LifecyclePolicyEvaluator) {
-	// 	this.transition("SUBMIT", actorId, policy);
-	// }
+	public reclassify(
+		newClassification: ClassificationMetadata,
+		actorId: string,
+	) {
+		if (
+			this.currentVersion?.lifecycle.currentState ===
+			LifecycleState.DECLARED_RECORD
+		) {
+			throw new Error("Records cannot be reclassified.");
+		}
 
-	// public approve(actorId: string, policy: LifecyclePolicyEvaluator) {
-	// 	this.transition("APPROVE", actorId, policy);
-	// }
+		this.classification = {
+			...newClassification,
+			lastReclassifiedBy: actorId,
+			lastReclassifiedAt: new Date(),
+		};
 
-	// public reject(actorId: string, policy: LifecyclePolicyEvaluator) {
-	// 	this.transition("REJECT", actorId, policy);
-	// }
+		this.modifiedAt = new Date();
+	}
 
-	// public declareRecord(actorId: string, policy: LifecyclePolicyEvaluator) {
-	// 	this.transition("DECLARE_RECORD", actorId, policy);
-	// }
+	// retention metadata
+	startRetention(startDate: Date) {
+		if (this.retention.retentionStartDate) {
+			throw new Error("Retention already started");
+		}
 
-	// public archive(actorId: string, policy: LifecyclePolicyEvaluator) {
-	// 	this.transition("ARCHIVE", actorId, policy);
-	// }
+		this.retention.retentionStartDate = startDate;
+	}
 
-	// public dispose(actorId: string, policy: LifecyclePolicyEvaluator) {
-	// 	this.transition("DISPOSE", actorId, policy);
-	// }
+	isEligibleForDisposition(currentDate: Date): boolean {
+		return currentDate >= this.retention.disposalEligibilityDate;
+	}
 
-	// // Core Transition Logic
-	// private transition(
-	// 	event: LifecycleEventType,
-	// 	actorId: string,
-	// 	policy: LifecyclePolicyEvaluator,
-	// ) {
-	// 	policy.assertTransitionAllowed({
-	// 		document: this,
-	// 		currentState: this.lifecycleState,
-	// 		event,
-	// 		actorId,
-	// 	});
-
-	// 	const newState = DocumentTransitions.getNextState(
-	// 		this.lifecycleState,
-	// 		event,
-	// 	);
-
-	// 	this.lifecycleState = newState;
-	// 	this.stateEnteredAt = new Date();
-	// 	this.stateEnteredBy = actorId;
-	// 	this.modifiedAt = new Date();
-
-	// 	this.domainEvents.push(
-	// 		new DocumentStateChangedEvent(this.id, event, newState),
-	// 	);
-	// }
-
-	// public pullDomainEvents(): DomainEvent[] {
-	// 	const events = this.domainEvents;
-	// 	this.domainEvents = [];
-	// 	return events;
-	// }
+	getDispositionAction() {
+		return this.retention.archivalRequired
+			? DisposalAction.ARCHIVE
+			: DisposalAction.DESTROY;
+	}
 }
 
 export default Document;

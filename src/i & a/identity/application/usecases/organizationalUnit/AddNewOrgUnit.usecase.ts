@@ -1,7 +1,7 @@
 import type { IdGeneratorPort } from "../../../../../shared/application/port/IdGenerator.port.js";
 import OrganizationalUnit from "../../../domain/unit/OrganizationalUnit.js";
-import type { OrgUnitEventsPort } from "../../ports/events/OrgUnitEvents.port.js";
-import type { OrgUnitRepositoryPort } from "../../ports/repos/OrgUnitRepository.port.js";
+import type { OrgUnitEventsPort } from "../../ports/events/unit/OrgUnitEvents.port.js";
+import type { OrgUnitRepositoryPort } from "../../ports/repos/unit/OrgUnitRepository.port.js";
 import type { OrganizationalUnitTypeForCreation } from "../../types/orgUnit.type.js";
 
 class AddNewOrgUnitUseCase {

@@ -30,6 +30,7 @@ async function identityRoutes(
 				lastName,
 				middleName,
 				email,
+                phoneNum,
 				authProvider,
 			} = request.body;
 
@@ -40,6 +41,7 @@ async function identityRoutes(
 				lastName,
 				middleName,
 				email,
+                phoneNum,
 				authProvider,
 			});
 
@@ -92,7 +94,7 @@ async function identityRoutes(
 		) => {
 			const userId = request.body.authProviderId;
 
-			// get userId from my database. note, i had the option of getting this from user input but common programmer's rule is applied here, never trust user input or frontend
+			// get user identity from my database
 			const userIdentity =
 				await authenticationController.authenticate(userId);
 

@@ -13,7 +13,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_CANCELLED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -24,7 +24,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_ACTIVATED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -35,7 +35,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_DECLARED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -46,7 +46,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_DELETED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -57,7 +57,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_DISPOSED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -68,7 +68,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_SUBMITTED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -79,7 +79,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_CREATED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -90,7 +90,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_APPROVED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -102,7 +102,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_REJECTED,
 			occurredAt: new Date(),
-			payload
+			payload,
 		});
 	}
 
@@ -113,7 +113,32 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.document.DOCUMENT_ARCHIVED,
 			occurredAt: new Date(),
-			payload
+			payload,
+		});
+	}
+
+	async documentMediaAttached(payload: {
+		documentId: string;
+		mediaId: string;
+		attachedBy: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.document.DOCUMENT_MEDIA_ATTACHED,
+			occurredAt: new Date(),
+			payload,
+		});
+	}
+
+	async documentMediaReplaced(payload: {
+		documentId: string;
+		oldMediaId: string;
+		newMediaId: string;
+		replacedBy: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.document.DOCUMENT_MEDIA_REPLACED,
+			occurredAt: new Date(),
+			payload,
 		});
 	}
 }

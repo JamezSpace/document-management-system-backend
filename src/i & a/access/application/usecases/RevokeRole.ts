@@ -1,4 +1,4 @@
-import DomainError from "../../../../shared/errors/enum/domain.enum.js";
+import { GlobalDomainErrors } from "../../../../shared/errors/enum/domain.enum.js";
 import AccessDomainError from "../../domain/errors/AccessDomainError.js";
 import Role from "../../domain/role/Role.js";
 import type { AccessEventsPort } from "../ports/AccessEvents.port.js";
@@ -33,20 +33,20 @@ class RevokeRole {
 
 
 		if (!activeAssignment) {
-			throw new AccessDomainError(DomainError.ROLE_NOT_ACTIVE);
+			throw new AccessDomainError(GlobalDomainErrors.identity_authority.access.ROLE_NOT_ACTIVE);
 		}
 
 		// Close assignment (you may need a domain method instead)
 		activeAssignment.close(new Date());
 
-		await this.roleAssignmentRepo.save(activeAssignment);
+		const roleRevoked = await this.roleAssignmentRepo.save(activeAssignment);
 
-		await this.authorityEvents.roleRevoked({
-			userId: staffId,
-			role,
-			revokedBy,
-			revokedAt: new Date(),
-		});
+        if(roleRevoked)
+            await this.authorityEvents.roleRevoked({
+                staffId,
+                role,
+                revokedBy
+            });
 	}
 }
 

@@ -1,8 +1,8 @@
 import type { IdGeneratorPort } from "../../../../../shared/application/port/IdGenerator.port.js";
-import Office from "../../../domain/office/Office.js";
+import Office from "../../../domain/entities/office/Office.js";
 import type { OfficeEventsPort } from "../../ports/events/office/OfficeEvents.port.js";
 import type { OfficeRepositoryPort } from "../../ports/repos/office/OfficeRepository.port.js";
-import type { OfficeTypeForCreation } from "../../types/office.type.js";
+import type { OfficeTypeForCreation } from "../../types/office/office.type.js";
 
 class AddNewOfficeUseCase {
 	constructor(

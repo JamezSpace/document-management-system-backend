@@ -1,9 +1,10 @@
 import { Type, type Static } from "@fastify/type-provider-typebox";
-import { IdentityStatus } from "../../domain/user/IdentityStatus.js";
+import { IdentityStatus } from "../../domain/entities/user/IdentityStatus.js";
 
 const userSchema = Type.Object({
 	uid: Type.String(),
 	email: Type.String(),
+	phoneNum: Type.String(),
 	status: Type.Enum(IdentityStatus),
     authProvider: Type.String(),
     authProviderId: Type.String(),
@@ -14,6 +15,7 @@ const userSchema = Type.Object({
 
 const userSchemaForSignup = Type.Object({
 	email: Type.String(),
+    phoneNum: Type.String(),
     authProvider: Type.String(),
     authProviderId: Type.String(),
 	firstName: Type.String(),

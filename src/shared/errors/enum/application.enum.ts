@@ -13,6 +13,14 @@ export const ApplicationErrorEnum = {
         codeName: "identity_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND
     },
+    STAFF_NOT_FOUND: {
+        codeName: "staff_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    MEDIA_NOT_FOUND: {
+        codeName: "media_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
     USER_NOT_AUTHENTICATED: {
         codeName: "user_not_authenticated",
         httpStatusCode: StatusCodes.UNAUTHORIZED

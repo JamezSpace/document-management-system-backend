@@ -1,5 +1,6 @@
 import type OrganizationalUnit from "../../../domain/unit/OrganizationalUnit.js";
-import type { OrgUnitRepositoryPort } from "../../ports/repos/OrgUnitRepository.port.js";
+import type { OrgUnitRepositoryPort } from "../../ports/repos/unit/OrgUnitRepository.port.js";
+
 
 class GetAllUnitsUseCase {
 	constructor(private readonly unitRepo: OrgUnitRepositoryPort) {}

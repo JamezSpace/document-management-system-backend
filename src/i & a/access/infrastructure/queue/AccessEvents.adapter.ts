@@ -10,7 +10,7 @@ class AccessEventsAdapter implements AccessEventsPort {
 	constructor(private readonly eventBus: EventBus) {}
 
 	async officialRoleAssigned(payload: {
-		userId: string;
+		staffId: string;
 		role: Role;
 	}): Promise<void> {
 		await this.eventBus.emit({
@@ -21,7 +21,7 @@ class AccessEventsAdapter implements AccessEventsPort {
 	}
 
 	async roleDelegated(payload: {
-		userId: string;
+		staffId: string;
 		role: Role;
 		delegatedBy: string;
 		validTo: Date;
@@ -34,12 +34,22 @@ class AccessEventsAdapter implements AccessEventsPort {
 	}
 
 	async roleRevoked(payload: {
-		userId: string;
+		staffId: string;
 		role: Role;
 		revokedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
 			eventName: GlobalEventTypes.identity_authority.access.ROLE_REVOKED,
+			occurredAt: new Date(),
+			payload
+		});
+	}
+
+	async roleCreated(payload: {
+		roleId: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.identity_authority.access.ROLE_CREATED,
 			occurredAt: new Date(),
 			payload
 		});

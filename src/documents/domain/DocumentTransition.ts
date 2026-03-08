@@ -76,7 +76,7 @@ class DocumentTransitions {
             });
     }
 
-    private static assertCanSubmit(currentState: LifecycleState) {
+    static assertCanSubmit(currentState: LifecycleState) {
         if (currentState !== LifecycleState.DRAFT)
             throw new DomainError(GlobalDomainErrors.document.INVALID_DOCUMENT_STATE, {
                 currentState,
@@ -85,7 +85,7 @@ class DocumentTransitions {
             });
     }
 
-    private static assertCanDelete(currentState: LifecycleState) {
+    static assertCanDelete(currentState: LifecycleState) {
         // Soft delete logic
         if (![LifecycleState.DRAFT, LifecycleState.IN_REVIEW].includes(currentState))
             throw new DomainError(GlobalDomainErrors.document.INVALID_DOCUMENT_STATE, {
@@ -95,7 +95,7 @@ class DocumentTransitions {
             });
     }
 
-    private static assertCanApprove(currentState: LifecycleState) {
+    static assertCanApprove(currentState: LifecycleState) {
         if (currentState !== LifecycleState.IN_REVIEW)
             throw new DomainError(GlobalDomainErrors.document.INVALID_DOCUMENT_STATE, {
                 currentState,
@@ -104,7 +104,7 @@ class DocumentTransitions {
             });
     }
 
-    private static assertCanReject(currentState: LifecycleState) {
+    static assertCanReject(currentState: LifecycleState) {
         if (currentState !== LifecycleState.IN_REVIEW)
             throw new DomainError(GlobalDomainErrors.document.INVALID_DOCUMENT_STATE, {
                 currentState,
@@ -113,7 +113,7 @@ class DocumentTransitions {
             });
     }
 
-    private static assertCanActivate(currentState: LifecycleState) {
+    static assertCanActivate(currentState: LifecycleState) {
         if (currentState !== LifecycleState.APPROVED)
             throw new DomainError(GlobalDomainErrors.document.INVALID_DOCUMENT_STATE, {
                 currentState,
@@ -122,7 +122,7 @@ class DocumentTransitions {
             });
     }
 
-    private static assertCanDeclareRecord(currentState: LifecycleState) {
+    static assertCanDeclareRecord(currentState: LifecycleState) {
         if (![LifecycleState.APPROVED, LifecycleState.ACTIVE].includes(currentState))
             throw new DomainError(GlobalDomainErrors.document.INVALID_DOCUMENT_STATE, {
                 currentState,

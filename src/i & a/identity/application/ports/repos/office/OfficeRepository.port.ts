@@ -1,4 +1,4 @@
-import type Office from "../../../../domain/office/Office.js";
+import type Office from "../../../../domain/entities/office/Office.js";
 
 interface OfficeRepositoryPort {
     save(office: Office): Promise<Office>;

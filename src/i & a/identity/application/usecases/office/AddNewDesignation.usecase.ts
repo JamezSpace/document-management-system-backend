@@ -1,8 +1,8 @@
 import type { IdGeneratorPort } from "../../../../../shared/application/port/IdGenerator.port.js";
-import OfficeDesignation from "../../../domain/office/OfficeDesignation.js";
+import OfficeDesignation from "../../../domain/entities/office/OfficeDesignation.js";
 import type { OfficeDesignationEventsPort } from "../../ports/events/office/OfficeDesignationEvents.port.js";
 import type { OfficeDesignationRepositoryPort } from "../../ports/repos/office/OfficeDesignationRepository.port.js";
-import type { OfficeDesignationTypeForCreation } from "../../types/officeDesignation.type.js";
+import type { OfficeDesignationTypeForCreation } from "../../types/office/officeDesignation.type.js";
 
 class AddNewOfficeDesignationUseCase {
     constructor(

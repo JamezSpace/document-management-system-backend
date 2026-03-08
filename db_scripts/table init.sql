@@ -1,8 +1,10 @@
 CREATE SCHEMA IF NOT EXISTS identity;
+CREATE SCHEMA IF NOT EXISTS media;
 drop table if exists identity.users cascade;
 drop table if exists identity.staff;
 drop type if exists identity.user_status;
 
+-- IDENTITY SCHEMA
 CREATE TYPE identity.user_status AS ENUM (
     'pending','active','suspended', 'retired', 'resigned', 'terminated'
 );
@@ -11,6 +13,9 @@ CREATE TYPE identity.employment_type AS ENUM (
 );
 CREATE TYPE identity.org_unit_sector AS ENUM(
 	'academic', 'non-academic'
+)
+CREATE TYPE identity.capability_class_category AS ENUM(
+	'leadership', 'professional officers', 'clerical & records', 'operational support'
 )
 
 -- identity table
@@ -48,7 +53,7 @@ CREATE TABLE identity.offices(
 	updated_at TIMESTAMPTZ
 );
 
--- designations table
+-- designations table (this comes directly from the organogram)
 CREATE TABLE identity.designations(
 	id VARCHAR(50) PRIMARY KEY,
 	title VARCHAR(150) UNIQUE NOT NULL,
@@ -56,7 +61,7 @@ CREATE TABLE identity.designations(
 	hierarchy_level INTEGER NOT NULL,
 	office_id VARCHAR(50) REFERENCES identity.offices(id),
 	created_at TIMESTAMPTZ NOT NULL,
-	updated_at TIMESTAMPTZ NOT NULL
+	updated_at TIMESTAMPTZ 
 );
 
 -- staff table
@@ -69,49 +74,151 @@ CREATE TABLE identity.staff(
 	office_id VARCHAR(50) references identity.offices(id),
 	designation_id VARCHAR(50) REFERENCES identity.designations(id),
 	status identity.user_status not null,
-	created_at TIMESTAMP NOT NULL
+	created_at TIMESTAMPTZ NOT NULL,
+	created_by VARCHAR(50) REFERENCES identity.staff(id),
+	activated_by VARCHAR(50),
+	activated_at TIMESTAMPTZ,
+	updated_at TIMESTAMPTZ
+);
+
+-- staff media
+CREATE TABLE identity.staff_media_assets (
+    staff_id VARCHAR(50) NOT NULL,
+    media_id VARCHAR(50) NOT NULL,
+
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (staff_id, media_id),
+
+    CONSTRAINT fk_staff
+        FOREIGN KEY (staff_id)
+        REFERENCES identity.staff(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_staff_media
+        FOREIGN KEY (media_id)
+        REFERENCES media.media_assets(id)
+        ON DELETE CASCADE
+);
+
+-- capability class
+CREATE TABLE identity.capability_classes(
+    id varchar(50) PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    category identity.capability_class_category NOT NULL,     
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL
 );
 
 -- staff classification
 CREATE TABLE identity.staff_classifications(
-id varchar(50) PRIMARY KEY,
-staff_id varchar(50) REFERENCES staff(identity_id),
-capability_class VARCHAR(100) NOT NULL,
-authority_level INTEGER NOT NULL,
-effective_from DATE NOT NULL,
-effective_to DATE,
-created_at TIMESTAMPTZ NOT NULL
-)
-
--- role assignemnts
-CREATE TABLE identity.role_assignments(
-id varchar(50) PRIMARY KEY,
-staff_id UUID REFERENCES staff(id),
-role_id UUID REFERENCES roles(id),
-scope JSONB, -- e.g { unitId: "...", officeId: "..." }
-delegated_by UUID REFERENCES staff(id),
-valid_from TIMESTAMPTZ NOT NULL,
-valid_to TIMESTAMPTZ,
-created_at TIMESTAMPTZ NOT NULL
-)
-
--- roles table
-CREATE TABLE identity.roleS(
 	id varchar(50) PRIMARY KEY,
-	name VARCHAR(100) UNIQUE NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL
-)
+	staff_id varchar(50) REFERENCES identity.staff(id),
+	capability_class_id VARCHAR(50) REFERENCES identity.capability_classes(id),
+	authority_level INTEGER NOT NULL,
+	effective_from DATE NOT NULL,
+	effective_to DATE,
+	created_at TIMESTAMPTZ NOT NULL,
+	updated_at TIMESTAMPTZ
+);
 
 -- permissions table
 CREATE TABLE identity.permissions(
 	id varchar(50) PRIMARY KEY,
 	code VARCHAR(100) UNIQUE NOT NULL,
 	description TEXT
-)
+);
+
+-- roles table
+CREATE TABLE identity.roles(
+	id varchar(50) PRIMARY KEY,
+	name VARCHAR(100) UNIQUE NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL
+);
 
 -- roles-permissions table
 CREATE TABLE identity.role_permissions(
-    role_id varchar(50) REFERENCES roles(id),
-    permission_id varchar(50) REFERENCES permissions(id),
+    role_id varchar(50) REFERENCES identity.roles(id),
+    permission_id varchar(50) REFERENCES identity.permissions(id),
     PRIMARY KEY (role_id, permission_id)
 )
+
+-- role assignments
+CREATE TABLE identity.role_assignments(
+	id varchar(50) PRIMARY KEY,
+	staff_id varchar(50) REFERENCES identity.staff(id),
+	role_id varchar(50) REFERENCES identity.roles(id),
+	scope JSONB, -- e.g { unitId: "...", officeId: "..." }
+	delegated_by varchar(50) REFERENCES identity.staff(id),
+	valid_from TIMESTAMPTZ NOT NULL,
+	valid_to TIMESTAMPTZ,
+	created_at TIMESTAMPTZ NOT NULL
+)
+
+
+-- MEDIA SCHEMA
+-- media-assets
+CREATE TABLE media.media_assets (
+    id VARCHAR(50) PRIMARY KEY,
+
+    asset_role VARCHAR(50) NOT NULL, 
+    -- e.g. PROFILE_PICTURE, SIGNATURE, PRIMARY_CONTENT, ATTACHMENT
+
+    storage_provider VARCHAR(50) NOT NULL, 
+    -- e.g. LOCAL, S3, AZURE
+
+    bucket_name VARCHAR(100),
+    object_key VARCHAR(255) NOT NULL,
+
+    mime_type VARCHAR(100) NOT NULL,
+    size_bytes BIGINT NOT NULL,
+    checksum VARCHAR(255) NOT NULL, -- SHA-256 recommended
+
+    uploaded_at TIMESTAMPTZ NOT NULL,
+    uploaded_by VARCHAR(50) NOT NULL,
+
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+
+-- DOCUMENTS SCHEMA
+
+-- documents-media
+CREATE TABLE documents.document_versions (
+    id VARCHAR(50) PRIMARY KEY,
+    document_id REFERENCES documents.documents(id) NOT NULL,
+    version_number INT NOT NULL,
+    media_id REFERENCES media.media_assets(id) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    created_by REFERENCES identity.staff(id) NOT NULL,
+    lifecycle_state VARCHAR(50) NOT NULL,
+
+    CONSTRAINT fk_document
+        FOREIGN KEY (document_id)
+        REFERENCES documents.documents(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_media
+        FOREIGN KEY (media_id)
+        REFERENCES media.media_assets(id)
+);
+
+-- documents-media
+CREATE TABLE documents.document_media_assets (
+    document_id VARCHAR(50) NOT NULL,
+    media_id VARCHAR(50) NOT NULL,
+
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (document_id, media_id),
+
+    CONSTRAINT fk_document
+        FOREIGN KEY (document_id)
+        REFERENCES documents.documents(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_document_media
+        FOREIGN KEY (media_id)
+        REFERENCES media.media_assets(id)
+        ON DELETE CASCADE
+);

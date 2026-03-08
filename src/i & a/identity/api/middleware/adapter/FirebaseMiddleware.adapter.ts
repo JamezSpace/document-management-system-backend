@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import FirebaseAuthAdapter from "../../../infrastructure/auth/FirebaseAuth.adapter.js";
-import type { MiddlewarePort } from "../port/AuthMiddleware.port.js";
+import FirebaseAuthAdapter from "../../../infrastructure/services/auth/FirebaseAuth.adapter.js";
 import UnauthorizedError from "../../errors/Unauthorizederror.error.js";
+import type { MiddlewarePort } from "../port/AuthMiddleware.port.js";
 
 class FirebaseMiddlewareAdapter implements MiddlewarePort {
 	authAdapter: FirebaseAuthAdapter;

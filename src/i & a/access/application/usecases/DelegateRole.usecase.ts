@@ -33,16 +33,16 @@ class DelegateRole {
 		});
 
 		// persist
-		await this.roleAssignmentRepo.save(assignment);
+		const roleDelegated = await this.roleAssignmentRepo.save(assignment);
 
 		// emit event
-		await this.authorityEvents.roleDelegated({
-			userId: staffId,
-			role: role,
-			delegatedBy,
-			validTo,
-			assignedAt: new Date(),
-		});
+        if(roleDelegated)
+            await this.authorityEvents.roleDelegated({
+                staffId: staffId,
+                role: role,
+                delegatedBy,
+                validTo,
+            });
 	}
 }
 

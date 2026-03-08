@@ -1,4 +1,4 @@
-import type OfficeDesignation from "../../../../domain/office/OfficeDesignation.js";
+import type OfficeDesignation from "../../../../domain/entities/office/OfficeDesignation.js";
 
 interface OfficeDesignationRepositoryPort {
 	save(office: OfficeDesignation): Promise<OfficeDesignation>;
@@ -15,3 +15,4 @@ interface OfficeDesignationRepositoryPort {
 }
 
 export type { OfficeDesignationRepositoryPort };
+

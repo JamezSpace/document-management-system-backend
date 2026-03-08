@@ -41,13 +41,13 @@ class AssignOfficialRole {
 		});
 
 		// persist to the database
-		await this.roleAssignmentRepo.save(assignment);
+		const roleAssigned = await this.roleAssignmentRepo.save(assignment);
 
-        await this.authorityEvents.officialRoleAssigned({
-            userId: staffId,
-            role: role,
-            assignedAt: new Date()
-        })
+        if(roleAssigned)
+            await this.authorityEvents.officialRoleAssigned({
+                staffId,
+                role: role,
+            })
 	}
 }
 

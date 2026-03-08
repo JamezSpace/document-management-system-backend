@@ -1,0 +1,50 @@
+import type AddNewStaffUseCase from "../../../application/usecases/staff/AddNewStaff.usecase.js";
+import type EditExistingStaffUseCase from "../../../application/usecases/staff/EditExistingStaff.usecase.js";
+import type FetchStaffRecordUsecase from "../../../application/usecases/staff/FetchStaffRecord.usecase.js";
+import type GetAllStaffUseCase from "../../../application/usecases/staff/GetAllStaff.usecase.js";
+import type RegisterNewStaffUseCase from "../../../application/usecases/staff/RegisterStaff.usecase.js";
+import type Staff from "../../../domain/entities/staff/Staff.js";
+import type { CreateStaffType, RegisterStaffType } from "../../types/staff/staff.type.js";
+
+class StaffController {
+    constructor(
+		private readonly getAllStaffUseCase: GetAllStaffUseCase,
+		private readonly addNewStaffUseCase: AddNewStaffUseCase,
+		private readonly registerNewStaffUseCase: RegisterNewStaffUseCase,
+		private readonly editExistingStaffUseCase: EditExistingStaffUseCase,
+        private readonly fetchStaffUseCase: FetchStaffRecordUsecase
+	) {}
+
+    // manual disjointed approach (not for frontend). Use registerNewStaff instead
+    async addNewStaff(payload: CreateStaffType) {
+        const newStaff = await this.addNewStaffUseCase.addNewStaff(payload)
+
+		return newStaff;
+    }
+
+    async registerNewStaff(payload: RegisterStaffType) {
+        const userId = await this.registerNewStaffUseCase.registerNewStaff(payload);
+
+        return userId;
+    }
+
+    async updateExistingStaff(staffId: string, newStaff: Partial<Staff>){
+        const editedStaff = this.editExistingStaffUseCase.editExistingStaff(staffId, newStaff)
+
+        return editedStaff;
+    }
+
+    async fetchExistingStaff(staffId: string) {
+        const staff = this.fetchStaffUseCase.fetchStaff(staffId)
+
+        return staff;
+    }
+
+    async fetchAllStaffMembersByUnit(unitId: string) {
+        const allStaffMembers = this.getAllStaffUseCase.getAllStaffMembersByUnit(unitId);
+
+        return allStaffMembers;
+    }
+}
+
+export default StaffController;

@@ -1,25 +1,8 @@
-import type { DisposalStatus } from "../enum/disposalStatus.enum.js"
-import type { RecordStatus } from "../enum/recordStatus.enum.js"
-
-
 interface RetentionMetadata {
-  recordStatus: RecordStatus
-
-  declaredAt?: Date
-  declaredByRoleId?: string
-
-  retentionScheduleId?: string
-  retentionTriggerDate?: Date
-  disposalEligibleAt?: Date
-
-  legalHold: boolean
-  auditHold: boolean
-
-  disposalStatus: DisposalStatus
-  disposalApprovedByRoleId?: string
-  disposalApprovedAt?: Date
-  disposalExecutedAt?: Date
+	retentionScheduleId: string;
+	retentionStartDate: Date;
+	disposalEligibilityDate: Date;
+	archivalRequired: boolean;
 }
 
-export type { RetentionMetadata }
-
+export type { RetentionMetadata };
