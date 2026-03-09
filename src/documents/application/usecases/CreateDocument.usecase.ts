@@ -3,11 +3,10 @@ import type { MediaServicePort } from "../../../shared/application/port/services
 import Document from "../../domain/Document.js";
 import DocumentVersion from "../../domain/DocumentVersion.js";
 import { DocumentType } from "../../domain/enum/documentTypes.enum.js";
-import { LifecycleActions } from "../../domain/enum/lifecycleActions.enum.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
 import type { DocumentEventsPort } from "../ports/DocumentEvents.port.js";
-import type { DocumentRepositoryPort } from "../ports/DocumentRepository.port.js";
-import type { DocumentVersionRepositoryPort } from "../ports/DocumentVersion.port.js";
+import type { DocumentRepositoryPort } from "../ports/repos/DocumentRepository.port.js";
+import type { DocumentVersionRepositoryPort } from "../ports/repos/DocumentVersionRepository.port.js";
 import type { ReferenceNumberServicePort } from "../ports/services/ReferenceNumberService.port.js";
 import type RetentionService from "../ports/services/RetentionService.port.js";
 import type { DocumentTypeForCreation } from "../types/doc.type.js";
@@ -34,16 +33,20 @@ class DocumentCreation {
 		);
 
 		if (payload.classification.documentType === DocumentType.MEMO) {
-			const refDetails = await this.refNumService.generate();
-
-			referenceNumber = refDetails.refNum;
+			referenceNumber = await this.refNumService.generate({
+                year: new Date().getFullYear(),
+                volume: payload.volume,
+                recipientDeptId: payload.recipientDeptId,
+                originUnitId: payload.originUnitId
+            });
 		}
 
 		const newDocument = new Document({
 			id: docId,
-			...payload,
 			version: null,
 			retention,
+            referenceNumber,
+			...payload,
 		});
 
 		const savedDoc = await this.documentRepo.save(newDocument);

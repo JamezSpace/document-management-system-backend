@@ -7,16 +7,17 @@ class PostgresDocumentPolicyAdapter implements DocumentPolicyPort {
 
 	async getRetentionData(documentType: DocumentType) {
 		const result = await this.dbPool.query(
-			`
-      SELECT retention_duration
-      FROM policy.documents
-      WHERE document_type = $1
-   `,
+			`SELECT retention_duration
+            FROM policy.documents
+            WHERE document_type = $1`,
 			[documentType],
 		);
 
+		const policyLoadedFromDb = result.rows[0];
+
 		return {
-			duration: result.rows[0].retention_duration,
+			policyVersion: policyLoadedFromDb.policy_version,
+			duration: policyLoadedFromDb.retention_duration,
 			archivalRequired: true,
 		};
 	}

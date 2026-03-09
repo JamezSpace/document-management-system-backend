@@ -2,8 +2,8 @@ import type { DocumentType } from "../types/documentPolicy/documentPolicy.type.j
 
 interface DocumentPolicyPort {
 	getRetentionData(
-		documentType: DocumentType,
-	): Promise<{ duration: number, archivalRequired: boolean }>;
+        documentType: DocumentType,
+	): Promise<{ duration: number, archivalRequired: boolean, policyVersion: number }>;
 }
 
 export type { DocumentPolicyPort };

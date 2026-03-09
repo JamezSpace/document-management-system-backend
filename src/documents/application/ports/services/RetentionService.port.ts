@@ -18,6 +18,7 @@ class RetentionService {
         );
 
         return {
+            policyVersion: policy.policyVersion,
             retentionScheduleId: documentType,
             retentionStartDate,
             disposalEligibilityDate,

@@ -1,5 +1,5 @@
 import type { PostgresDb } from "@fastify/postgres";
-import type { DocumentRepositoryPort } from "../../application/ports/DocumentRepository.port.js";
+import type { DocumentRepositoryPort } from "../../application/ports/repos/DocumentRepository.port.js";
 import type Document from "../../domain/Document.js";
 
 class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {

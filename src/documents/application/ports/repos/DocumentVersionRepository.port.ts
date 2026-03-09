@@ -1,4 +1,4 @@
-import type DocumentVersion from "../../domain/DocumentVersion.js";
+import type DocumentVersion from "../../../domain/DocumentVersion.js";
 
 interface DocumentVersionRepositoryPort {
     save(document: DocumentVersion): Promise<DocumentVersion>;

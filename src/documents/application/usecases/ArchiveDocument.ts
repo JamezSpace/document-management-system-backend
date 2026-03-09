@@ -1,8 +1,8 @@
 import type Document from "../../domain/Document.js";
 import type { DocumentDecisionRepositoryPort } from "../ports/DocumentDecisionRepository.port.js";
 import type { DocumentEventsPort } from "../ports/DocumentEvents.port.js";
-import type { DocumentRepositoryPort } from "../ports/DocumentRepository.port.js";
-import { DocumentAction } from "../types/DocumentDecisionAction.js";
+import type { DocumentRepositoryPort } from "../ports/repos/DocumentRepository.port.js";
+import { DocumentAction } from "../types/documentDecisionAction.type.js";
 
 class DocumentArchival {
     private readonly documentRepo: DocumentRepositoryPort;

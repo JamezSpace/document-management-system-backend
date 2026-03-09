@@ -1,6 +1,6 @@
 import type Document from "../../domain/Document.js";
 import type { DocumentEventsPort } from "../ports/DocumentEvents.port.js";
-import type { DocumentRepositoryPort } from "../ports/DocumentRepository.port.js";
+import type { DocumentRepositoryPort } from "../ports/repos/DocumentRepository.port.js";
 
 class DocumentSubmission {
     private readonly documentRepo: DocumentRepositoryPort;

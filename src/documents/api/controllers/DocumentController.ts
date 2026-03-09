@@ -1,4 +1,4 @@
-import type DocumentCreation from "../../application/usecases/documents/CreateDocument.usecase.js";
+import type DocumentCreation from "../../application/usecases/CreateDocument.usecase.js";
 import type { DocumentSchemaTypeForCreation } from "../types/document.type.js";
 
 class DocumentController {
@@ -6,12 +6,7 @@ class DocumentController {
 
     async createDocument(payload: DocumentSchemaTypeForCreation) {
         const newDoc = await this.createDocumentUseCase.createDocument({
-            lifecycle: {
-                currentState: null,
-                enteredBy: payload.createdBy,
-                enteredAt: new Date().toString()
-            }, 
-            ...payload
+            
         })
 
         return newDoc;

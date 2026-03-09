@@ -1,6 +1,7 @@
-// TODO: implement this in the infrastructure layer
+import type { RefNumPayload } from "../../types/refNum.type.js";
+
 interface ReferenceNumberServicePort {
-    generate(): Promise<{refNum: string}>
+    generate(payload: RefNumPayload): Promise<string>
 }
 
 export type {ReferenceNumberServicePort};

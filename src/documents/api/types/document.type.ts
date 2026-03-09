@@ -1,6 +1,9 @@
 import { Type, type Static } from "@fastify/type-provider-typebox";
 import { DocumentType } from "../../domain/enum/documentTypes.enum.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
+import { CorrespondenceVolume } from "../../domain/enum/correspondenceVolumes.enum.js";
+import { CorrespondenceAddressee } from "../../domain/enum/correspondenceAddresee.enum.js";
+import { RecipientSector } from "../../domain/enum/recipientSector.enum.js";
 
 const documentSchema = Type.Object({
     ownerId: Type.String(),
@@ -16,10 +19,17 @@ const documentSchema = Type.Object({
 });
 
 const documentSchemaForCreation = Type.Object({
-	ownerId: Type.String(),
-	title: Type.String(),
-	documentType: Type.Enum(DocumentType),
 	createdBy: Type.String(),
+	title: Type.String(),
+    
+	documentType: Type.Enum(DocumentType),
+    correspondence: Type.Object({
+        originatingUnitId: Type.String(),
+        recipientUnitId: Type.String(),
+        addressedTo: Type.Enum(CorrespondenceAddressee),
+        recipientName: Type.String(),
+        recipientSector: Type.Enum(RecipientSector),
+    })
 });
 
 type DocumentSchemaType = Static<typeof documentSchema>;

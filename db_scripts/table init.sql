@@ -188,7 +188,27 @@ CREATE TABLE media.media_assets (
 
 -- DOCUMENTS SCHEMA
 
--- documents-media
+-- documents volumes
+CREATE TABLE documents.volumes (
+    id VARCHAR(50) PRIMARY KEY,
+    name varchar(50) NOT NULL,
+    code varchar(10) UNIQUE NOT NULL,
+    description TEXT
+    created_at TIMESTAMPTZ NOT NULL,
+    uploaded_at TIMESTAMPTZ
+);
+
+-- ref number
+CREATE TABLE document.reference_sequences (
+    year INT NOT NULL,
+    origin_unit_id REFERENCES identity.organizational_units NOT NULL,
+    recipient_code VARCHAR(30) NOT NULL,
+    volume_id REFERENCES documents.volumes NOT NULL,
+    current_value INT NOT NULL,
+    UNIQUE(year, origin_unit_id, recipient_code, volume)
+);
+
+-- documents versions
 CREATE TABLE documents.document_versions (
     id VARCHAR(50) PRIMARY KEY,
     document_id REFERENCES documents.documents(id) NOT NULL,
@@ -208,7 +228,7 @@ CREATE TABLE documents.document_versions (
         REFERENCES media.media_assets(id)
 );
 
--- documents-media
+-- documents media
 CREATE TABLE documents.document_media_assets (
     document_id VARCHAR(50) NOT NULL,
     media_id VARCHAR(50) NOT NULL,

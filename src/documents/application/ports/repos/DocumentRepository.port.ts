@@ -1,4 +1,4 @@
-import type Document from "../../domain/Document.js";
+import type Document from "../../../domain/Document.js";
 
 interface DocumentRepositoryPort {
     save(document: Document): Promise<Document>;

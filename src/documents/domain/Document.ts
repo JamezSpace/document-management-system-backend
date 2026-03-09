@@ -2,6 +2,7 @@ import DocumentVersion from "./DocumentVersion.js";
 import { DisposalAction } from "./enum/disposalAction.enum.js";
 import { LifecycleState } from "./enum/lifecycleState.enum.js";
 import type { ClassificationMetadata } from "./metadata/Classification.metadata.js";
+import type { CorrespondenceMetadata } from "./metadata/Correspondence.metadata.js";
 import type { RetentionMetadata } from "./metadata/Retention.metadata.js";
 
 interface DocumentPayload {
@@ -12,6 +13,7 @@ interface DocumentPayload {
     referenceNumber?: string | null;
 
 	classification: ClassificationMetadata;
+    correspondence: CorrespondenceMetadata;
 	retention: RetentionMetadata;
 }
 
@@ -34,6 +36,7 @@ class Document {
 
 	// Governance Domains (Value Objects)
 	classification: ClassificationMetadata;
+    correspondence: CorrespondenceMetadata;
 	readonly retention: RetentionMetadata;
 
 	// Audit
@@ -52,6 +55,7 @@ class Document {
         this.referenceNumber = payload.referenceNumber ?? null;
 
 		this.classification = payload.classification;
+        this.correspondence = payload.correspondence;
 		this.retention = payload.retention;
 
 		this.createdAt = new Date();
