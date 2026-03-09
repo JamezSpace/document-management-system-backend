@@ -45,12 +45,12 @@ class RegisterNewStaffUseCase {
 			identity,
 		});
 
-		const identityId = newUserIdentity.getUserId()
+		const identityId = newUserIdentity.getUserId();
 
-        if(newUserIdentity)
-            await this.identityEvents.userCreated({
-                userId: identityId,
-            });
+		if (newUserIdentity)
+			await this.identityEvents.userCreated({
+				userId: identityId,
+			});
 
 		// create Staff - event emission is handled internally
 		const newStaff = await this.addNewStaffUsecase.addNewStaff({
@@ -61,13 +61,19 @@ class RegisterNewStaffUseCase {
 			officeId: payload.officeId,
 			designationId: payload.designationId,
 			status: Status.PENDING,
+			createdBy: payload.createdBy,
 		});
 
-        // generate password setup link
-        const setupLink = await this.authService.generatePasswordSetupLink(payload.email);
+		// generate password setup link
+		const setupLink = await this.authService.generatePasswordSetupLink(
+			payload.email,
+		);
 
 		// 3️⃣ Send onboarding email
-		await this.emailService.sendOnboardingLink(newUserIdentity.getEmail(), setupLink);
+		await this.emailService.sendOnboardingLink(
+			newUserIdentity.getEmail(),
+			setupLink,
+		);
 
 		return { staffId: newStaff.getStaffId() };
 	}

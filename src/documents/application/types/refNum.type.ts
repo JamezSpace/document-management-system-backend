@@ -1,8 +1,10 @@
+import type { DocumentSubjectCode } from "../../domain/enum/DocumentSubjectCodes.enum.js";
+
 interface RefNumPayload {
 	year: number;
 	originUnitId: string;
-	recipientDeptId: string;
-	volume: string;
+	recipientCode: string;
+	volume: DocumentSubjectCode;
 }
 
-export type {RefNumPayload};
+export type { RefNumPayload };

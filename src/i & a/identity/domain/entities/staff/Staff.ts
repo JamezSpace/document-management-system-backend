@@ -11,8 +11,8 @@ interface StaffPayload {
 	status: Status;
 	createdAt?: Date;
     createdBy : string;
-	activatedBy: string;
-	activatedAt: Date;
+	activatedBy?: string;
+	activatedAt? : Date;
 	updatedAt?: Date;
 }
 
@@ -27,8 +27,8 @@ class Staff {
 	status: Status;
 	readonly createdAt: Date;
     readonly createdBy : string;
-	readonly activatedBy: string;
-	readonly activatedAt: Date;
+	readonly activatedBy? : string | undefined;
+	readonly activatedAt?: Date | undefined;
 	readonly updatedAt?: Date | undefined;
 
 	constructor(payload: StaffPayload) {

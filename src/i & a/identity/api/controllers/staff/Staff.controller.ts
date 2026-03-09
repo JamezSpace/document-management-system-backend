@@ -17,7 +17,12 @@ class StaffController {
 
     // manual disjointed approach (not for frontend). Use registerNewStaff instead
     async addNewStaff(payload: CreateStaffType) {
-        const newStaff = await this.addNewStaffUseCase.addNewStaff(payload)
+        const {activatedAt, ...payloadWithoutDate} = payload
+        
+        const newStaff = await this.addNewStaffUseCase.addNewStaff({
+            activatedAt: new Date(activatedAt),
+            ...payloadWithoutDate
+        })
 
 		return newStaff;
     }

@@ -16,7 +16,10 @@ class AddNewStaffUseCase {
 		const staffId = "STAFF-" + uuid;
 
 		// create a new staff
-		const staff = new Staff({ id: staffId, ...payload });
+		const staff = new Staff({ 
+            id: staffId, 
+            ...payload
+        });
 
 		const newStaff = await this.staffRepo.save(staff);
 

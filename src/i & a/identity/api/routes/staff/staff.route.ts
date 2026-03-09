@@ -63,6 +63,27 @@ async function staffRoutes(
 			});
 		},
 	);
+	
+    // activate staff
+	fastify.post(
+		"/staff/:staffId/activate",
+		{ schema: { params: staffIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: StaffIdType }>,
+			reply: FastifyReply,
+		) => {
+			// extract information from request body
+			const {staffId} = request.params;
+
+			// save data in database
+			const status = await staffController.activateStaff(staffId);
+
+			return reply.code(201).send({
+				success: true,
+				message: "Staff activated successfully"
+			});
+		},
+	);
 
 	// update an existing staff
 	fastify.patch(

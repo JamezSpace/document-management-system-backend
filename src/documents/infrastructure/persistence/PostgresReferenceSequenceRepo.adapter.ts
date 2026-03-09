@@ -17,7 +17,7 @@ class PostgresReferenceSequenceRepositoryAdapter implements ReferenceSequenceRep
 		const result = await this.dbPool.query(query, [
 			payload.year,
 			payload.originUnitId,
-			payload.recipientDeptId,
+			payload.recipientCode,
 			payload.volume,
 		]);
 

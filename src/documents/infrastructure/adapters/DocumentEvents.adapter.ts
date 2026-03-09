@@ -1,9 +1,42 @@
 import { GlobalEventTypes } from "../../../shared/application/enum/event.enum.js";
 import type { EventBus } from "../../../shared/application/port/eventbus.port.js";
-import type { DocumentEventsPort } from "../../application/ports/DocumentEvents.port.js";
+import type { DocumentEventsPort } from "../../application/ports/events/DocumentEvents.port.js";
 
 class DocumentEventsAdapter implements DocumentEventsPort {
 	constructor(private readonly eventBus: EventBus) {}
+
+	async documentInitialized(payload: {
+		documentId: string;
+		createdBy: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.document.document.DOCUMENT_INITIALIZED,
+			occurredAt: new Date(),
+			payload,
+		});
+	}
+	
+    async documentVersionCreated(payload: {
+		documentId: string;
+		versionedBy: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.document.document.DOCUMENT_VERSION_CREATED,
+			occurredAt: new Date(),
+			payload,
+		});
+	}
+	
+    async documentVersionChanged(payload: {
+		documentId: string;
+		actorBy: string;
+	}): Promise<void> {
+		await this.eventBus.emit({
+			eventName: GlobalEventTypes.document.document.DOCUMENT_VERSION_CHANGED,
+			occurredAt: new Date(),
+			payload,
+		});
+	}
 
 	async documentCancelled(payload: {
 		documentId: string;
@@ -11,7 +44,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		reason: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_CANCELLED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_CANCELLED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -22,7 +55,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		activatedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_ACTIVATED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_ACTIVATED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -33,7 +66,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		declaredBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_DECLARED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_DECLARED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -44,7 +77,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		deletedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_DELETED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_DELETED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -55,7 +88,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		disposedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_DISPOSED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_DISPOSED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -66,7 +99,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		submittedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_SUBMITTED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_SUBMITTED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -77,7 +110,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		createdBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_CREATED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_CREATED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -88,7 +121,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		approvedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_APPROVED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_APPROVED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -100,7 +133,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		reason: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_REJECTED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_REJECTED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -111,7 +144,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		archivedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_ARCHIVED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_ARCHIVED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -123,7 +156,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		attachedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_MEDIA_ATTACHED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_MEDIA_ATTACHED,
 			occurredAt: new Date(),
 			payload,
 		});
@@ -136,7 +169,7 @@ class DocumentEventsAdapter implements DocumentEventsPort {
 		replacedBy: string;
 	}): Promise<void> {
 		await this.eventBus.emit({
-			eventName: GlobalEventTypes.document.DOCUMENT_MEDIA_REPLACED,
+			eventName: GlobalEventTypes.document.document.DOCUMENT_MEDIA_REPLACED,
 			occurredAt: new Date(),
 			payload,
 		});

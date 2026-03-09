@@ -52,6 +52,7 @@ import FirebaseAuthAdapter from "./identity/infrastructure/services/auth/Firebas
 import IdentityEmailServiceAdapter from "./identity/infrastructure/services/EmailService.adapter.js";
 import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
 
+
 export default async function IdentityAccessSubsystem(
 	fastify: FastifyInstance,
 ) {

@@ -1,5 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
+CREATE SCHEMA IF NOT EXISTS document;
 drop table if exists identity.users cascade;
 drop table if exists identity.staff;
 drop type if exists identity.user_status;
@@ -21,6 +22,9 @@ CREATE TYPE identity.capability_class_category AS ENUM(
 -- DOCUMENT SCHEMA TYPES
 CREATE TYPE document.document_type AS ENUM(
 	'memo', 'letter'
+)
+CREATE TYPE document.sensitivity_level AS ENUM(
+	'public', 'internal', 'confidential', 'restricted'
 )
 
 -- identity table
@@ -81,7 +85,7 @@ CREATE TABLE identity.staff(
 	status identity.user_status not null,
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by VARCHAR(50) REFERENCES identity.staff(id),
-	activated_by VARCHAR(50),
+	activated_by VARCHAR(50) REFERENCES identity.staff(id),
 	activated_at TIMESTAMPTZ,
 	updated_at TIMESTAMPTZ
 );
@@ -189,13 +193,20 @@ CREATE TABLE media.media_assets (
 -- DOCUMENTS SCHEMA
 
 -- documents volumes
-CREATE TABLE documents.volumes (
+CREATE TABLE document.correspondence_subjects (
     id VARCHAR(50) PRIMARY KEY,
-    name varchar(50) NOT NULL,
     code varchar(10) UNIQUE NOT NULL,
-    description TEXT
+    name varchar(50) NOT NULL,
+    description TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     uploaded_at TIMESTAMPTZ
+);
+
+CREATE TABLE document.business_functions (
+    id VARCHAR(50) PRIMARY KEY,
+    code VARCHAR(20) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT
 );
 
 -- ref number
@@ -203,9 +214,55 @@ CREATE TABLE document.reference_sequences (
     year INT NOT NULL,
     origin_unit_id REFERENCES identity.organizational_units NOT NULL,
     recipient_code VARCHAR(30) NOT NULL,
-    volume_id REFERENCES documents.volumes NOT NULL,
+    subject_code REFERENCES documents.correspondence_subjects NOT NULL,
     current_value INT NOT NULL,
-    UNIQUE(year, origin_unit_id, recipient_code, volume)
+    UNIQUE(year, origin_unit_id, recipient_code, subject_code)
+);
+
+CREATE TABLE document.documents (
+    id VARCHAR(50) PRIMARY KEY,
+
+    -- core
+    title VARCHAR(200) NOT NULL,
+    owner_id REFERENCES identity.staff(id) NOT NULL,
+    reference_number VARCHAR(50),
+
+    current_version_id REFERENCES document.document_versions(id),
+
+    -- correspondence metadata
+    originating_unit_id REFERENCES identity.organizational_units(id) NOT NULL,
+    recipient_code VARCHAR(30) NOT NULL,
+    subject_code_id REFERENCES document.correspondence_subjects(id) NOT NULL,
+
+    -- classification metadata
+    sensitivity document.sensitivity_level NOT NULL,
+    business_function_id REFERENCES document.business_functions(id) NOT NULL,
+    document_type document.document_type NOT NULL,
+
+    classified_by REFERENCES identity.staff(id) NOT NULL,
+    classified_at TIMESTAMPTZ NOT NULL,
+
+    last_reclassified_at TIMESTAMPTZ,
+    last_reclassified_by REFERENCES identity.staff(id),
+
+    -- retention metadata
+    policy_version INT NOT NULL,
+    retention_schedule_id VARCHAR(50) NOT NULL,
+    retention_start_date TIMESTAMPTZ NOT NULL,
+    disposal_eligibility_date TIMESTAMPTZ NOT NULL,
+    archival_required BOOLEAN NOT NULL,
+
+    -- audit sake
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ
+);
+
+-- documents classification
+CREATE TABLE documents.document_classification (
+    id VARCHAR(50) PRIMARY KEY,
+    sensitivity document.sensitivity_level NOT NULL,
+    business_function_id REFERENCES document.volumes(id),
+    document_type 
 );
 
 -- documents versions

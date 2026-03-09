@@ -5,6 +5,10 @@ export const ApplicationErrorEnum = {
         codeName: "invalid_credentials",
         httpStatusCode: StatusCodes.BAD_REQUEST
     },
+    INCOMPLETE_REQUEST: {
+        codeName: "invalid_credentials",
+        httpStatusCode: StatusCodes.BAD_REQUEST
+    },
     ROLE_NOT_FOUND: {
         codeName: "role_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND

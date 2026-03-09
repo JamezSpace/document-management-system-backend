@@ -1,10 +1,10 @@
-import type Document from "../../domain/Document.js";
+import Document from "../../../domain/Document.js";
+import type { DocumentEventsPort } from "../../ports/events/DocumentEvents.port.js";
+import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepository.port.js";
+import { DocumentAction } from "../../types/documentDecisionAction.type.js";
 import type { DocumentDecisionRepositoryPort } from "../ports/DocumentDecisionRepository.port.js";
-import type { DocumentEventsPort } from "../ports/DocumentEvents.port.js";
-import type { DocumentRepositoryPort } from "../ports/repos/DocumentRepository.port.js";
-import { DocumentAction } from "../types/documentDecisionAction.type.js";
 
-class DocumentArchival {
+class DocumentApproval {
     private readonly documentRepo: DocumentRepositoryPort;
     private readonly decisionRepo: DocumentDecisionRepositoryPort;
 	private readonly documentEvents: DocumentEventsPort;
@@ -19,7 +19,7 @@ class DocumentArchival {
 		this.documentRepo = documentRepoInstance;
 	}
 
-    async archiveDocument(documentDecision: {document: Document, archiverId: string}) {
+    async approveDocument(documentDecision: {document: Document, approverId: string}) {
         documentDecision.document.approve()
 
         // persist state to database
@@ -28,19 +28,19 @@ class DocumentArchival {
         // persist decision record as well
         await this.decisionRepo.save({
             documentId: documentDecision.document.id,
-            action: DocumentAction.ARCHIVED,
-            actorId: documentDecision.archiverId,
+            action: DocumentAction.APPROVED,
+            actorId: documentDecision.approverId,
             timestamp: new Date(),
             reason: null
         });
 
         // emit document approved event
-        await this.documentEvents.documentArchived({
+        await this.documentEvents.documentApproved({
             documentId: documentDecision.document.id,
-            archivedBy: documentDecision.archiverId,
+            approvedBy: documentDecision.approverId,
             timestamp: new Date()
         })
     }
 }
 
-export default DocumentArchival;
+export default DocumentApproval;

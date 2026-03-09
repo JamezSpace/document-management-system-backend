@@ -1,6 +1,9 @@
-// TODO: implement a global service for media assets upload
+// TODO: implement a global service for media assets uploadDoc
 interface MediaServicePort {
-	upload(file: Buffer, ownerId: string): Promise<{ mediaId: string }>;
+	uploadDoc(file: Buffer, ownerId: string): Promise<{ mediaId: string }>;
+
+    uploadStaffMedia(): Promise<>
 }
 
 export type { MediaServicePort };
+

@@ -1,27 +1,70 @@
 import type { FastifyInstance } from "fastify";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
-import DocumentController from "./api/controllers/DocumentController.js";
+import DocumentController from "./api/controllers/document/DocumentController.js";
 import documentRoutes from "./api/routes/documents.route.js";
-import DocumentCreation from "./application/usecases/documents/CreateDocument.usecase.js";
 import DocumentEventsAdapter from "./infrastructure/adapters/DocumentEvents.adapter.js";
 import PostgresqlDocumentRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentRepo.adapter.js";
+import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
+import CreateCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/CreateCorrespondenceSubject.usecase.js";
+import PostgresCorrespondenceSubjectRepoAdapter from "./infrastructure/persistence/PostgresCorrSubjectRepo.adapter.js";
+import CorrespondenceSubjectEventsAdapter from "./infrastructure/adapters/CorrSubjectEvents.adapter.js";
+import CorrespondenceSubjectController from "./api/controllers/correspondenceSubject/CorrespondenceSubjectController.js";
+import correspondenceSubjectRoutes from "./api/routes/corrSubject.route.js";
+import DocumentCreation from "./application/usecases/document/CreateDocument.usecase.js";
+import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
+import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
+import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/PostgresDocVersionRepo.adapter.js";
+import EmailServiceAdapter from "../shared/infrastructure/adapters/EmailService.adapter.js";
 
 export default async function DocumentSubsystem(fastify: FastifyInstance) {
-    // infastructure layer
-    const globalEventBus = new InMemoryEventBusAdapter();
-	const documentRepository = new PostgresqlDocumentRepositoryAdapter();
+	// infrastructure Layer
+	const postgres = fastify.pg;
+
+	const globalEventBus = new InMemoryEventBusAdapter();
+    const idGenerator = new UuidV7Generator();
+    
+    // all module repos in documents subsystem
+	const documentRepository = new PostgresqlDocumentRepositoryAdapter(postgres);
+    const docVersionRepository = new PostgresDocVersionRepositoryAdapter(postgres);
+	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(postgres);
+    const refSequenceRepository = new PostgresReferenceSequenceRepositoryAdapter(postgres);
+
+
+    //  all module event adapters in documents subsystem
 	const documentEventsAdapter = new DocumentEventsAdapter(globalEventBus);
+	const corrSubjectEventsAdapter = new CorrespondenceSubjectEventsAdapter(globalEventBus);
 
-    // application layer
-    const createNewDocumentUseCase = new DocumentCreation(
+    // service
+    const refNumberService = new ReferenceNumberService(refSequenceRepository);
+    
+
+	// application layer - documents
+	const createNewDocumentUseCase = new DocumentCreation(
+        idGenerator,
         documentRepository,
-        documentEventsAdapter
-    );
+        docVersionRepository,
+		documentEventsAdapter,
+        refNumberService,
 
-    // controller Layer
-    const documentController = new DocumentController(createNewDocumentUseCase)
+	);
+    
+    // application layer - correspondence subjects
+    const createCorrSubjectUsecase = new CreateCorrespondenceSubjectUseCase(
+        idGenerator,
+        corrSubjectEventsAdapter,
+        corrSubjectRepository
+    )
 
-    await fastify.register(documentRoutes, {
-        controller: documentController,
-    })
+	// controller Layer
+	const documentController = new DocumentController(createNewDocumentUseCase);
+
+	const corrSubjectController = new CorrespondenceSubjectController(createCorrSubjectUsecase);
+
+	await fastify.register(documentRoutes, {
+		controller: documentController,
+	});
+
+	await fastify.register(correspondenceSubjectRoutes, {
+		controller: corrSubjectController,
+	});
 }

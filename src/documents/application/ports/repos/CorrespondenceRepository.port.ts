@@ -1,0 +1,18 @@
+import type CorrespondenceSubject from "../../../domain/CorrespondenceSubject.js";
+
+interface CorrespondenceSubjectRepositoryPort {
+	save(
+		correspondenceSubject: CorrespondenceSubject,
+	): Promise<CorrespondenceSubject>;
+
+	updateCorrespondenceSubject(
+		correspondenceSubjectId: string,
+		changesToMake: Partial<CorrespondenceSubject>,
+	): Promise<CorrespondenceSubject>;
+
+	findCorrespondenceSubjectById(
+		correspondenceSubjectId: string,
+	): Promise<CorrespondenceSubject | null>;
+}
+
+export type { CorrespondenceSubjectRepositoryPort };

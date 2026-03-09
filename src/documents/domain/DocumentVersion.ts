@@ -3,6 +3,7 @@ import { LifecycleState } from "./enum/lifecycleState.enum.js";
 import type { LifecycleMetadata } from "./metadata/Lifecycle.metadata.js";
 
 interface DocumentVersionPayload {
+    id: string;
 	documentId: string;
 	versionNumber: number;
 	mediaId: string;
@@ -10,12 +11,14 @@ interface DocumentVersionPayload {
 }
 
 class DocumentVersion {
-	documentId: string;
+	id: string;
+    documentId: string;
 	versionNumber: number;
 	mediaId: string;
 	lifecycle: LifecycleMetadata;
 
 	constructor(payload: DocumentVersionPayload) {
+        this.id = payload.id;
 		this.documentId = payload.documentId;
 		this.versionNumber = payload.versionNumber;
 		this.mediaId = payload.mediaId;

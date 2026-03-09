@@ -9,8 +9,8 @@ interface ClassificationMetadata {
   classifiedBy: string;
   classifiedAt: Date;
 
-  lastReclassifiedAt: Date;
-  lastReclassifiedBy: string;
+  lastReclassifiedAt?: Date | null;
+  lastReclassifiedBy?: string | null;
 }
 
 export type { ClassificationMetadata };

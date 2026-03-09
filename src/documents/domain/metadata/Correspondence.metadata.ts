@@ -1,14 +1,10 @@
-import type { CorrespondenceAddressee } from "../enum/correspondenceAddresee.enum.js";
-import type { CorrespondenceVolume } from "../enum/correspondenceVolumes.enum.js";
-import type { RecipientSector } from "../enum/recipientSector.enum.js";
+import type { DocumentSubjectCode } from "../enum/documentSubjectCodes.enum.js";
 
 interface CorrespondenceMetadata {
 	originatingUnitId: string; // ITCC
-	addressedTo: CorrespondenceAddressee;
-	recipientUnitId?: string;
-	recipientName?: string;
-	recipientSector: RecipientSector;
-	volume: CorrespondenceVolume;
+	recipientCode: string
+	subjectCode: DocumentSubjectCode;
 }
 
 export type { CorrespondenceMetadata };
+

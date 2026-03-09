@@ -34,7 +34,10 @@ enum AccessModuleEvents {
 }
 
 enum DocumentEvents {
+	DOCUMENT_INITIALIZED = "document_initialized",
 	DOCUMENT_CREATED = "document_created",
+	DOCUMENT_VERSION_CREATED = "document_version_created",
+	DOCUMENT_VERSION_CHANGED = "document_version_changed",
 	DOCUMENT_SUBMITTED = "document_submitted",
 	DOCUMENT_APPROVED = "document_approved",
 	DOCUMENT_REJECTED = "document_rejected",
@@ -46,6 +49,10 @@ enum DocumentEvents {
 	DOCUMENT_DISPOSED = "document_disposed",
 	DOCUMENT_MEDIA_ATTACHED = "document_media_attached",
 	DOCUMENT_MEDIA_REPLACED = "document_media_replaced",
+}
+
+enum CorrSubjectEvents {
+    CORR_SUBJECT_CREATED = "correspondence_subject_created"
 }
 
 enum MediaEvents {
@@ -63,7 +70,10 @@ const GlobalEventTypes = {
         },
         access: AccessModuleEvents
     },
-	document: DocumentEvents,
+	document: {
+        document: DocumentEvents,
+        correspondence_subject: CorrSubjectEvents
+    },
     media: MediaEvents
 };
 

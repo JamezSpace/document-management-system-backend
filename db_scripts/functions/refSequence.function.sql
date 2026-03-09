@@ -25,9 +25,9 @@ AS $$
 
     SELECT
         seq.current_value AS next_count,
-        ou.name AS origin_unit,
+        unit.name AS origin_unit,
         seq.recipient_code AS recipient_dept
     FROM seq
-    JOIN identity.organizational_units ou
-        ON ou.id = seq.origin_unit_id;
+    JOIN identity.organizational_units unit
+        ON unit.id = seq.origin_unit_id;
 $$;
