@@ -2,9 +2,9 @@ import type { StatusCodes } from "http-status-codes";
 import type { NexusAppError } from "./api/nexusAppError.type.js";
 import type { DomainErrorType } from "./enum/domain.enum.js";
 
-interface StateDetails {
-	currentState: string | null;
-	targetState: string;
+interface ErrorContext {
+	currentState?: string;
+	targetState?: string;
 	details?: Record<string, any>;
 }
 
@@ -13,14 +13,14 @@ interface StateDetails {
  */
 class DomainError extends Error implements NexusAppError {
 	readonly code: DomainErrorType;
-	readonly context: StateDetails;
+	readonly context: ErrorContext;
 
 	httpStatusCode: StatusCodes;
 	errorCode: string;
 	details?: Record<string, any>;
 
 
-	constructor(code: DomainErrorType, context: StateDetails) {
+	constructor(code: DomainErrorType, context: ErrorContext) {
 		// constructor call to parent class 'Error'
 		super(code.codeName);
 

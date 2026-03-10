@@ -51,6 +51,8 @@ import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persi
 import FirebaseAuthAdapter from "./identity/infrastructure/services/auth/FirebaseAuth.adapter.js";
 import IdentityEmailServiceAdapter from "./identity/infrastructure/services/EmailService.adapter.js";
 import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
+import ActivateStaffUseCase from "./identity/application/usecases/staff/ActivateStaff.usecase.js";
+import MediaServiceAdapter from "../shared/infrastructure/adapters/MediaService.adapter.js";
 
 
 export default async function IdentityAccessSubsystem(
@@ -94,6 +96,8 @@ export default async function IdentityAccessSubsystem(
 	const identityEmailService = new IdentityEmailServiceAdapter(
 		globalEmailService,
 	);
+
+    const mediaService = new MediaServiceAdapter();
 
 	// application Layer
 	const authenticateUserUseCase = new AuthenticateUserUseCase(
@@ -171,6 +175,8 @@ export default async function IdentityAccessSubsystem(
 		identityEmailService,
 	);
 
+    const activateStaffUseCase = new ActivateStaffUseCase(staffEventsAdapter, staffRepositoryAdapter, mediaService);
+
 	const fetchStaffUseCase = new FetchStaffRecordUsecase(staffRepositoryAdapter);
 
 	// application layer - staff classification
@@ -223,6 +229,7 @@ export default async function IdentityAccessSubsystem(
 		getAllStaffUseCase,
 		addNewStaffUseCase,
         registerNewStaffUseCase,
+        activateStaffUseCase,
 		editStaffUseCase,
 		fetchStaffUseCase
 	);

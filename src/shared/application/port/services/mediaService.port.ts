@@ -2,8 +2,13 @@
 interface MediaServicePort {
 	uploadDoc(file: Buffer, ownerId: string): Promise<{ mediaId: string }>;
 
-    uploadStaffMedia(): Promise<>
+	uploadStaffMedia(
+		staffId: string,
+		mediaUploads: {
+			signatureFile: Buffer;
+			profilePic: Buffer;
+		},
+	): Promise<void>;
 }
 
 export type { MediaServicePort };
-

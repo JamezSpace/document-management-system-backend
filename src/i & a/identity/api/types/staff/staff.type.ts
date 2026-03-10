@@ -30,6 +30,11 @@ const registerStaffSchema = Type.Object({
     createdBy: Type.String()
 });
 
+const activateStaffSchema = Type.Object({
+    profilePic: Type.Any(),
+    signatureFile: Type.Any()
+})
+
 const staffIdSchema = Type.Object({
 	staffId: Type.String(),
 });
@@ -51,6 +56,7 @@ const editStaffSchema = Type.Partial(registerStaffSchema);
 
 type CreateStaffType = Static<typeof createStaffSchema>;
 type RegisterStaffType = Static<typeof registerStaffSchema>;
+type ActivateStaffType = Static<typeof activateStaffSchema>;
 type EditStaffType = Static<typeof editStaffSchema>;
 type StaffIdType = Static<typeof staffIdSchema>;
 type UnitIdType = Static<typeof unitIdSchema>;
@@ -60,6 +66,7 @@ export {
 	createStaffSchema,
 	editStaffSchema,
 	registerStaffSchema,
+    activateStaffSchema,
 	staffIdSchema,
 	staffMediaNeededBySchema,
 	StaffMediaRequester,
@@ -67,6 +74,7 @@ export {
 	type CreateStaffType,
 	type EditStaffType,
 	type RegisterStaffType,
+    type ActivateStaffType,
 	type StaffIdType,
 	type StaffMediaNeededByType,
 	type UnitIdType,

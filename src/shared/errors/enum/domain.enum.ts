@@ -8,6 +8,10 @@ export const IdentityDomainErrors = {
     INVALID_STATE_TRANSITION: {
         codeName: "invalid_state_transition",
         httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    INCOMPLETE_REQUEST: {
+        codeName: "incomplete request",
+        httpStatusCode: StatusCodes.BAD_REQUEST
     }
 } as const;
 

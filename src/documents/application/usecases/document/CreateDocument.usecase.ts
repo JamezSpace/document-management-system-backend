@@ -4,11 +4,12 @@ import Document from "../../../domain/Document.js";
 import DocumentVersion from "../../../domain/DocumentVersion.js";
 import { DocumentType } from "../../../domain/enum/documentTypes.enum.js";
 import { LifecycleState } from "../../../domain/enum/lifecycleState.enum.js";
+import type RetentionService from "../../../infrastructure/services/RetentionService.js";
 import type { DocumentEventsPort } from "../../ports/events/DocumentEvents.port.js";
 import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepository.port.js";
 import type { DocumentVersionRepositoryPort } from "../../ports/repos/DocumentVersionRepository.port.js";
 import type { ReferenceNumberServicePort } from "../../ports/services/ReferenceNumberService.port.js";
-import type RetentionService from "../../ports/services/RetentionService.port.js";
+import type { RetentionServicePort } from "../../ports/services/RetentionService.port.js";
 import type { DocumentTypeForCreation } from "../../types/doc.type.js";
 
 class DocumentCreation {
@@ -19,7 +20,7 @@ class DocumentCreation {
 		private readonly documentEvents: DocumentEventsPort,
 		private readonly refNumService: ReferenceNumberServicePort,
 		private readonly mediaService: MediaServicePort,
-		private readonly retentionService: RetentionService,
+		private readonly retentionService: RetentionServicePort,
 	) {}
 
 	async createDocument(payload: DocumentTypeForCreation) {

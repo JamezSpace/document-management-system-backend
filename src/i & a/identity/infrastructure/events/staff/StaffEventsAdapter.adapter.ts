@@ -12,21 +12,30 @@ class StaffEventsAdapter implements StaffEventsPort {
 			payload
 		});
 	}
-
-	async staffUpdated(payload: { staffId: string }): Promise<void> {
-		await this.eventBus.emit({
-			eventName: GlobalEventTypes.identity_authority.identity.staff.STAFF_UPDATED,
-			occurredAt: new Date(),
-			payload
-		});
-	}
-
+    
     async onboardingStaffEmailSent(payload: { staffId: string; }): Promise<void> {
         await this.eventBus.emit({
-			eventName: GlobalEventTypes.identity_authority.identity.staff.ONBOARDING_STAFF_EMAIL_SENT,
+            eventName: GlobalEventTypes.identity_authority.identity.staff.ONBOARDING_STAFF_EMAIL_SENT,
 			occurredAt: new Date(),
 			payload
 		});
+    }
+    
+    async staffActivated(payload: { staffId: string; }): Promise<void> {
+        await this.eventBus.emit({
+            eventName: GlobalEventTypes.identity_authority.identity.staff.STAFF_ACTIVATED,
+            occurredAt: new Date(),
+            payload
+        });
+        
+    }
+
+    async staffUpdated(payload: { staffId: string }): Promise<void> {
+        await this.eventBus.emit({
+            eventName: GlobalEventTypes.identity_authority.identity.staff.STAFF_UPDATED,
+            occurredAt: new Date(),
+            payload
+        });
     }
 
     async staffMediaAssigned(payload: { staffId: string; mediaId: string; assignedBy: string; }): Promise<void> {

@@ -1,7 +1,9 @@
 interface StaffEventsPort {
 	staffAdded(payload: { staffId: string }): Promise<void>;
 
-    onboardingStaffEmailSent(payload: { staffId: string }): Promise<void>
+    onboardingStaffEmailSent(payload: { staffId: string }): Promise<void>;
+
+    staffActivated(payload: {staffId: string}): Promise<void>;
 
 	staffUpdated(payload: { staffId: string }): Promise<void>;
 

@@ -1,19 +1,21 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type StaffController from "../../controllers/staff/Staff.controller.js";
 import {
-    createStaffSchema,
-    editStaffSchema,
-    registerStaffSchema,
-    staffIdSchema,
-    staffMediaNeededBySchema,
-    StaffMediaRequester,
-    unitIdSchema,
-    type CreateStaffType,
-    type EditStaffType,
-    type RegisterStaffType,
-    type StaffIdType,
-    type StaffMediaNeededByType,
-    type UnitIdType
+	activateStaffSchema,
+	createStaffSchema,
+	editStaffSchema,
+	registerStaffSchema,
+	staffIdSchema,
+	staffMediaNeededBySchema,
+	StaffMediaRequester,
+	unitIdSchema,
+	type ActivateStaffType,
+	type CreateStaffType,
+	type EditStaffType,
+	type RegisterStaffType,
+	type StaffIdType,
+	type StaffMediaNeededByType,
+	type UnitIdType,
 } from "../../types/staff/staff.type.js";
 
 async function staffRoutes(
@@ -63,24 +65,31 @@ async function staffRoutes(
 			});
 		},
 	);
-	
-    // activate staff
+
+	// activate staff
 	fastify.post(
 		"/staff/:staffId/activate",
-		{ schema: { params: staffIdSchema } },
+		{ schema: { params: staffIdSchema, body: activateStaffSchema },  },
 		async (
-			request: FastifyRequest<{ Params: StaffIdType }>,
+			request: FastifyRequest<{
+				Params: StaffIdType;
+                Body: ActivateStaffType
+			}>,
 			reply: FastifyReply,
 		) => {
-			// extract information from request body
-			const {staffId} = request.params;
+			// extract information from request
+			const { staffId } = request.params;
+			const filesToUpload = request.body;
 
 			// save data in database
-			const status = await staffController.activateStaff(staffId);
+			const status = await staffController.activateStaff(
+				staffId,
+				filesToUpload,
+			);
 
 			return reply.code(201).send({
 				success: true,
-				message: "Staff activated successfully"
+				message: "Staff activated successfully",
 			});
 		},
 	);
@@ -90,16 +99,21 @@ async function staffRoutes(
 		"/staff/:staffId",
 		{ schema: { params: staffIdSchema, body: editStaffSchema } },
 		async (
-			request: FastifyRequest<{ Params: StaffIdType, Body: EditStaffType }>,
+			request: FastifyRequest<{
+				Params: StaffIdType;
+				Body: EditStaffType;
+			}>,
 			reply: FastifyReply,
 		) => {
 			// extract information from request body
 			const { staffId } = request.params;
-            const editToMakeOnStaff = request.body
+			const editToMakeOnStaff = request.body;
 
 			// call controller
-			const updatedStaff =
-				await staffController.updateExistingStaff(staffId, editToMakeOnStaff);
+			const updatedStaff = await staffController.updateExistingStaff(
+				staffId,
+				editToMakeOnStaff,
+			);
 
 			return reply.code(200).send({
 				success: true,
@@ -118,7 +132,8 @@ async function staffRoutes(
 		) => {
 			const { staffId } = request.params;
 
-			const existingStaff = await staffController.fetchExistingStaff(staffId);
+			const existingStaff =
+				await staffController.fetchExistingStaff(staffId);
 
 			return reply.code(200).send({
 				success: true,
@@ -127,22 +142,25 @@ async function staffRoutes(
 		},
 	);
 
-    // this retrieves all staff members in an office
-    fastify.get(
-        "/:officeId/staff",
-        {schema: {params: unitIdSchema }},
-        async (request: FastifyRequest<{Params: UnitIdType}>, reply: FastifyReply) => {
-            const { unitId } = request.params;
+	// this retrieves all staff members in an office
+	fastify.get(
+		"/:officeId/staff",
+		{ schema: { params: unitIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: UnitIdType }>,
+			reply: FastifyReply,
+		) => {
+			const { unitId } = request.params;
 
 			const officeStaffMembers =
 				await staffController.fetchAllStaffMembersByUnit(unitId);
 
 			return reply.code(200).send({
 				success: true,
-				officeStaffMembers
+				officeStaffMembers,
 			});
-        }
-    )
+		},
+	);
 }
 
 export default staffRoutes;

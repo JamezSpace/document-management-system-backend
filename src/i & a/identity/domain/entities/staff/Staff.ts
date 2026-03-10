@@ -1,3 +1,5 @@
+import DomainError from "../../../../../shared/errors/DomainError.error.js";
+import { GlobalDomainErrors } from "../../../../../shared/errors/enum/domain.enum.js";
 import { Status, type EmploymentType } from "../../enum/staff.enum.js";
 
 interface StaffPayload {
@@ -54,8 +56,13 @@ class Staff {
 
 	public activate(hasProfilePic: boolean, hasSignature: boolean) {
 		if (!hasProfilePic || !hasSignature) {
-			throw new Error(
-				"Staff cannot be activated without required legal assets.",
+			throw new DomainError(
+                GlobalDomainErrors.identity_authority.identity.INCOMPLETE_REQUEST,
+                {
+                    details: {
+                        message: "Staff cannot be activated without required legal assets."
+                    }
+                }
 			);
 		}
 
