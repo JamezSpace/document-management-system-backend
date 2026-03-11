@@ -17,60 +17,82 @@ import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persist
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
 import RetentionService from "./infrastructure/services/RetentionService.js";
 import type { RetentionServicePort } from "./application/ports/services/RetentionService.port.js";
-
+import businessFunctionRoutes from "./api/routes/bussFunction.route.js";
+import BusinessFunctionController from "./api/controllers/businessFunction/BusinessFunctionController.js";
+import CreateBusinessFunctionUseCase from "./application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
+import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctionEvents.adapter.js";
+import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
 
 interface DocumentSubsystemDependencies {
-    retentionService: RetentionServicePort;
+	retentionService: RetentionServicePort;
 }
 
-export default async function DocumentSubsystem(fastify: FastifyInstance, dependencies: DocumentSubsystemDependencies) {
-
-    // dependencies
-    const { retentionService } = dependencies;
+export default async function DocumentSubsystem(
+	fastify: FastifyInstance,
+	dependencies: DocumentSubsystemDependencies,
+) {
+	// dependencies
+	const { retentionService } = dependencies;
 
 	// infrastructure Layer
 	const postgres = fastify.pg;
 
 	const globalEventBus = new InMemoryEventBusAdapter();
-    const idGenerator = new UuidV7Generator();
-    
-    // all module repos in documents subsystem
+	const idGenerator = new UuidV7Generator();
+
+	// all module repos in documents subsystem
 	const documentRepository = new PostgresqlDocumentRepositoryAdapter(postgres);
-    const docVersionRepository = new PostgresDocVersionRepositoryAdapter(postgres);
+	const docVersionRepository = new PostgresDocVersionRepositoryAdapter(postgres);
 	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(postgres);
-    const refSequenceRepository = new PostgresReferenceSequenceRepositoryAdapter(postgres);
+	const bussFunctionRepository = new PostgresBusinessFunctionRepoAdapter(postgres);
+	const refSequenceRepository =
+		new PostgresReferenceSequenceRepositoryAdapter(postgres);
 
-
-    //  all module event adapters in documents subsystem
+	//  all module event adapters in documents subsystem
 	const documentEventsAdapter = new DocumentEventsAdapter(globalEventBus);
-	const corrSubjectEventsAdapter = new CorrespondenceSubjectEventsAdapter(globalEventBus);
+	const corrSubjectEventsAdapter = new CorrespondenceSubjectEventsAdapter(
+		globalEventBus,
+	);
+	const bussFunctionEventsAdapter = new BusinessFunctionEventsAdapter(
+		globalEventBus,
+	);
 
-    // service
-    const refNumberService = new ReferenceNumberService(refSequenceRepository);
-    const mediaService = new MediaServiceAdapter();
+	// service
+	const refNumberService = new ReferenceNumberService(refSequenceRepository);
+	const mediaService = new MediaServiceAdapter();
 
 	// application layer - documents
 	const createNewDocumentUseCase = new DocumentCreation(
-        idGenerator,
-        documentRepository,
-        docVersionRepository,
+		idGenerator,
+		documentRepository,
+		docVersionRepository,
 		documentEventsAdapter,
-        refNumberService,
-        mediaService,
-        retentionService
+		refNumberService,
+		mediaService,
+		retentionService,
 	);
-    
-    // application layer - correspondence subjects
-    const createCorrSubjectUsecase = new CreateCorrespondenceSubjectUseCase(
-        idGenerator,
-        corrSubjectEventsAdapter,
-        corrSubjectRepository
-    )
+
+	// application layer - correspondence subjects
+	const createCorrSubjectUsecase = new CreateCorrespondenceSubjectUseCase(
+		idGenerator,
+		corrSubjectEventsAdapter,
+		corrSubjectRepository,
+	);
+
+	const createBusinessFunctionUseCase = new CreateBusinessFunctionUseCase(
+		idGenerator,
+		bussFunctionEventsAdapter,
+		bussFunctionRepository,
+	);
 
 	// controller Layer
 	const documentController = new DocumentController(createNewDocumentUseCase);
 
-	const corrSubjectController = new CorrespondenceSubjectController(createCorrSubjectUsecase);
+	const corrSubjectController = new CorrespondenceSubjectController(
+		createCorrSubjectUsecase,
+	);
+
+	const bussFunctionController = new BusinessFunctionController(createBusinessFunctionUseCase);
 
 	await fastify.register(documentRoutes, {
 		controller: documentController,
@@ -78,5 +100,9 @@ export default async function DocumentSubsystem(fastify: FastifyInstance, depend
 
 	await fastify.register(correspondenceSubjectRoutes, {
 		controller: corrSubjectController,
+	});
+
+	await fastify.register(businessFunctionRoutes, {
+		controller: bussFunctionController,
 	});
 }

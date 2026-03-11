@@ -14,7 +14,7 @@ async function correspondenceSubjectRoutes(
 	const correspondenceSubjectController = options.controller;
 
 	fastify.post(
-		"/",
+		"/subject",
 		{ schema: { body: corrSubjectSchema } },
 		async (
 			request: FastifyRequest<{ Body: CorrSubjectType }>,

@@ -128,7 +128,7 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
                 updatedAt: staffData.updatedAt
             });
         } catch (error: any) {
-            console.log("error fetching staff by id", error);
+            console.log("error fetching staff details by id", error);
 
             throw new InfrastructureError(GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR, {
                 category: Category.PERSISTENCE,

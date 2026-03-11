@@ -1,6 +1,6 @@
 import type CreateBusinessFunctionUseCase from "../../../application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
 
-class BusinessController {
+class BusinessFunctionController {
 	constructor(
 		private readonly createBusinessFunctionUseCase: CreateBusinessFunctionUseCase,
 	) {}
@@ -19,4 +19,4 @@ class BusinessController {
 	}
 }
 
-export default BusinessController;
+export default BusinessFunctionController;

@@ -9,6 +9,7 @@ import {
 	staffMediaNeededBySchema,
 	StaffMediaRequester,
 	unitIdSchema,
+	userIdSchema,
 	type ActivateStaffType,
 	type CreateStaffType,
 	type EditStaffType,
@@ -16,6 +17,7 @@ import {
 	type StaffIdType,
 	type StaffMediaNeededByType,
 	type UnitIdType,
+	type UserIdType,
 } from "../../types/staff/staff.type.js";
 
 async function staffRoutes(
@@ -69,11 +71,11 @@ async function staffRoutes(
 	// activate staff
 	fastify.post(
 		"/staff/:staffId/activate",
-		{ schema: { params: staffIdSchema, body: activateStaffSchema },  },
+		{ schema: { params: staffIdSchema, body: activateStaffSchema } },
 		async (
 			request: FastifyRequest<{
 				Params: StaffIdType;
-                Body: ActivateStaffType
+				Body: ActivateStaffType;
 			}>,
 			reply: FastifyReply,
 		) => {
@@ -91,6 +93,29 @@ async function staffRoutes(
 				success: true,
 				message: "Staff activated successfully",
 			});
+		},
+	);
+
+	// staff login
+	fastify.post(
+		"/staff/me",
+		{ schema: { body: userIdSchema } },
+		async (
+			request: FastifyRequest<{ Body: UserIdType }>,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.body;
+
+            // fetch staff details
+            const staff = await staffController.fetchStaffDetailsForLogin(uid);
+
+            return staff ? reply.code(200).send({
+                success: true,
+                me: staff
+            }) : reply.code(401).send({
+                success: true,
+                message: "Staff not found"
+            })
 		},
 	);
 

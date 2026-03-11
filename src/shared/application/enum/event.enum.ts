@@ -56,6 +56,10 @@ enum CorrSubjectEvents {
     CORR_SUBJECT_CREATED = "correspondence_subject_created"
 }
 
+enum BussFunctionEvents {
+    BUSS_FUNCTION_CREATED = "business_function_created"
+}
+
 enum MediaEvents {
     MEDIA_ADDED = "media_added",
     MEDIA_REPLACED = "media_replaced",
@@ -73,7 +77,8 @@ const GlobalEventTypes = {
     },
 	document: {
         document: DocumentEvents,
-        correspondence_subject: CorrSubjectEvents
+        correspondence_subject: CorrSubjectEvents,
+        business_function: BussFunctionEvents
     },
     media: MediaEvents
 };

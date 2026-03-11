@@ -98,15 +98,11 @@ async function identityRoutes(
 			const userIdentity =
 				await authenticationController.authenticate(userId);
 
-			const assignedRoles = await authorityController.authorizeImplicitly(
-				userIdentity.getUserId(),
-			);
-
 			return reply.code(200).send({
 				success: true,
 				user: {
 					id: userId,
-					assignedRoles,
+					userIdentity,
 				},
 			});
 		},

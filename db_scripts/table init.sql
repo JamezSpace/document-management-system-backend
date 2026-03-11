@@ -17,15 +17,15 @@ CREATE TYPE identity.org_unit_sector AS ENUM(
 )
 CREATE TYPE identity.capability_class_category AS ENUM(
 	'leadership', 'professional officers', 'clerical & records', 'operational support'
-)
+);
 
 -- DOCUMENT SCHEMA TYPES
 CREATE TYPE document.document_type AS ENUM(
 	'memo', 'letter'
-)
+);
 CREATE TYPE document.sensitivity_level AS ENUM(
 	'public', 'internal', 'confidential', 'restricted'
-)
+);
 
 -- identity table
 create table identity.users (
@@ -206,7 +206,9 @@ CREATE TABLE document.business_functions (
     id VARCHAR(50) PRIMARY KEY,
     code VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
-    description TEXT
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    uploaded_at TIMESTAMPTZ
 );
 
 -- ref number

@@ -20,6 +20,7 @@ VALUES
     ('CC-019cc29e-3b53-7b0e-8826-69a2719236e3', 'administrative support staff', 'operational support', 'Personnel who provide general administrative assistance across office functions, including document handling, logistics coordination, and routine operational support necessary for day-to-day office activities.', '2026-03-06 11:07:55.731475+01'),
     ('CC-019cc29e-aea8-7e6b-baa3-9322a9629222', 'facilities & logistics liaison', 'operational support', 'A staff member responsible for coordinating operational logistics, facilities-related documentation, and support requests between offices and institutional service departments. This role ensures that logistical processes and supporting documentation move efficiently across units.', '2026-03-06 11:08:25.256612+01'),
 
+
 -- permissions data
 INSERT INTO identity.permissions
 VALUES 
@@ -164,5 +165,11 @@ VALUES
     ('role.sys_admin', 'perm.staff.deactivate'),
 
 
-
+-- DOCUMENTS SCHEMA
+INSERT INTO document.business_functions (id, code, name, description, created_at)
+VALUES
+    ('BUS-FUNC-019cd79d-68fe-7107-bbb8-9f994280cb13', 'REC', 'Recruitment', 'The legal process of onboarding new staff/interns.', now()),
+    ('BUS-FUNC-019cd79e-c7f3-79f4-807f-c13113f66cce', 'LIT', 'Litigation', 'Active legal disputes and court proceedings.', now()),
+    ('BUS-FUNC-019cd7a0-5b15-7d73-8dbc-c42db9960cb6', 'BUD', 'Budgeting', 'The preparation and oversight of departmental allocations.', now()),
+    ('BUS-FUNC-019cd7a2-b212-7d8a-b3a9-4faaaca9096b', 'PRO', 'Procurement', 'The legal process of acquiring goods and services.', now())
 

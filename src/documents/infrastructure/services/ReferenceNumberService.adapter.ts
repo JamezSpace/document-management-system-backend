@@ -10,7 +10,7 @@ class ReferenceNumberService implements ReferenceNumberServicePort {
 
 		const padded = result.nextCount.toString().padStart(4, "0");
 
-		return `${payload.year}/${result.originUnit}/${result.recipientCode}/${payload.volume}/${padded}`;
+		return `${payload.year}/${result.originUnit}/${result.recipientCode}/${payload.subjectCode}/${padded}`;
 	}
 }
 

@@ -39,17 +39,21 @@ const staffIdSchema = Type.Object({
 	staffId: Type.String(),
 });
 
+const userIdSchema = Type.Object({
+	uid: Type.String(),
+});
+
 enum StaffMediaRequester {
 	ME = "me",
 	OTHER = "other",
 }
 
 const staffMediaNeededBySchema = Type.Object({
-	requestMadeBy: Type.String(),
+	requestMadeBy: Type.Enum(StaffMediaRequester),
 });
 
 const unitIdSchema = Type.Object({
-	unitId: Type.Enum(StaffMediaRequester),
+	unitId: Type.String()
 });
 
 const editStaffSchema = Type.Partial(registerStaffSchema);
@@ -59,6 +63,7 @@ type RegisterStaffType = Static<typeof registerStaffSchema>;
 type ActivateStaffType = Static<typeof activateStaffSchema>;
 type EditStaffType = Static<typeof editStaffSchema>;
 type StaffIdType = Static<typeof staffIdSchema>;
+type UserIdType = Static<typeof userIdSchema>;
 type UnitIdType = Static<typeof unitIdSchema>;
 type StaffMediaNeededByType = Static<typeof staffMediaNeededBySchema>;
 
@@ -71,6 +76,8 @@ export {
 	staffMediaNeededBySchema,
 	StaffMediaRequester,
 	unitIdSchema,
+    userIdSchema,
+    type UserIdType,
 	type CreateStaffType,
 	type EditStaffType,
 	type RegisterStaffType,

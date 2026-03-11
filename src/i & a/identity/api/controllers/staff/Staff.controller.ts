@@ -1,6 +1,7 @@
 import type ActivateStaffUseCase from "../../../application/usecases/staff/ActivateStaff.usecase.js";
 import type AddNewStaffUseCase from "../../../application/usecases/staff/AddNewStaff.usecase.js";
 import type EditExistingStaffUseCase from "../../../application/usecases/staff/EditExistingStaff.usecase.js";
+import type FetchStaffDetailsForLoginUseCase from "../../../application/usecases/staff/FetchStaffDetailsForLogin.usecase.js";
 import type FetchStaffRecordUsecase from "../../../application/usecases/staff/FetchStaffRecord.usecase.js";
 import type GetAllStaffUseCase from "../../../application/usecases/staff/GetAllStaff.usecase.js";
 import type RegisterNewStaffUseCase from "../../../application/usecases/staff/RegisterStaff.usecase.js";
@@ -14,7 +15,8 @@ class StaffController {
 		private readonly registerNewStaffUseCase: RegisterNewStaffUseCase,
 		private readonly activateStaffUseCase: ActivateStaffUseCase,
 		private readonly editExistingStaffUseCase: EditExistingStaffUseCase,
-        private readonly fetchStaffUseCase: FetchStaffRecordUsecase
+        private readonly fetchStaffUseCase: FetchStaffRecordUsecase,
+        private readonly fetchStaffForLoginUseCase: FetchStaffDetailsForLoginUseCase
 	) {}
 
     // manual disjointed approach (not for frontend). Use registerNewStaff instead
@@ -57,6 +59,12 @@ class StaffController {
         const allStaffMembers = this.getAllStaffUseCase.getAllStaffMembersByUnit(unitId);
 
         return allStaffMembers;
+    }
+
+    async fetchStaffDetailsForLogin(uid: string) {
+        const me = this.fetchStaffForLoginUseCase.fetchStaffDetails(uid);
+
+        return me;
     }
 }
 
