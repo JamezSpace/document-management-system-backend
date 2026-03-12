@@ -1,3 +1,4 @@
+import type { StaffMediaMetadata } from "../metadata/StaffMedia.meta.js";
 import type { StaffDetailsBasePayload } from "../type/staffDetailsBasePayload.type.js";
 import AbstractStaffDetails from "./AbstractStaffDetails.js";
 
@@ -9,18 +10,17 @@ interface StaffDetailsWithMediaPayload extends StaffDetailsBasePayload {
 }
 
 class StaffDetailsWithMedia extends AbstractStaffDetails {
-    readonly bucketName: string;
-    readonly objectKey: string;
-    readonly storageProvider: string;
-    readonly assetRole: string;
+    readonly media: StaffMediaMetadata;    
 
     constructor(payload: StaffDetailsWithMediaPayload) {
         super(payload);
 
-        this.storageProvider = payload.storageProvider;
-        this.bucketName = payload.bucketName;
-        this.objectKey = payload.objectKey;
-        this.assetRole = payload.assetRole;
+        this.media = {
+            assetRole: payload.assetRole,
+            storageProvider: payload.storageProvider,
+            bucketName: payload.bucketName,
+            objectKey: payload.objectKey
+        }
     }
 }
 

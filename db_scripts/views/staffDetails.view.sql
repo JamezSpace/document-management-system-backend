@@ -1,9 +1,23 @@
-CREATE VIEW identity.staff_details as
-SELECT staff.id, identity_id, staff_number, employment_type, unit.sector as unit_sector, unit.full_name as unit_name, office.name as office, designation.title as designation, staff.status, staff.created_at, staff.updated_at 
+CREATE OR REPLACE VIEW identity.staff_details AS
+SELECT 
+    staff.id, 
+	users.auth_provider_id,
+    staff.identity_id, 
+	users.firstName,
+	users.middleName,
+	users.lastName,
+	users.email,
+    staff.staff_number, 
+    staff.employment_type, 
+    unit.sector AS unit_sector, 
+    unit.full_name AS unit_name, 
+    office.name AS office, 
+    designation.title AS designation,
+    staff.status, 
+    staff.created_at, 
+    staff.updated_at 
 FROM identity.staff staff
-JOIN identity.organizational_units unit
-ON staff.unit_id = unit.id
-JOIN identity.offices office
-ON staff.office_id = office.name
-JOIN identity.designations designation 
-ON staff.designation_id = designation.title;
+LEFT JOIN identity.users users ON staff.identity_id = users.id
+LEFT JOIN identity.organizational_units unit ON staff.unit_id = unit.id
+LEFT JOIN identity.offices office ON staff.office_id = office.id
+LEFT JOIN identity.designations designation ON staff.designation_id = designation.id;

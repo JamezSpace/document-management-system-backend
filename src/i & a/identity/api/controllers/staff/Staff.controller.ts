@@ -16,7 +16,6 @@ class StaffController {
 		private readonly activateStaffUseCase: ActivateStaffUseCase,
 		private readonly editExistingStaffUseCase: EditExistingStaffUseCase,
         private readonly fetchStaffUseCase: FetchStaffRecordUsecase,
-        private readonly fetchStaffForLoginUseCase: FetchStaffDetailsForLoginUseCase
 	) {}
 
     // manual disjointed approach (not for frontend). Use registerNewStaff instead
@@ -62,7 +61,7 @@ class StaffController {
     }
 
     async fetchStaffDetailsForLogin(uid: string) {
-        const me = this.fetchStaffForLoginUseCase.fetchStaffDetails(uid);
+        const me = this.fetchStaffUseCase.fetchStaffDetails(uid);
 
         return me;
     }

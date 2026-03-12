@@ -99,33 +99,39 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 
 	async findStaffWithMediaByIdentityId(identityId: string): Promise<StaffDetailsWithMedia | null> {
         try {
-            const query = "SELECT * FROM identity.staff_details_with_media WHERE identity_id = $1";
+            const query = "SELECT * FROM identity.staff_details_with_media WHERE ap_id = $1";
             const result = await this.dbPool.query(query, [identityId]);
-
+            
             if (result.rows.length === 0) {
                 return null;
             }
 
             const staffData = result.rows[0];
+            
             return new StaffDetailsWithMedia({
                 id: staffData.id,
+                authProviderId: staffData.ap_id,
+                identityId: staffData.identity_id,
+                firstName: staffData.first_name,
+                lastName: staffData.last_name,
+                middleName: staffData.middle_name,
+                email: staffData.email,
                 staffNumber: staffData.staff_number,
                 employmentType: staffData.employment_type,
                 status: staffData.status,
                 designation: staffData.designation,
-                identityId: staffData.identity_id,
                 office: staffData.office,
-                unitName: staffData.unitName,
-                unitSector: staffData.unitSector,
-                assetRole: staffData.assetRole,
-                bucketName: staffData.bucketName,
-                storageProvider: staffData.storageProvider,
-                objectKey: staffData.objectKey,
-                createdAt: staffData.createdAt,
-                createdBy: staffData.createdBy,
-                activatedBy: staffData.activatedBy,
-                activatedAt : staffData.activatedAt,
-                updatedAt: staffData.updatedAt
+                unitName: staffData.unit_name,
+                unitSector: staffData.unit_sector,
+                assetRole: staffData.asset_role,
+                bucketName: staffData.bucket_name,
+                storageProvider: staffData.storage_provider,
+                objectKey: staffData.object_key,
+                createdAt: staffData.created_at,
+                createdBy: staffData.created_by,
+                activatedBy: staffData.activated_by,
+                activatedAt : staffData.activated_at,
+                updatedAt: staffData.updated_at
             });
         } catch (error: any) {
             console.log("error fetching staff details by id", error);

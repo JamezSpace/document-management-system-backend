@@ -8,6 +8,12 @@ class FetchStaffRecordUsecase {
 
 		return staff;
 	}
+
+    async fetchStaffDetails(uid: string) {
+        const staffDetails = await this.staffRepo.findStaffWithMediaByIdentityId(uid)
+
+        return staffDetails;
+    }
 }
 
 export default FetchStaffRecordUsecase;

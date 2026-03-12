@@ -6,6 +6,7 @@ import fastify, {
 	type FastifyReply,
 	type FastifyRequest,
 } from "fastify";
+import fastifyCors from "@fastify/cors";
 import DocumentSubsystem from "./documents/index.js";
 import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
 import IdentityAccessSubsystem from "./i & a/index.js";
@@ -19,6 +20,9 @@ const server: FastifyInstance = fastify({
 }).withTypeProvider<TypeBoxTypeProvider>();
 
 // load plugins (from the Fastify ecosystem) next
+server.register(fastifyCors, {
+    origin: process.env.ORIGIN!
+})
 server.register(fastifyPostgres, dbConfig);
 server.register(fastifyMultipart, {
 	attachFieldsToBody: "keyValues",
@@ -28,13 +32,13 @@ server.register(fastifyMultipart, {
 });
 
 // load your plugins (your custom plugins) next
-server.register(IdentityAccessSubsystem, { prefix: "identity" });
+server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
 
 // documents subsystem
 const policyAdapter = new PostgresDocumentPolicyAdapter(server.pg);
 const retentionService = new RetentionService(policyAdapter);
 
-server.register(DocumentSubsystem, { prefix: "document", retentionService });
+server.register(DocumentSubsystem, { prefix: "api/document", retentionService });
 
 // load decorators next
 
