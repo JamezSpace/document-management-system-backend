@@ -30,7 +30,7 @@ class RegisterNewStaffUseCase {
 
 		// create Identity
 		const identity = new Identity({
-			uid: userId,
+			id: userId,
 			authProviderId,
 			email: payload.email,
 			phoneNum: payload.phoneNumber,
@@ -44,8 +44,8 @@ class RegisterNewStaffUseCase {
 			authProvider: "firebase",
 			identity,
 		});
-
-		const identityId = newUserIdentity.getUserId();
+        
+		const identityId = newUserIdentity.getUserId()
 
 		if (newUserIdentity)
 			await this.identityEvents.userCreated({

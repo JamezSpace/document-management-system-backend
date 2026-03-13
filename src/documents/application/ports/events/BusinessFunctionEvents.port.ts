@@ -1,6 +1,10 @@
 interface BusinessFunctionEventsPort {
 	businessFunctionCreated(payload: {
-		businessFunctionId: string;
+		businessFunction: {
+            id: string;
+            name: string;
+        };
+        actorId: string;
 	}): Promise<void>;
 }
 

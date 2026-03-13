@@ -1,14 +1,35 @@
-import { GlobalInfrastructureErrors, type PersistenceErrorsType } from "../../../../errors/enum/infrastructure.enum.js";
+import {
+	GlobalInfrastructureErrors
+} from "../../../../errors/enum/infrastructure.enum.js";
 
-export function mapPostgresError(err: any): PersistenceErrorsType {
-    // checking for Postgres unique constraint violation
-    if (err?.code === "23505") {
-        return GlobalInfrastructureErrors.persistence;
-    }
+export function mapPostgresError(err: any) {
+	// checking for Postgres unique constraint violation
+	switch (err.code) {
+		case "23505":
+			return {
+				summary:
+					GlobalInfrastructureErrors.persistence
+						.UNIQUE_CONSTRAINT_VIOLATION,
+				details: err,
+			};
 
-    // add more Postgres error mappings here if needed
-    // e.g., foreign key violation = '23503'
+		case "42P01":
+			return {
+				summary: GlobalInfrastructureErrors.persistence.NOT_FOUND,
+				details: err,
+			};
 
-    // Default generic persistence error
-    return GlobalInfrastructureErrors.persistence;
+		case "23503":
+			return {
+				summary: GlobalInfrastructureErrors.persistence.UNIQUE_CONSTRAINT_VIOLATION,
+				details: err,
+			};
+
+		default:
+			return {
+				summary:
+					GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
+				details: err,
+			};
+	}
 }

@@ -53,9 +53,9 @@ class PostgresMediaAdapter implements MediaRepositoryPort {
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
 
-			throw new InfrastructureError(postgresError.UNREGISTERED_ERROR, {
+			throw new InfrastructureError(postgresError.summary, {
 				category: Category.PERSISTENCE,
-				message: error.message,
+				message: postgresError.details?.message ?? error.message,
 			});
 		}
 	}

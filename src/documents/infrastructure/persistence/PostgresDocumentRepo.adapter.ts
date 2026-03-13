@@ -90,12 +90,12 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 			const postgresError = mapPostgresError(error);
 
 			throw new InfrastructureError(
-				postgresError.UNIQUE_CONSTRAINT_VIOLATION,
+				postgresError.summary,
 				{
 					category: Category.PERSISTENCE,
-					message: error.message,
-					table: error.table,
-					column: error.column,
+					message: postgresError.details?.message ?? error.message,
+					table: postgresError.details?.table,
+					column: postgresError.details?.column,
 				},
 			);
 		}
@@ -179,11 +179,11 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
 
-			throw new InfrastructureError(postgresError.UNREGISTERED_ERROR, {
+			throw new InfrastructureError(postgresError.summary, {
 				category: Category.PERSISTENCE,
-				message: error.message,
-				table: error.table,
-				column: error.column,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+				column: postgresError.details?.column,
 			});
 		}
 	}

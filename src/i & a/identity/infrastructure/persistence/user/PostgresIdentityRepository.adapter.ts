@@ -15,12 +15,12 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
     // helper function to rehydrate to Identity object
 	private toIdentity(row: any): Identity {
 		return new Identity({
-			uid: row.id,
+			id: row.id,
 			authProviderId: row.auth_provider_id,
-			firstName: row.firstname,
-			lastName: row.lastname,
-			middleName: row.middlename,
-            phoneNum: row.phoneNum,
+			firstName: row.first_name,
+			lastName: row.last_name,
+			middleName: row.middle_name,
+            phoneNum: row.phone_number,
 			email: row.email,
 			status: row.status as IdentityStatus,
 			createdAt: row.created_at,
@@ -34,7 +34,7 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
 	): Promise<Identity> {
 		try {
 			const result = await this.dbPool.query(
-				"UPDATE identity.users SET status = $1, updated_at = now() WHERE id = $2 RETURNING id, auth_provider_id, firstname, lastname, middlename, email, status, created_at, updated_at",
+				"UPDATE identity.users SET status = $1, updated_at = now() WHERE id = $2 RETURNING id, auth_provider_id, first_name, last_name, middle_name, email, phone_number, status, created_at, updated_at",
 				[status, uid],
 			);
 
@@ -62,7 +62,7 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
 	): Promise<Identity | null> {
 		try {
 			const result = await this.dbPool.query(
-				"SELECT id, auth_provider_id, firstname, lastname, middlename, email, status FROM identity.users WHERE auth_provider_id = $1 LIMIT 1",
+				"SELECT id, auth_provider_id, first_name, last_name, middle_name, email, phone_number, status FROM identity.users WHERE auth_provider_id = $1 LIMIT 1",
 				[authProviderId],
 			);
 
@@ -85,7 +85,7 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
 	}): Promise<Identity> {
 		try {
 			const result = await this.dbPool.query(
-				"INSERT INTO identity.users VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, auth_provider, auth_provider_id, email, firstname, lastname, middlename, status, created_at",
+				"INSERT INTO identity.users VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, auth_provider, auth_provider_id, email, first_name, last_name, middle_name, phone_number, status, created_at",
 				[
 					payload.identity.getUserId(),
 					payload.authProvider,
@@ -94,21 +94,22 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
 					payload.identity.getFirstName(),
 					payload.identity.getLastName(),
 					payload.identity.getMiddleName(),
+                    payload.identity.getPhoneNumber(),
 					payload.identity.getStatus(),
 					payload.identity.getCreatedAt(),
 				],
 			);
 
-			return result.rows[0];
+			return this.toIdentity(result.rows[0]);
 		} catch (error: any) {
 			console.log("error in identity repo adapter", error);
 
 			const err = mapPostgresError(error);
 
-			throw new InfrastructureError(err.UNIQUE_CONSTRAINT_VIOLATION, {
+			throw new InfrastructureError(err.summary, {
 				category: Category.PERSISTENCE,
-				message: error.detail,
-				table: error.table,
+				message: err.details?.message ?? error.message,
+				table: err.details?.table,
 			});
 		}
 	}

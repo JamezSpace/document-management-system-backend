@@ -1,9 +1,11 @@
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
 CREATE SCHEMA IF NOT EXISTS document;
+CREATE SCHEMA IF NOT EXISTS policy;
+CREATE SCHEMA IF NOT EXISTS notifications;
+
 drop table if exists identity.users cascade;
 drop table if exists identity.staff;
-drop type if exists identity.user_status;
 
 -- IDENTITY SCHEMA TYPES
 CREATE TYPE identity.user_status AS ENUM (
@@ -14,7 +16,7 @@ CREATE TYPE identity.employment_type AS ENUM (
 );
 CREATE TYPE identity.org_unit_sector AS ENUM(
 	'academic', 'non-academic'
-)
+);
 CREATE TYPE identity.capability_class_category AS ENUM(
 	'leadership', 'professional officers', 'clerical & records', 'operational support'
 );
@@ -27,15 +29,30 @@ CREATE TYPE document.sensitivity_level AS ENUM(
 	'public', 'internal', 'confidential', 'restricted'
 );
 
+-- NOTIFICATIONS SCHEMA TYPES
+CREATE TYPE notifications.recipient_type as ENUM (
+    'user', 'role'
+);
+CREATE TYPE notifications.preference as ENUM (
+    'in app', 'email'
+);
+CREATE TYPE notifications.priority as ENUM (
+    'low', 'high', 'normal'
+);
+CREATE TYPE notifications.state as ENUM (
+    'pending', 'sent', 'failed', 'read'
+);
+
 -- identity table
 create table identity.users (
 	id varchar(50) primary key not null,
 	auth_provider VARCHAR(50) NOT NULL,
 	auth_provider_id VARCHAR(255) unique NOT NULL,
 	email varchar(255) unique not null,
-	firstName varchar(25) not null,
-	lastName varchar(25) not null,
-	middleName varchar(25),
+	first_name varchar(25) not null,
+	last_name varchar(25) not null,
+	middle_name varchar(25),
+	phone_number varchar(25) not null,
 	status identity.user_status NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	updated_at TIMESTAMPTZ
@@ -316,4 +333,32 @@ CREATE TABLE policy.documents (
     archival_required BOOLEAN NOT NULL,
     retention_duration INT NOT NULL,
     effective_from DATE NOT NULL
+);
+
+-- NOTIFICATIONS SCHEMA
+CREATE TABLE notifications.notifications (
+    id VARCHAR(50) PRIMARY KEY,
+
+    recipient_id varchar(50) NOT NULL,
+    recipient_type notifications.recipient_type NOT NULL,
+
+    event_type varchar(50) NOT NULL,
+    subject_type varchar(50) NOT NULL,
+    subject_id varchar(50) NOT NULL,
+
+    message_template TEXT NOT NULL,
+
+    payload JSONB,
+
+    channel notifications.preference NOT NULL,
+
+    priority notifications.priority NOT NULL,
+
+    state notifications.state NOT NULL,
+
+    retry_count INT DEFAULT 0,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    sent_at TIMESTAMPTZ,
+    read_at TIMESTAMPTZ
 );

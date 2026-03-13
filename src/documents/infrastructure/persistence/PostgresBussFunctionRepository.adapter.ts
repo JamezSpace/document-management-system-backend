@@ -44,12 +44,12 @@ class PostgresBusinessFunctionRepoAdapter
             console.log(error)
 
 			throw new InfrastructureError(
-				postgresError.UNREGISTERED_ERROR,
+				postgresError.summary,
 				{
 					category: Category.PERSISTENCE,
-					message: error.message,
-					table: error.table,
-					column: error.column,
+					message: postgresError.details?.message ?? error.message,
+					table: postgresError.details?.table,
+					column: postgresError.details?.column,
 				},
 			);
 		}
@@ -138,11 +138,11 @@ class PostgresBusinessFunctionRepoAdapter
 
 			const postgresError = mapPostgresError(error);
 
-			throw new InfrastructureError(postgresError.UNREGISTERED_ERROR, {
+			throw new InfrastructureError(postgresError.summary, {
 				category: Category.PERSISTENCE,
-				message: error.message,
-				table: error.table,
-				column: error.column,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+				column: postgresError.details?.column,
 			});
 		}
 	}

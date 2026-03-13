@@ -6,7 +6,7 @@ import { IdentityStatus } from "./IdentityStatus.js";
  * This keeps the Domain independent of Application/API DTOs.
  */
 interface IdentityPayload {
-	readonly uid: string;
+	readonly id: string;
 	readonly authProviderId: string;
 	readonly firstName: string;
 	readonly lastName: string;
@@ -19,7 +19,7 @@ interface IdentityPayload {
 }
 
 class Identity {
-	private readonly uid: string;
+	private readonly id: string;
 	private readonly authProviderId: string;
 	private readonly email: string;
 	private readonly phoneNum: string;
@@ -31,7 +31,7 @@ class Identity {
 	private status: IdentityStatus;
 
 	constructor(payload: IdentityPayload) {
-		this.uid = payload.uid;
+		this.id = payload.id;
 		this.authProviderId = payload.authProviderId;
 		this.firstName = payload.firstName;
 		this.lastName = payload.lastName;
@@ -46,7 +46,7 @@ class Identity {
 
 	// getters
 	getUserId(): string {
-		return this.uid;
+		return this.id;
 	}
 
 	getStatus(): IdentityStatus {
@@ -80,6 +80,10 @@ class Identity {
 	getMiddleName(): string {
 		return this.middleName;
 	}
+
+    getPhoneNumber() {
+        return this.phoneNum;   
+    }
 
 	activate() {
 		IdentityTransition.assertCanActivate(this.status);

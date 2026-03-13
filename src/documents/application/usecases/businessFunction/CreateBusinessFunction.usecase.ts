@@ -10,11 +10,14 @@ class CreateBusinessFunctionUseCase {
 		private readonly businessFunctionRepo: BusinessFunctionRepositoryPort,
 	) {}
 
-	async createBusinessFunction(payload: {
-		code: string;
-		name: string;
-		description?: string | null;
-	}) {
+	async createBusinessFunction(
+		actorId: string,
+		payload: {
+			code: string;
+			name: string;
+			description?: string | null;
+		},
+	) {
 		const uuid = this.idGenerator.generate();
 		const businessFunctionId = "BUS-FUNC-" + uuid;
 
@@ -30,8 +33,11 @@ class CreateBusinessFunctionUseCase {
 
 		if (newBusinessFunction) {
 			await this.businessFunctionEvents.businessFunctionCreated({
-				businessFunctionId:
-					newBusinessFunction.getBusinessFunctionId(),
+				businessFunction:{
+                    id: newBusinessFunction.getBusinessFunctionId(),
+                    name: businessFunction.name
+                },
+                actorId
 			});
 		}
 

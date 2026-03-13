@@ -21,10 +21,17 @@ async function businessFunctionRoutes(
 			reply: FastifyReply,
 		) => {
             const payload = request.body;
+            const {uid} = request.user!
+
+            if(!uid) 
+                return reply.code(401).send({
+                    success: true,
+                    message: "Only an authorized user can carry out this operation."
+                })
 
 			const newBusinessFunction =
 				await businessFunctionController.createBusinessFunction(
-					payload
+                    uid, payload
 				);
 
 			return reply.code(201).send({

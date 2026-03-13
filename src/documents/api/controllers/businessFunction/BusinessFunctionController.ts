@@ -5,13 +5,14 @@ class BusinessFunctionController {
 		private readonly createBusinessFunctionUseCase: CreateBusinessFunctionUseCase,
 	) {}
 
-	async createBusinessFunction(payload: {
+	async createBusinessFunction(actorId: string, payload: {
 		code: string;
 		name: string;
 		description?: string | null;
 	}) {
 		const newBusinessFunction =
 			await this.createBusinessFunctionUseCase.createBusinessFunction(
+                actorId,
 				payload,
 			);
 

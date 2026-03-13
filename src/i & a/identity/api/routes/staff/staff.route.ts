@@ -116,7 +116,7 @@ async function staffRoutes(
 
             return staff ? reply.code(200).send({
                 success: true,
-                me: staff
+                data: staff
             }) : reply.code(404).send({
                 success: true,
                 message: "Staff not found"

@@ -72,6 +72,13 @@ export const WorkflowDomainErrors = {
     }
 } as const;
 
+export const NotificationDomainErrors = {
+    INVALID_NOTIFICATION_STATE_TRANSISITION: {
+        codeName: "invalid_notification_state_transistion",
+        httpStatusCode: StatusCodes.NOT_ACCEPTABLE
+    },
+} as const;
+
 const GlobalDomainErrors = {
     identity_authority: {
         identity: IdentityDomainErrors,
@@ -79,6 +86,7 @@ const GlobalDomainErrors = {
     },
     workflow: WorkflowDomainErrors,
     document: DocumentDomainErrors,
+    notifications: NotificationDomainErrors
 } as const;
 
 type ValueOf<T> = T[keyof T];
@@ -87,7 +95,8 @@ type DomainErrorType =
     | ValueOf<typeof IdentityDomainErrors>
     | ValueOf<typeof AccessDomainErrors>
     | ValueOf<typeof DocumentDomainErrors>
-    | ValueOf<typeof WorkflowDomainErrors>;
+    | ValueOf<typeof WorkflowDomainErrors>
+    | ValueOf<typeof NotificationDomainErrors>;
 
 export { GlobalDomainErrors, type DomainErrorType };
 
