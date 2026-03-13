@@ -1,5 +1,4 @@
 import { Type, type Static } from "@fastify/type-provider-typebox";
-import { DocumentSubjectCode } from "../../domain/enum/documentSubjectCodes.enum.js";
 import { CorrespondenceAddressee } from "../../domain/enum/correspondenceAddresee.enum.js";
 import { DocumentType } from "../../domain/enum/documentTypes.enum.js";
 import { LifecycleActions } from "../../domain/enum/lifecycleActions.enum.js";
@@ -31,7 +30,8 @@ const documentSchemaForCreation = Type.Object({
         addressedTo: Type.Enum(CorrespondenceAddressee),
         recipientName: Type.String(),
         recipientSector: Type.Enum(RecipientSector),
-        subjectCode: Type.Enum(DocumentSubjectCode)
+        subjectCode: Type.String(),
+        functionCode: Type.String(),
     }),
     classification: Type.Object({
         businessFunctionId: Type.String(),

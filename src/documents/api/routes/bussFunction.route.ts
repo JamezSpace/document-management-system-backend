@@ -40,6 +40,27 @@ async function businessFunctionRoutes(
 			});
         }
 	);
+
+    fastify.get(
+		"/functions",
+		async (request: FastifyRequest, reply: FastifyReply) => {
+            const { uid } = request.user!;
+
+             if(!uid) 
+                return reply.code(401).send({
+                    success: true,
+                    message: "No uid extracted from access token"
+                })
+
+            // fetch business functions
+            const functions = await businessFunctionController.getAllBussFunctions();
+
+            return reply.code(200).send({
+                success: true,
+                data: functions
+            })
+        },
+	);
 }
 
 export default businessFunctionRoutes;

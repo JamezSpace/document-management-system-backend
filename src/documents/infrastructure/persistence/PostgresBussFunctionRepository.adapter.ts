@@ -14,6 +14,7 @@ class PostgresBusinessFunctionRepoAdapter
 	private toDomain(row: any): BusinessFunction {
 		return new BusinessFunctionEntity({
 			id: row.id,
+            subjectId: row.subject_id,
 			code: row.code,
 			name: row.name,
 			description: row.description,
@@ -66,6 +67,25 @@ class PostgresBusinessFunctionRepoAdapter
 			if (!result.rows || result.rows.length === 0) return null;
 
 			return this.toDomain(result.rows[0]);
+		} catch (error: any) {
+			throw new InfrastructureError(
+				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
+				{
+					category: Category.PERSISTENCE,
+					message: error.message,
+				},
+			);
+		}
+	}
+
+	async fetchAll(): Promise<BusinessFunction[]> {
+		try {
+			const query = "SELECT * FROM document.business_functions;";
+			const result = await this.dbPool.query(query);
+
+			if (!result.rows || result.rows.length === 0) return [];
+
+			return result.rows.map((row) => this.toDomain(row));
 		} catch (error: any) {
 			throw new InfrastructureError(
 				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,

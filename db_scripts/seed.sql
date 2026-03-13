@@ -166,10 +166,30 @@ VALUES
 
 
 -- DOCUMENTS SCHEMA
-INSERT INTO document.business_functions (id, code, name, description, created_at)
-VALUES
-    ('BUS-FUNC-019cd79d-68fe-7107-bbb8-9f994280cb13', 'REC', 'Recruitment', 'The legal process of onboarding new staff/interns.', now()),
-    ('BUS-FUNC-019cd79e-c7f3-79f4-807f-c13113f66cce', 'LIT', 'Litigation', 'Active legal disputes and court proceedings.', now()),
-    ('BUS-FUNC-019cd7a0-5b15-7d73-8dbc-c42db9960cb6', 'BUD', 'Budgeting', 'The preparation and oversight of departmental allocations.', now()),
-    ('BUS-FUNC-019cd7a2-b212-7d8a-b3a9-4faaaca9096b', 'PRO', 'Procurement', 'The legal process of acquiring goods and services.', now())
+INSERT INTO document.correspondence_subjects (id, code, name, description, created_at)
+VALUES 
+    ('CORR-SUBJ-GOV', 'GOV', 'Governance', 'Corporate and administrative oversight', now()),
+    ('CORR-SUBJ-ACA', 'ACA', 'Academic', 'Core teaching and learning functions', now()),
+    ('CORR-SUBJ-HRM', 'HRM', 'Personnel', 'Staff and identity management', now()),
+    ('CORR-SUBJ-FIN', 'FIN', 'Finance', 'Monetary and asset management', now());
+
+
+INSERT INTO document.business_functions (id, subject_id, code, name, description, created_at)
+VALUES 
+    -- Governance Functions
+    ('BUS-FUNC-DIR', 'CORR-SUBJ-GOV', 'DIR', 'Executive Directives', 'Official orders from the VC, Registrar, or Council.', now()),
+    ('BUS-FUNC-SEN', 'CORR-SUBJ-GOV', 'SEN', 'Senate Matters', 'Correspondence regarding academic policy and decisions.', now()),
+    ('BUS-FUNC-MTG', 'CORR-SUBJ-GOV', 'MTG', 'Committee Minutes', 'Records of formal board and committee meetings.', now()),
+    -- Academic Functions
+    ('BUS-FUNC-EXM', 'CORR-SUBJ-ACA', 'EXM', 'Examinations', 'Highly sensitive grading, results, and scripts.', now()),
+    ('BUS-FUNC-ADM', 'CORR-SUBJ-ACA', 'ADM', 'Admissions', 'Processing of new student entries and registrations.', now()),
+    ('BUS-FUNC-ACR', 'CORR-SUBJ-ACA', 'ACR', 'Accreditation', 'Professional body and NUC compliance records.', now()),
+    -- Finance Functions
+    ('BUS-FUNC-PRO', 'CORR-SUBJ-FIN', 'PRO', 'Procurement', 'Purchase orders and tender documents.', now()),
+    ('BUS-FUNC-BUD', 'CORR-SUBJ-FIN', 'BUD', 'Budgeting', 'Departmental allocations and financial planning.', now()),
+    ('BUS-FUNC-GNT', 'CORR-SUBJ-FIN', 'GNT', 'Research Grants', 'Management of external funding for academic research.', now()),
+    -- HR Functions
+    ('BUS-FUNC-REC', 'CORR-SUBJ-HRM', 'REC', 'Recruitment', 'Onboarding, internships, and staff applications.', now()),
+    ('BUS-FUNC-DIS', 'CORR-SUBJ-HRM', 'DIS', 'Disciplinary', 'Queries, warnings, and tribunal records.', now()),
+    ('BUS-FUNC-LEV', 'CORR-SUBJ-HRM', 'LEV', 'Disciplinary', 'Tracking of staff absences and study leaves.', now());
 

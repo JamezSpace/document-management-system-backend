@@ -13,6 +13,8 @@ interface CorrespondenceSubjectRepositoryPort {
 	findCorrespondenceSubjectById(
 		correspondenceSubjectId: string,
 	): Promise<CorrespondenceSubject | null>;
+
+    fetchAll(): Promise<CorrespondenceSubject[]>;
 }
 
 export type { CorrespondenceSubjectRepositoryPort };

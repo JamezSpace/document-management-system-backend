@@ -36,7 +36,8 @@ class DocumentCreation {
 		if (payload.classification.documentType === DocumentType.MEMO) {
 			referenceNumber = await this.refNumService.generate({
                 year: new Date().getFullYear(),
-                volume: payload.correspondence.subjectCode,
+                subjectCode: payload.correspondence.subjectCode,
+                functionCode: payload.classification.functionCode,
                 originUnitId: payload.correspondence.originatingUnitId,
                 recipientCode: payload.correspondence.recipientCode
             });

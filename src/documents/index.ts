@@ -22,6 +22,8 @@ import BusinessFunctionController from "./api/controllers/businessFunction/Busin
 import CreateBusinessFunctionUseCase from "./application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
 import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctionEvents.adapter.js";
 import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
+import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
+import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -41,10 +43,18 @@ export default async function DocumentSubsystem(
 	const idGenerator = new UuidV7Generator();
 
 	// all module repos in documents subsystem
-	const documentRepository = new PostgresqlDocumentRepositoryAdapter(postgres);
-	const docVersionRepository = new PostgresDocVersionRepositoryAdapter(postgres);
-	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(postgres);
-	const bussFunctionRepository = new PostgresBusinessFunctionRepoAdapter(postgres);
+	const documentRepository = new PostgresqlDocumentRepositoryAdapter(
+		postgres,
+	);
+	const docVersionRepository = new PostgresDocVersionRepositoryAdapter(
+		postgres,
+	);
+	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(
+		postgres,
+	);
+	const bussFunctionRepository = new PostgresBusinessFunctionRepoAdapter(
+		postgres,
+	);
 	const refSequenceRepository =
 		new PostgresReferenceSequenceRepositoryAdapter(postgres);
 
@@ -74,13 +84,18 @@ export default async function DocumentSubsystem(
 
 	// application layer - correspondence subjects
 	const createCorrSubjectUsecase = new CreateCorrespondenceSubjectUseCase(
-		idGenerator,
 		corrSubjectEventsAdapter,
 		corrSubjectRepository,
 	);
 
+	const getAllCorrespondenceSubjectUseCase =
+		new GetAllCorrespondenceSubjectUseCase(corrSubjectRepository);
+
+	const getAllBusinessFunctionUseCase = new GetAllBusinessFunctionsUseCase(
+		bussFunctionRepository,
+	);
+
 	const createBusinessFunctionUseCase = new CreateBusinessFunctionUseCase(
-		idGenerator,
 		bussFunctionEventsAdapter,
 		bussFunctionRepository,
 	);
@@ -90,9 +105,13 @@ export default async function DocumentSubsystem(
 
 	const corrSubjectController = new CorrespondenceSubjectController(
 		createCorrSubjectUsecase,
+		getAllCorrespondenceSubjectUseCase,
 	);
 
-	const bussFunctionController = new BusinessFunctionController(createBusinessFunctionUseCase);
+	const bussFunctionController = new BusinessFunctionController(
+		createBusinessFunctionUseCase,
+		getAllBusinessFunctionUseCase,
+	);
 
 	await fastify.register(documentRoutes, {
 		controller: documentController,

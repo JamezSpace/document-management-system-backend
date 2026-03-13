@@ -1,5 +1,6 @@
 interface BusinessFunctionPayload {
 	id: string;
+    subjectId: string;
 	code: string;
 	name: string;
 	description?: string | null;
@@ -9,6 +10,7 @@ interface BusinessFunctionPayload {
 
 class BusinessFunction {
 	private readonly id: string;
+    readonly subjectId: string;
 	readonly code: string;
 	readonly name: string;
 	readonly description: string | null;
@@ -17,6 +19,7 @@ class BusinessFunction {
 
 	constructor(payload: BusinessFunctionPayload) {
 		this.id = payload.id;
+        this.subjectId = payload.subjectId;
 		this.code = payload.code;
 		this.name = payload.name;
 		this.description = payload.description ?? null;

@@ -1,11 +1,9 @@
-import type { IdGeneratorPort } from "../../../../shared/application/port/IdGenerator.port.js";
 import type { BusinessFunctionEventsPort } from "../../ports/events/BusinessFunctionEvents.port.js";
 import type { BusinessFunctionRepositoryPort } from "../../ports/repos/BusinessFunctionRepository.port.js";
 import BusinessFunction from "../../../domain/BusinessFunction.js";
 
 class CreateBusinessFunctionUseCase {
 	constructor(
-		private readonly idGenerator: IdGeneratorPort,
 		private readonly businessFunctionEvents: BusinessFunctionEventsPort,
 		private readonly businessFunctionRepo: BusinessFunctionRepositoryPort,
 	) {}
@@ -13,16 +11,17 @@ class CreateBusinessFunctionUseCase {
 	async createBusinessFunction(
 		actorId: string,
 		payload: {
+            subjectId: string;
 			code: string;
 			name: string;
 			description?: string | null;
 		},
 	) {
-		const uuid = this.idGenerator.generate();
-		const businessFunctionId = "BUS-FUNC-" + uuid;
+		const businessFunctionId = "BUS-FUNC-" + payload.code;
 
 		const businessFunction = new BusinessFunction({
 			id: businessFunctionId,
+            subjectId: payload.subjectId,
 			code: payload.code,
 			name: payload.name,
 			description: payload.description ?? null,

@@ -80,6 +80,25 @@ class PostgresCorrespondenceSubjectRepoAdapter implements CorrespondenceSubjectR
 		}
 	}
 
+	async fetchAll(): Promise<CorrespondenceSubject[]> {
+		try {
+			const query = "SELECT * FROM document.correspondence_subjects;";
+			const result = await this.dbPool.query(query);
+
+			if (!result.rows || result.rows.length === 0) return [];
+
+			return result.rows.map((row) => this.toDomain(row));
+		} catch (error: any) {
+			throw new InfrastructureError(
+				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
+				{
+					category: Category.PERSISTENCE,
+					message: error.message,
+				},
+			);
+		}
+	}
+
 	async updateCorrespondenceSubject(
 		correspondenceSubjectId: string,
 		changesToMake: Partial<CorrespondenceSubject>,

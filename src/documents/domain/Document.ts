@@ -67,11 +67,14 @@ class Document {
 	}
 
 	public addVersion(mediaId: string, actorId: string): DocumentVersion {
-		const version = new DocumentVersion({
-			documentId: this.id,
-			versionNumber: this.currentVersion
+        const versionNumber = this.currentVersion
 				? this.currentVersion.versionNumber + 1
-				: 1,
+				: 1
+
+		const version = new DocumentVersion({
+            id: "DOC-VERSION-" + versionNumber,
+			documentId: this.id,
+			versionNumber,
 			mediaId,
 			lifecycle: {
 				currentState: LifecycleState.DRAFT,
@@ -96,9 +99,12 @@ class Document {
 			throw new Error("Records cannot be versioned.");
 		}
 
+        const versionNumber = this.currentVersion.versionNumber + 1
+
 		return new DocumentVersion({
+            id: "DOC-VERS-" + versionNumber,
 			documentId: this.id,
-			versionNumber: this.currentVersion.versionNumber + 1,
+			versionNumber,
 			mediaId: mediaId,
 			lifecycle: {
 				currentState: LifecycleState.DRAFT,

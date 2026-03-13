@@ -6,6 +6,8 @@ CREATE SCHEMA IF NOT EXISTS notifications;
 
 drop table if exists identity.users cascade;
 drop table if exists identity.staff;
+drop table if exists document.correspondence_subjects;
+drop table if exists document.business_functions;
 
 -- IDENTITY SCHEMA TYPES
 CREATE TYPE identity.user_status AS ENUM (
@@ -221,6 +223,7 @@ CREATE TABLE document.correspondence_subjects (
 
 CREATE TABLE document.business_functions (
     id VARCHAR(50) PRIMARY KEY,
+    subject_id VARCHAR(50) REFERENCES document.correspondence_subjects(id) NOT NULL,
     code VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -231,9 +234,9 @@ CREATE TABLE document.business_functions (
 -- ref number
 CREATE TABLE document.reference_sequences (
     year INT NOT NULL,
-    origin_unit_id REFERENCES identity.organizational_units NOT NULL,
+    origin_unit_id varchar(50) REFERENCES identity.organizational_units NOT NULL,
     recipient_code VARCHAR(30) NOT NULL,
-    subject_code REFERENCES documents.correspondence_subjects NOT NULL,
+    subject_code varchar(50) REFERENCES document.correspondence_subjects NOT NULL,
     current_value INT NOT NULL,
     UNIQUE(year, origin_unit_id, recipient_code, subject_code)
 );
@@ -243,26 +246,24 @@ CREATE TABLE document.documents (
 
     -- core
     title VARCHAR(200) NOT NULL,
-    owner_id REFERENCES identity.staff(id) NOT NULL,
+    owner_id varchar(50) REFERENCES identity.staff(id) NOT NULL,
     reference_number VARCHAR(50),
 
-    current_version_id REFERENCES document.document_versions(id),
-
     -- correspondence metadata
-    originating_unit_id REFERENCES identity.organizational_units(id) NOT NULL,
+    originating_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
     recipient_code VARCHAR(30) NOT NULL,
-    subject_code_id REFERENCES document.correspondence_subjects(id) NOT NULL,
+    subject_code_id varchar(50) REFERENCES document.correspondence_subjects(id) NOT NULL,
 
     -- classification metadata
     sensitivity document.sensitivity_level NOT NULL,
-    business_function_id REFERENCES document.business_functions(id) NOT NULL,
+    business_function_id varchar(50) REFERENCES document.business_functions(id) NOT NULL,
     document_type document.document_type NOT NULL,
 
-    classified_by REFERENCES identity.staff(id) NOT NULL,
+    classified_by varchar(50) REFERENCES identity.staff(id) NOT NULL,
     classified_at TIMESTAMPTZ NOT NULL,
 
     last_reclassified_at TIMESTAMPTZ,
-    last_reclassified_by REFERENCES identity.staff(id),
+    last_reclassified_by varchar(50) REFERENCES identity.staff(id),
 
     -- retention metadata
     policy_version INT NOT NULL,
@@ -277,26 +278,26 @@ CREATE TABLE document.documents (
 );
 
 -- documents classification
-CREATE TABLE documents.document_classification (
+CREATE TABLE document.document_classification (
     id VARCHAR(50) PRIMARY KEY,
     sensitivity document.sensitivity_level NOT NULL,
-    business_function_id REFERENCES document.volumes(id),
+    business_function_id varchar(50) REFERENCES document.business_functions(id),
     document_type 
 );
 
 -- documents versions
-CREATE TABLE documents.document_versions (
+CREATE TABLE document.document_versions (
     id VARCHAR(50) PRIMARY KEY,
-    document_id REFERENCES documents.documents(id) NOT NULL,
+    document_id varchar(50) REFERENCES document.documents(id) NOT NULL,
     version_number INT NOT NULL,
-    media_id REFERENCES media.media_assets(id) NOT NULL,
+    media_id varchar(50) REFERENCES media.media_assets(id) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    created_by REFERENCES identity.staff(id) NOT NULL,
+    created_by varchar(50) REFERENCES identity.staff(id) NOT NULL,
     lifecycle_state VARCHAR(50) NOT NULL,
 
     CONSTRAINT fk_document
         FOREIGN KEY (document_id)
-        REFERENCES documents.documents(id)
+        REFERENCES document.documents(id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_media
@@ -305,7 +306,7 @@ CREATE TABLE documents.document_versions (
 );
 
 -- documents media
-CREATE TABLE documents.document_media_assets (
+CREATE TABLE document.document_media_assets (
     document_id VARCHAR(50) NOT NULL,
     media_id VARCHAR(50) NOT NULL,
 
@@ -315,7 +316,7 @@ CREATE TABLE documents.document_media_assets (
 
     CONSTRAINT fk_document
         FOREIGN KEY (document_id)
-        REFERENCES documents.documents(id)
+        REFERENCES document.documents(id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_document_media

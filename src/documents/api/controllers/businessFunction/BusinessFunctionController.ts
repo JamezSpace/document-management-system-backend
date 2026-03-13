@@ -1,12 +1,15 @@
 import type CreateBusinessFunctionUseCase from "../../../application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
+import type GetAllBusinessFunctionsUseCase from "../../../application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
 
 class BusinessFunctionController {
 	constructor(
 		private readonly createBusinessFunctionUseCase: CreateBusinessFunctionUseCase,
+		private readonly getAllBusinessFunctionUseCase: GetAllBusinessFunctionsUseCase,
 	) {}
 
 	async createBusinessFunction(actorId: string, payload: {
-		code: string;
+		subjectId: string;
+        code: string;
 		name: string;
 		description?: string | null;
 	}) {
@@ -18,6 +21,12 @@ class BusinessFunctionController {
 
 		return newBusinessFunction;
 	}
+
+    async getAllBussFunctions() {
+        const allBussFunctions = await this.getAllBusinessFunctionUseCase.getAll()
+
+        return allBussFunctions;
+    }
 }
 
 export default BusinessFunctionController;

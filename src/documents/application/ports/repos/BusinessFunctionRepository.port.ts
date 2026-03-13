@@ -11,6 +11,8 @@ interface BusinessFunctionRepositoryPort {
 	findBusinessFunctionById(
 		businessFunctionId: string,
 	): Promise<BusinessFunction | null>;
+
+    fetchAll(): Promise<BusinessFunction[]>;
 }
 
 export type { BusinessFunctionRepositoryPort };

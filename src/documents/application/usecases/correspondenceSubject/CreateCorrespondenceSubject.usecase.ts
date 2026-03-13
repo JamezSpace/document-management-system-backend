@@ -1,11 +1,9 @@
-import type { IdGeneratorPort } from "../../../../shared/application/port/IdGenerator.port.js";
 import type { CorrespondenceSubjectEventsPort } from "../../ports/events/CorrespondenceSubjectEvents.port.js";
 import type { CorrespondenceSubjectRepositoryPort } from "../../ports/repos/CorrespondenceRepository.port.js";
 import CorrespondenceSubject from "../../../domain/CorrespondenceSubject.js";
 
 class CreateCorrespondenceSubjectUseCase {
 	constructor(
-		private readonly idGenerator: IdGeneratorPort,
 		private readonly correspondenceSubjectEvents: CorrespondenceSubjectEventsPort,
 		private readonly correspondenceSubjectRepo: CorrespondenceSubjectRepositoryPort,
 	) {}
@@ -15,8 +13,7 @@ class CreateCorrespondenceSubjectUseCase {
 		name: string;
 		description?: string | null;
 	}) {
-		const uuid = this.idGenerator.generate();
-		const correspondenceSubjectId = "CORR-SUBJ-" + uuid;
+		const correspondenceSubjectId = "CORR-SUBJ-" + payload.code;
 
 		const correspondenceSubject = new CorrespondenceSubject({
 			id: correspondenceSubjectId,
