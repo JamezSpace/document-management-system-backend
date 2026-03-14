@@ -1,10 +1,10 @@
-import type { DocumentPolicyPort } from "../../../shared/application/port/documentPolicy.port.js";
-import type { DocumentType } from "../../../shared/application/types/documentPolicy/documentPolicy.type.js";
+import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/DocumentRetentionPolicy.port.js";
+import type { DocumentType } from "../../../shared/application/types/DocumentRetentionPolicy/DocumentRetentionPolicy.type.js";
 import type { RetentionServicePort } from "../../application/ports/services/RetentionService.port.js";
 import type { RetentionMetadata } from "../../domain/metadata/Retention.metadata.js";
 
 class RetentionService implements RetentionServicePort {
-    constructor(private readonly policyPort: DocumentPolicyPort) {}
+    constructor(private readonly policyPort: DocumentRetentionPolicyPort) {}
 
     async computeRetention(
         documentType: DocumentType,

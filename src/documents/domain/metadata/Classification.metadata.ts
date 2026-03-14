@@ -1,4 +1,4 @@
-import type { DocumentType } from "../enum/documentTypes.enum.js";
+import type { DocumentType } from "../../../shared/application/enum/documentTypes.enum.js";
 import type { SensitivityLevel } from "../enum/sensitivityLevel.enum.js";
 
 interface ClassificationMetadata {

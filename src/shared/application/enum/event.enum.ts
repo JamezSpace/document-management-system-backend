@@ -65,6 +65,10 @@ enum MediaEvents {
     MEDIA_REPLACED = "media_replaced",
 }
 
+enum PolicyEvents {
+    DOC_RET_POLICY_CREATED = "document_retention_policy_created"
+}
+
 const GlobalEventTypes = {
 	identity_authority: {
         identity: {
@@ -80,7 +84,8 @@ const GlobalEventTypes = {
         correspondence_subject: CorrSubjectEvents,
         business_function: BussFunctionEvents
     },
-    media: MediaEvents
+    media: MediaEvents,
+    policy: PolicyEvents
 };
 
 

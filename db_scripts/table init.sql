@@ -327,13 +327,16 @@ CREATE TABLE document.document_media_assets (
 
 
 -- POLICY SCHEMA
-CREATE TABLE policy.documents (
+CREATE TABLE policy.documents_retention (
     id VARCHAR(50) PRIMARY KEY,
     policy_version INT NOT NULL,
     document_type document.document_type NOT NULL,
     archival_required BOOLEAN NOT NULL,
     retention_duration INT NOT NULL,
-    effective_from DATE NOT NULL
+    effective_from DATE NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+	UNIQUE(document_type, policy_version)
 );
 
 -- NOTIFICATIONS SCHEMA

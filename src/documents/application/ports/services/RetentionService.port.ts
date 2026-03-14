@@ -1,5 +1,5 @@
+import { DocumentType } from "../../../../shared/application/types/DocumentRetentionPolicy/DocumentRetentionPolicy.type.js";
 import type { RetentionMetadata } from "../../../domain/metadata/Retention.metadata.js";
-import { DocumentType } from "../../../../shared/application/types/documentPolicy/documentPolicy.type.js";
 
 interface RetentionServicePort {
 	computeRetention(
@@ -9,3 +9,4 @@ interface RetentionServicePort {
 }
 
 export type { RetentionServicePort };
+

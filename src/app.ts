@@ -1,19 +1,20 @@
+import fastifyCors from "@fastify/cors";
 import fastifyMultipart from "@fastify/multipart";
 import { fastifyPostgres } from "@fastify/postgres";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import fastify, {
-	type FastifyInstance,
-	type FastifyReply,
-	type FastifyRequest,
+    type FastifyInstance,
+    type FastifyReply,
+    type FastifyRequest,
 } from "fastify";
-import fastifyCors from "@fastify/cors";
 import DocumentSubsystem from "./documents/index.js";
+import RetentionService from "./documents/infrastructure/services/RetentionService.js";
 import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
 import IdentityAccessSubsystem from "./i & a/index.js";
+import PolicySubsystem from "./policy/index.js";
 import type { NexusAppError } from "./shared/errors/api/nexusAppError.type.js";
 import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.config.js";
-import PostgresDocumentPolicyAdapter from "./policy/infrastructre/persistence/PostgresDocumentPolicy.adapter.js";
-import RetentionService from "./documents/infrastructure/services/RetentionService.js";
+import PostgresDocumentRetentionPolicyAdapter from "./policy/infrastructre/persistence/PostgresDocumentPolicy.adapter.js";
 
 const server: FastifyInstance = fastify({
 	logger: true,
@@ -33,9 +34,10 @@ server.register(fastifyMultipart, {
 
 // load your plugins (your custom plugins) next
 server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
+server.register(PolicySubsystem, { prefix: "api/policy" });
 
 // documents subsystem
-const policyAdapter = new PostgresDocumentPolicyAdapter(server.pg);
+const policyAdapter = new PostgresDocumentRetentionPolicyAdapter(server.pg);
 const retentionService = new RetentionService(policyAdapter);
 
 server.register(DocumentSubsystem, { prefix: "api/document", retentionService });

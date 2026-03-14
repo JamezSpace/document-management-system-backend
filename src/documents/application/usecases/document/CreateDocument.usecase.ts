@@ -2,7 +2,7 @@ import type { IdGeneratorPort } from "../../../../shared/application/port/IdGene
 import type { MediaServicePort } from "../../../../shared/application/port/services/mediaService.port.js";
 import Document from "../../../domain/Document.js";
 import DocumentVersion from "../../../domain/DocumentVersion.js";
-import { DocumentType } from "../../../domain/enum/documentTypes.enum.js";
+import { DocumentType } from "../../../../shared/application/enum/documentTypes.enum.js";
 import { LifecycleState } from "../../../domain/enum/lifecycleState.enum.js";
 import type RetentionService from "../../../infrastructure/services/RetentionService.js";
 import type { DocumentEventsPort } from "../../ports/events/DocumentEvents.port.js";

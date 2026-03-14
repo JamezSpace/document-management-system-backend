@@ -1,9 +1,8 @@
 import { Type, type Static } from "@fastify/type-provider-typebox";
 import { CorrespondenceAddressee } from "../../domain/enum/correspondenceAddresee.enum.js";
-import { DocumentType } from "../../domain/enum/documentTypes.enum.js";
+import { DocumentType } from "../../../shared/application/enum/documentTypes.enum.js";
 import { LifecycleActions } from "../../domain/enum/lifecycleActions.enum.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
-import { RecipientSector } from "../../domain/enum/recipientSector.enum.js";
 import { SensitivityLevel } from "../../domain/enum/sensitivityLevel.enum.js";
 
 const documentSchema = Type.Object({
