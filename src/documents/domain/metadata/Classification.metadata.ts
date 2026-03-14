@@ -2,8 +2,8 @@ import type { DocumentType } from "../enum/documentTypes.enum.js";
 import type { SensitivityLevel } from "../enum/sensitivityLevel.enum.js";
 
 interface ClassificationMetadata {
-  sensitivity: SensitivityLevel
-  functionCode: string
+  sensitivity: SensitivityLevel;
+  functionCodeId: string;
   documentType: DocumentType;
 
   classifiedBy: string;

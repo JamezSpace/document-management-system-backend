@@ -5,22 +5,41 @@ import { mapPostgresError } from "../../../../../shared/infrastructure/persisten
 import { transformToCamelCase } from "../../../../../shared/infrastructure/persistence/primary/helpers/transformToCamelCase.helper.js";
 import type { StaffRepositoryPort } from "../../../application/ports/repos/staff/StaffRepository.port.js";
 import Staff from "../../../domain/entities/staff/Staff.js";
-import type AbstractStaffDetails from "../../../domain/views/staff/AbstractStaffDetails.js";
+import AbstractStaffDetails from "../../../domain/views/staff/AbstractStaffDetails.js";
 import StaffDetailsWithMedia from "../../../domain/views/staff/StaffDetailsWithMedia.js";
 
 class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
 
 	async fetchAllStaffMembersByUnit(unitId: string): Promise<AbstractStaffDetails[]> {
-		const query = "select * from identity.staff_details;";
+		const query = "select * from identity.staff_details where unit_id = $1;";
 
-		const result = await this.dbPool.query(query);
+		const result = await this.dbPool.query(query, [unitId]);
 		
         let staffDetails: AbstractStaffDetails[] = [];
 		result.rows.forEach((staffDetail) => {
-			const preparedUnit = transformToCamelCase(staffDetail);
+			let camelCasedStaffDetail = transformToCamelCase(staffDetail);
 
-			staffDetails.push(staffDetail);
+            const { auth_provider_id, unitId, unitSector, unitName, officeId, officeName, designationId, designationTitle, ...restOfStaffDetails } = camelCasedStaffDetail
+
+            let preparedStaffDetail = {
+                unit: {
+                   id: unitId,
+                   name: unitName,
+                   sector: unitSector 
+                },
+                office: {
+                    id: officeId,
+                    name: officeName,
+                },
+                designation: {
+                    id: designationId,
+                    title: designationTitle
+                }, 
+                ...restOfStaffDetails
+            } as AbstractStaffDetails
+
+			staffDetails.push(preparedStaffDetail);
 		});
 
 		return staffDetails;
@@ -115,12 +134,16 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
                 firstName: staffData.first_name,
                 lastName: staffData.last_name,
                 middleName: staffData.middle_name,
+                fullName: staffData.full_name,
                 email: staffData.email,
                 staffNumber: staffData.staff_number,
                 employmentType: staffData.employment_type,
                 status: staffData.status,
-                designation: staffData.designation,
-                office: staffData.office,
+                designationId: staffData.designation_id,
+                designationTitle: staffData.designation_title,
+                officeId: staffData.office_id,
+                officeName: staffData.office_name,
+                unitId: staffData.unit_id,
                 unitName: staffData.unit_name,
                 unitSector: staffData.unit_sector,
                 assetRole: staffData.asset_role,

@@ -7,14 +7,38 @@ import type { DocumentSchemaTypeForCreation } from "../../types/document.type.js
 class DocumentController {
 	constructor(private readonly createDocumentUseCase: DocumentCreation) {}
 
+    structureIncomingPayload(payload: DocumentSchemaTypeForCreation) {
+        return {
+            title: payload.title,
+            createdBy: payload.createdBy,
+            action: payload.action,
+                
+            correspondence: {
+                originatingUnitId: payload.originatingUnitId,
+                recipientUnitId: payload.recipientUnitId,
+                addressedTo: payload.addressedTo,
+                subjectCodeId: payload.subjectCodeId,
+                subjectCode: payload.subjectCode,
+            },
+            classification: {
+                functionCode: payload.functionCode,
+                functionCodeId: payload.functionCodeId,
+                sensitivity: payload.sensitivity,
+                documentType: payload.documentType
+            }
+        }
+    }
+
 	async createDocument(payload: DocumentSchemaTypeForCreation) {
+        const incomingDocument = this.structureIncomingPayload(payload);
+
 		let recipientCode!: string;
 
 		// correspondence matters
 		if (
-			payload.correspondence.addressedTo ===
+			incomingDocument.correspondence.addressedTo ===
 				CorrespondenceAddressee.UNIT &&
-			!payload.correspondence.recipientUnitId
+			!incomingDocument.correspondence.recipientUnitId
 		) {
 			throw new ApplicationError(
 				ApplicationErrorEnum.INCOMPLETE_REQUEST,
@@ -27,25 +51,27 @@ class DocumentController {
 		}
 
 		recipientCode =
-			payload.correspondence.addressedTo ===
+			incomingDocument.correspondence.addressedTo ===
 			CorrespondenceAddressee.EXTERNAL
 				? "EXT"
-				: payload.correspondence.recipientUnitId;
+				: incomingDocument.correspondence.recipientUnitId;
 
 		const newDoc = await this.createDocumentUseCase.createDocument({
-			ownerId: payload.createdBy,
-			title: payload.title,
+			ownerId: incomingDocument.createdBy,
+			title: incomingDocument.title,
 			correspondence: {
-                originatingUnitId: payload.correspondence.originatingUnitId,
+                originatingUnitId: incomingDocument.correspondence.originatingUnitId,
                 recipientCode,
-                subjectCode: payload.correspondence.subjectCode
+                subjectCodeId: incomingDocument.correspondence.subjectCodeId,
+                subjectCode: incomingDocument.correspondence.subjectCode
             },
-            action: payload.action,
+            action: incomingDocument.action,
             classification: {
-                businessFunctionId: payload.classification.businessFunctionId,
-                sensitivity: payload.classification.sensitivity,
-                documentType: payload.classification.documentType,
-                classifiedBy: payload.createdBy,
+                functionCodeId: incomingDocument.classification.functionCodeId,
+                functionCode: incomingDocument.classification.functionCode,
+                sensitivity: incomingDocument.classification.sensitivity,
+                documentType: incomingDocument.classification.documentType,
+                classifiedBy: incomingDocument.createdBy,
                 classifiedAt: new Date(),
             }
 		});

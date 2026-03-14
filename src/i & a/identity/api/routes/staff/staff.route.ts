@@ -174,7 +174,7 @@ async function staffRoutes(
 
 	// this retrieves all staff members in an office
 	fastify.get(
-		"/:officeId/staff",
+		"/:unitId/staff",
 		{ schema: { params: unitIdSchema } },
 		async (
 			request: FastifyRequest<{ Params: UnitIdType }>,
@@ -187,7 +187,7 @@ async function staffRoutes(
 
 			return reply.code(200).send({
 				success: true,
-				officeStaffMembers,
+				data: officeStaffMembers,
 			});
 		},
 	);

@@ -7,46 +7,43 @@ import { RecipientSector } from "../../domain/enum/recipientSector.enum.js";
 import { SensitivityLevel } from "../../domain/enum/sensitivityLevel.enum.js";
 
 const documentSchema = Type.Object({
-    ownerId: Type.String(),
-    title: Type.String(),
-    documentType: Type.Enum(DocumentType),
-    lifecycle: Type.Object({
-        currentState: Type.Union([Type.Enum(LifecycleState), Type.Null()]),
-        enteredAt: Type.String({
-            format: "date-time",
-        }),
-        enteredBy: Type.String(),
-    }),
+	ownerId: Type.String(),
+	title: Type.String(),
+	documentType: Type.Enum(DocumentType),
+	lifecycle: Type.Object({
+		currentState: Type.Union([Type.Enum(LifecycleState), Type.Null()]),
+		enteredAt: Type.String({
+			format: "date-time",
+		}),
+		enteredBy: Type.String(),
+	}),
 });
 
 const documentSchemaForCreation = Type.Object({
 	title: Type.String(),
 	createdBy: Type.String(),
-    action: Type.Enum(LifecycleActions),
-    
-    correspondence: Type.Object({
-        originatingUnitId: Type.String(),
-        recipientUnitId: Type.String(),
-        addressedTo: Type.Enum(CorrespondenceAddressee),
-        recipientName: Type.String(),
-        recipientSector: Type.Enum(RecipientSector),
-        subjectCode: Type.String(),
-        functionCode: Type.String(),
-    }),
-    classification: Type.Object({
-        businessFunctionId: Type.String(),
-        sensitivity: Type.Enum(SensitivityLevel),
-        documentType: Type.Enum(DocumentType)
-    })
+	action: Type.Enum(LifecycleActions),
+
+	// correspondence
+	originatingUnitId: Type.String(),
+	recipientUnitId: Type.String(),
+	addressedTo: Type.Enum(CorrespondenceAddressee),
+	subjectCodeId: Type.String(),
+	subjectCode: Type.String(),
+
+	// classification
+	functionCode: Type.String(),
+	functionCodeId: Type.String(),
+	sensitivity: Type.Enum(SensitivityLevel),
+	documentType: Type.Enum(DocumentType),
 });
 
 type DocumentSchemaType = Static<typeof documentSchema>;
 type DocumentSchemaTypeForCreation = Static<typeof documentSchemaForCreation>;
 
 export {
-    documentSchema,
-    documentSchemaForCreation,
-    type DocumentSchemaType,
-    type DocumentSchemaTypeForCreation
+	documentSchema,
+	documentSchemaForCreation,
+	type DocumentSchemaType,
+	type DocumentSchemaTypeForCreation,
 };
-

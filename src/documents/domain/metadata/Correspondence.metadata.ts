@@ -2,7 +2,7 @@
 interface CorrespondenceMetadata {
 	originatingUnitId: string; // ITCC
 	recipientCode: string
-	subjectCode: string;
+	subjectCodeId: string;
 }
 
 export type { CorrespondenceMetadata };
