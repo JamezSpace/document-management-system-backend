@@ -25,6 +25,12 @@ export function mapPostgresError(err: any) {
 				details: err,
 			};
 
+		case "22P02":
+			return {
+				summary: GlobalInfrastructureErrors.persistence.INVALID_INPUT_VALUE,
+				details: err,
+			};
+
 		default:
 			return {
 				summary:

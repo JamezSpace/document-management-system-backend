@@ -1,5 +1,5 @@
-import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/DocumentRetentionPolicy.port.js";
-import type { DocumentType } from "../../../shared/application/types/DocumentRetentionPolicy/DocumentRetentionPolicy.type.js";
+import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/documentRetentionPolicy.port.js";
+import { DocumentType } from "../../../shared/application/types/documentPolicy/documentPolicy.type.js";
 import type { RetentionServicePort } from "../../application/ports/services/RetentionService.port.js";
 import type { RetentionMetadata } from "../../domain/metadata/Retention.metadata.js";
 

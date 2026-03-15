@@ -5,16 +5,30 @@ import { mapPostgresError } from "../../../shared/infrastructure/persistence/pri
 import type { DocumentRepositoryPort } from "../../application/ports/repos/DocumentRepository.port.js";
 import type Document from "../../domain/Document.js";
 import DocumentEntity from "../../domain/Document.js";
+import DocumentVersion from "../../domain/DocumentVersion.js";
 
 class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
 
 	private toDomain(row: any): Document {
+        const version = row.current_version_id
+         ? new DocumentVersion({
+            documentId: row.id,
+            id: row.version_id,
+            mediaId: row.media_id,
+            versionNumber: row.version_number,
+            lifecycle: {
+                currentState: row.lifecycle_state,
+                stateEnteredAt: row.created_at,
+                stateEnteredBy: row.created_by
+            }
+         }) : null
+
 		return new DocumentEntity({
 			id: row.id,
 			ownerId: row.owner_id,
 			title: row.title,
-			version: null,
+            version,
 			referenceNumber: row.reference_number,
 			correspondence: {
 				originatingUnitId: row.originating_unit_id,
@@ -62,6 +76,8 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				RETURNING *;
 			`;
 
+            console.log(document);
+            
 			const result = await this.dbPool.query(query, [
 				document.id,
 				document.title,
@@ -88,7 +104,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 			return this.toDomain(result.rows[0]);
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
-
+            
 			throw new InfrastructureError(
 				postgresError.summary,
 				{
@@ -103,7 +119,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 
 	async findDocumentById(id: string): Promise<Document | null> {
 		try {
-			const query = "SELECT * FROM document.documents WHERE id = $1 LIMIT 1;";
+			const query = "SELECT * FROM document.full_document_details WHERE id = $1 LIMIT 1;";
 
 			const result = await this.dbPool.query(query, [id]);
 

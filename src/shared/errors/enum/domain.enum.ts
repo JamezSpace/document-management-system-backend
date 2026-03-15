@@ -54,6 +54,10 @@ export const DocumentDomainErrors = {
     INVALID_DOCUMENT_STATE: {
         codeName: "invalid_document_state",
         httpStatusCode: StatusCodes.BAD_REQUEST
+    },
+    INVALID_OPERATION: {
+        codeName: "invalid_operation",
+        httpStatusCode: StatusCodes.NOT_ACCEPTABLE
     }
 } as const;
 

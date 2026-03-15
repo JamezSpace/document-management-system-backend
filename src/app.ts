@@ -34,13 +34,21 @@ server.register(fastifyMultipart, {
 
 // load your plugins (your custom plugins) next
 server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
-server.register(PolicySubsystem, { prefix: "api/policy" });
 
-// documents subsystem
-const policyAdapter = new PostgresDocumentRetentionPolicyAdapter(server.pg);
-const retentionService = new RetentionService(policyAdapter);
+server.after(() => {
+	// documents subsystem
+	const policyAdapter = new PostgresDocumentRetentionPolicyAdapter(
+		server.pg,
+	);
+	const retentionService = new RetentionService(policyAdapter);
 
-server.register(DocumentSubsystem, { prefix: "api/document", retentionService });
+	server.register(DocumentSubsystem, {
+		prefix: "api/document",
+		retentionService,
+	});
+
+	server.register(PolicySubsystem, { prefix: "api/policy" });
+});
 
 // load decorators next
 

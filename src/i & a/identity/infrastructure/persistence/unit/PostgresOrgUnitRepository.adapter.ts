@@ -3,8 +3,8 @@ import InfrastructureError from "../../../../../shared/errors/InfrastructureErro
 import { Category } from "../../../../../shared/errors/enum/infrastructure.enum.js";
 import { mapPostgresError } from "../../../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import { transformToCamelCase } from "../../../../../shared/infrastructure/persistence/primary/helpers/transformToCamelCase.helper.js";
-import type { OrgUnitRepositoryPort } from "../../../application/ports/repos/OrgUnitRepository.port.js";
-import type OrganizationalUnit from "../../../domain/unit/OrganizationalUnit.js";
+import type { OrgUnitRepositoryPort } from "../../../application/ports/repos/unit/OrgUnitRepository.port.js";
+import type OrganizationalUnit from "../../../domain/entities/unit/OrganizationalUnit.js";
 
 class PostgresOrgUnitRepositoryAdapter implements OrgUnitRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -57,11 +57,11 @@ class PostgresOrgUnitRepositoryAdapter implements OrgUnitRepositoryPort {
 
 		const result = await this.dbPool.query(query);
 
-		let units: any[] = [];
+		let units: OrganizationalUnit[] = [];
 		result.rows.forEach((unit) => {
 			const preparedUnit = transformToCamelCase(unit);
 
-			units.push(preparedUnit);
+			units.push(preparedUnit as OrganizationalUnit);
 		});
 
 		return units;

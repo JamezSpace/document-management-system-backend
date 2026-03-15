@@ -3,9 +3,9 @@ import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.a
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
 import DocumentRetentionPolicyController from "./api/controllers/DocumentRetentionPolicyController.js";
 import documentRetentionPolicyRoutes from "./api/routes/docRetPolicy.route.js";
-import CreateDocumentRetentionPolicyUsecase from "./application/usecase/CreateDocumentRetentionPolicy.usecase.js";
-import PostgresDocumentRetentionPolicyAdapter from "./infrastructre/persistence/PostgresDocumentPolicy.adapter.js";
+import CreateDocumentRetentionPolicyUsecase from "./application/usecases/CreateDocumentRetentionPolicy.usecase.js";
 import DocumentRetentionPolicyEventsAdapter from "./infrastructre/adapters/DocRetPolicyEvents.adapter.js";
+import PostgresDocumentRetentionPolicyAdapter from "./infrastructre/persistence/PostgresDocumentPolicy.adapter.js";
 
 export default async function PolicySubsystem(fastify: FastifyInstance) {
     const postgres = fastify.pg;

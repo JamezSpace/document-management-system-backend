@@ -1,8 +1,8 @@
 enum SensitivityLevel {
-  PUBLIC = "PUBLIC",
-  INTERNAL = "INTERNAL",
-  CONFIDENTIAL = "CONFIDENTIAL",
-  RESTRICTED = "RESTRICTED"
+  PUBLIC = "public",
+  INTERNAL = "internal",
+  CONFIDENTIAL = "confidential",
+  RESTRICTED = "restricted"
 }
 
 export { 

@@ -14,7 +14,7 @@ async function documentRetentionPolicyRoutes(
     const documentRetentionPolicyController = options.controller;
 
     fastify.post(
-        "/retention-policy",
+        "/retention",
         { schema: { body: createDocumentRetentionPolicySchema } },
         async (
             request: FastifyRequest<{ Body: CreateDocumentRetentionPolicyType }>,

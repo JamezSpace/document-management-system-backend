@@ -3,55 +3,90 @@ import type { DocumentType } from "../../../shared/application/enum/documentType
 import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/documentRetentionPolicy.port.js";
 import type { DocumentRetentionPolicyRepositoryPort } from "../../application/port/repo/DocRetPolicyRepo.port.js";
 import DocumentRetentionPolicy from "../../domain/DocumentRetentionPolicy.js";
+import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
+import { Category } from "../../../shared/errors/enum/infrastructure.enum.js";
 
-class PostgresDocumentRetentionPolicyAdapter implements DocumentRetentionPolicyPort, DocumentRetentionPolicyRepositoryPort  {
+class PostgresDocumentRetentionPolicyAdapter
+	implements
+		DocumentRetentionPolicyPort,
+		DocumentRetentionPolicyRepositoryPort
+{
 	constructor(private readonly dbPool: PostgresDb) {}
 
 	async getRetentionData(documentType: DocumentType) {
-		const result = await this.dbPool.query(
-			`SELECT policy_version, retention_duration, archival_required
-            FROM policy.documents_retention
+		try {
+			const result = await this.dbPool.query(
+				`SELECT policy_version, retention_duration, archival_required
+            FROM policy.document_retention
             WHERE document_type = $1 ORDER BY policy_version DESC`,
-			[documentType],
-		);
+				[documentType],
+			);
 
-		const policyLoadedFromDb = result.rows[0];
+			const policyLoadedFromDb = result.rows[0];
 
-		return {
-			policyVersion: policyLoadedFromDb.policy_version,
-			duration: policyLoadedFromDb.retention_duration,
-			archivalRequired: policyLoadedFromDb.archival_required,
-		};
+			return {
+				policyVersion: policyLoadedFromDb.policy_version,
+				duration: policyLoadedFromDb.retention_duration,
+				archivalRequired: policyLoadedFromDb.archival_required,
+			};
+		} catch (error: any) {
+			const postgresError = mapPostgresError(error);
+
+			console.log(error);
+
+			throw new InfrastructureError(postgresError.summary, {
+				category: Category.PERSISTENCE,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+				column: postgresError.details?.column,
+			});
+		}
 	}
 
-    private toDomain(row: any): DocumentRetentionPolicy {
-        return new DocumentRetentionPolicy({
-            id: row.id,
-            archivalRequired: row.archival_required,
-            documentType: row.document_type,
-            effectiveFrom: row.effective_from,
-            retentionDuration: row.retention_duration,
-            createdAt: row.created_at,
-            policyVersion: row.policy_version
-        })
-    }
+	private toDomain(row: any): DocumentRetentionPolicy {
+		return new DocumentRetentionPolicy({
+			id: row.id,
+			archivalRequired: row.archival_required,
+			documentType: row.document_type,
+			effectiveFrom: row.effective_from,
+			retentionDuration: row.retention_duration,
+			createdAt: row.created_at,
+			policyVersion: row.policy_version,
+		});
+	}
 
-    async save(documentRetentionPolicy: DocumentRetentionPolicy): Promise<DocumentRetentionPolicy> {
-        const query = `INSERT INTO policy.document_retention_policies (id,document_type,policy_version,retention_duration,archival_required,effective_from)
+	async save(
+		documentRetentionPolicy: DocumentRetentionPolicy,
+	): Promise<DocumentRetentionPolicy> {
+		try {
+			const query = `INSERT INTO policy.document_retention (id,document_type,policy_version,retention_duration,archival_required,effective_from)
         VALUES (
-            $1, $2, policy.next_policy_version($2), $3, $4, $5
-        );`
+            $1, $2, policy.gen_next_policy_version($2), $3, $4, $5
+        ) RETURNING id, document_type, retention_duration, archival_required, effective_from, created_at, policy_version;`;
 
-        const newPolicy = await this.dbPool.query(query, [
-            documentRetentionPolicy.id, 
-            documentRetentionPolicy.documentType,
-            documentRetentionPolicy.retentionDuration,
-            documentRetentionPolicy.archivalRequired,
-            documentRetentionPolicy.effectiveFrom
-        ])
+			const newPolicy = await this.dbPool.query(query, [
+				documentRetentionPolicy.id,
+				documentRetentionPolicy.documentType,
+				documentRetentionPolicy.retentionDuration,
+				documentRetentionPolicy.archivalRequired,
+				documentRetentionPolicy.effectiveFrom,
+			]);
 
-        return this.toDomain(newPolicy.rows[0])
-    }
+			return this.toDomain(newPolicy.rows[0]);
+		} catch (error: any) {
+			const postgresError = mapPostgresError(error);
+
+			console.log(error);
+
+			throw new InfrastructureError(postgresError.summary, {
+				category: Category.PERSISTENCE,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+				column: postgresError.details?.column,
+			});
+		}
+	}
 }
 
 export default PostgresDocumentRetentionPolicyAdapter;

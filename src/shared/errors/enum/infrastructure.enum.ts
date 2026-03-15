@@ -14,6 +14,10 @@ const PersistenceErrors = {
         codeName: "not_found",
         httpStatusCode: StatusCodes.NOT_FOUND,
     },
+    INVALID_INPUT_VALUE: {
+        codeName: "invalid_input",
+        httpStatusCode: StatusCodes.NOT_ACCEPTABLE,
+    },
     UNREGISTERED_ERROR: {
         codeName: "unregistered_error",
         httpStatusCode: StatusCodes.INTERNAL_SERVER_ERROR,

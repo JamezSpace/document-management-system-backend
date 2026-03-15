@@ -1,7 +1,7 @@
 enum DocumentType {
-    MEMO = "MEMORANDUM",
-    LETTER = "LETTER",
-    REPORT = "REPORT"
+    MEMO = "memorandum",
+    LETTER = "letter",
+    REPORT = "report"
 }
 
 export { DocumentType };

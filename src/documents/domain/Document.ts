@@ -1,3 +1,5 @@
+import DomainError from "../../shared/errors/DomainError.error.js";
+import { GlobalDomainErrors } from "../../shared/errors/enum/domain.enum.js";
 import DocumentVersion from "./DocumentVersion.js";
 import { DisposalAction } from "./enum/disposalAction.enum.js";
 import { LifecycleState } from "./enum/lifecycleState.enum.js";
@@ -10,11 +12,13 @@ interface DocumentPayload {
 	ownerId: string;
 	title: string;
 	version?: DocumentVersion | null;
-    referenceNumber?: string | null;
+	referenceNumber?: string | null;
 
 	classification: ClassificationMetadata;
-    correspondence: CorrespondenceMetadata;
+	correspondence: CorrespondenceMetadata;
 	retention: RetentionMetadata;
+
+    createdAt?: Date
 }
 
 /**
@@ -32,11 +36,11 @@ class Document {
 	readonly ownerId: string;
 	readonly title: string;
 	private currentVersion: DocumentVersion | null;
-    readonly referenceNumber: string | null;
+	readonly referenceNumber: string | null;
 
 	// Governance Domains (Value Objects)
 	classification: ClassificationMetadata;
-    correspondence: CorrespondenceMetadata;
+	correspondence: CorrespondenceMetadata;
 	readonly retention: RetentionMetadata;
 
 	// Audit
@@ -52,13 +56,13 @@ class Document {
 		this.ownerId = payload.ownerId;
 		this.title = payload.title;
 		this.currentVersion = payload.version ?? null;
-        this.referenceNumber = payload.referenceNumber ?? null;
+		this.referenceNumber = payload.referenceNumber ?? null;
 
 		this.classification = payload.classification;
-        this.correspondence = payload.correspondence;
+		this.correspondence = payload.correspondence;
 		this.retention = payload.retention;
 
-		this.createdAt = new Date();
+		this.createdAt = payload.createdAt ?? new Date();
 		this.modifiedAt = null;
 	}
 
@@ -66,13 +70,13 @@ class Document {
 		return this.currentVersion;
 	}
 
-	public addVersion(mediaId: string, actorId: string): DocumentVersion {
-        const versionNumber = this.currentVersion
-				? this.currentVersion.versionNumber + 1
-				: 1
+	public addVersion(mediaId: string, actorId: string, uuid: string): DocumentVersion {
+		const versionNumber = this.currentVersion
+			? this.currentVersion.versionNumber + 1
+			: 1;
 
 		const version = new DocumentVersion({
-            id: "DOC-VERSION-" + versionNumber,
+			id: "DOC-VERSION-" + uuid,
 			documentId: this.id,
 			versionNumber,
 			mediaId,
@@ -87,22 +91,30 @@ class Document {
 		return version;
 	}
 
-	public createNextVersion(mediaId: string): DocumentVersion {
+	public createNextVersion(mediaId: string, uuid: string): DocumentVersion {
 		if (!this.currentVersion) {
-			throw new Error("Document has no version yet.");
+			throw new DomainError(GlobalDomainErrors.document.INVALID_OPERATION, {
+                details: {
+                    message: "Document has no version yet."
+                }
+            })
 		}
 
 		if (
 			this.currentVersion.lifecycle.currentState ===
 			LifecycleState.DECLARED_RECORD
 		) {
-			throw new Error("Records cannot be versioned.");
+            throw new DomainError(GlobalDomainErrors.document.INVALID_OPERATION, {
+                details: {
+                    message: "Records cannot be versioned."
+                }
+            })
 		}
 
-        const versionNumber = this.currentVersion.versionNumber + 1
+		const versionNumber = this.currentVersion.versionNumber + 1;
 
-		return new DocumentVersion({
-            id: "DOC-VERS-" + versionNumber,
+		const newVersion = new DocumentVersion({
+			id: "DOC-VERS-" + uuid,
 			documentId: this.id,
 			versionNumber,
 			mediaId: mediaId,
@@ -112,6 +124,10 @@ class Document {
 				stateEnteredBy: this.ownerId,
 			},
 		});
+
+		this.currentVersion = newVersion;
+
+		return newVersion;
 	}
 
 	public reclassify(

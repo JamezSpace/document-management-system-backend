@@ -3,6 +3,6 @@ RETURNS INT
 LANGUAGE sql
 as $$
     SELECT COALESCE(MAX(policy_version), 0) + 1
-    FROM policy.documents_retention
+    FROM policy.document_retention
     WHERE document_type = doc_type
 $$

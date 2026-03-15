@@ -1,4 +1,4 @@
-import type CreateDocumentRetentionPolicyUsecase from "../../application/usecase/CreateDocumentRetentionPolicy.usecase.js";
+import type CreateDocumentRetentionPolicyUsecase from "../../application/usecases/CreateDocumentRetentionPolicy.usecase.js";
 import type { CreateDocumentRetentionPolicyType } from "../types/docRetPolicy.type.js";
 
 class DocumentRetentionPolicyController {

@@ -16,9 +16,9 @@ class PostgresOfficeRepositoryAdapter implements OfficeRepositoryPort {
 
 		let offices: any[] = [];
 		result.rows.forEach((unit) => {
-			const preparedUnit = transformToCamelCase(unit);
+			const preparedOffice = transformToCamelCase(unit);
 
-			offices.push(preparedUnit);
+			offices.push(preparedOffice);
 		});
 
 		return offices;
