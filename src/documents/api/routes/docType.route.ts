@@ -2,7 +2,9 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type DocumentTypeController from "../controllers/documentType/DocumentTypeController.js";
 import {
 	docTypeCreationSchema,
+	docTypeIdSchema,
 	type DocTypeCreationType,
+    type DocTypeIdSchemaType,
 } from "../types/docType.type.js";
 
 async function documentTypeRoutes(
@@ -43,6 +45,7 @@ async function documentTypeRoutes(
 		},
 	);
 
+    // all document types
     fastify.get(
 		"/types",
 		async (request: FastifyRequest, reply: FastifyReply) => {
@@ -62,6 +65,33 @@ async function documentTypeRoutes(
                 data: docTypes
             })
         });
+
+    // fetch a specific document type
+    fastify.get("/type/:typeId", {schema: {params: docTypeIdSchema} }, async(request: FastifyRequest<{Params: DocTypeIdSchemaType}>, reply: FastifyReply) => {
+        const { uid } = request.user!;
+			const { typeId } = request.params;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+			// fetch document type by id
+			const docType =
+				await docTypeController.getDocTypeById(typeId);
+
+            return docType 
+            ? 
+			 reply.code(200).send({
+				success: true,
+				data: docType,
+			}) :
+            reply.code(404).send({
+				success: true,
+				data: null
+			})
+    })
 }
 
 export default documentTypeRoutes;

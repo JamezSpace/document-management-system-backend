@@ -60,8 +60,8 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 			const query = `
 				INSERT INTO document.documents (
 					id, title, owner_id, reference_number, current_version_id,
-					originating_unit_id, recipient_code, subject_code_id,
-					sensitivity, business_function_id, document_type,
+					originating_unit_id, recipient_code, subject_code_id, direction,
+					sensitivity, business_function_id, document_type_id,
 					classified_by, classified_at, last_reclassified_at, last_reclassified_by,
 					policy_version, retention_schedule_id, retention_start_date, disposal_eligibility_date, archival_required,
 					created_at, updated_at
@@ -71,7 +71,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 					$6, $7, $8,
 					$9, $10, $11,
 					$12, $13, $14, $15,
-					$16, $17, $18, $19, $20,
+					$16, $17, $18, $19, $20, $21,
 					now(), null
 				)
 				RETURNING *;
@@ -88,6 +88,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				document.correspondence.originatingUnitId,
 				document.correspondence.recipientCode,
 				document.correspondence.subjectCodeId,
+				document.correspondence.direction,
 				document.classification.sensitivity,
 				document.classification.functionCodeId,
 				document.classification.documentTypeId,
@@ -102,7 +103,10 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				document.retention.archivalRequired,
 			]);
 
-			return this.toDomain(result.rows[0]);
+            const dbResponse = result.rows[0];
+            console.log("Database Response", dbResponse);
+            
+			return this.toDomain(dbResponse);
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
             
@@ -218,6 +222,27 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 		]);
 	}
 
+    async fetchAllDocumentsAuthoredByStaff(staffId: string): Promise<Document[]> {
+        try {
+            const query = `
+                SELECT * FROM document.full_document_details WHERE owner_id = $1
+            `;
+
+            const result = await this.dbPool.query(query, [staffId]);
+
+            if (!result.rows || result.rows.length === 0) return [];
+
+            return result.rows.map((row) => this.toDomain(row));
+        } catch (error: any) {
+            throw new InfrastructureError(
+                GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
+                {
+                    category: Category.PERSISTENCE,
+                    message: error.message,
+                },
+            );
+        }
+    }
 }
 
 export default PostgresqlDocumentRepositoryAdapter;

@@ -263,7 +263,7 @@ CREATE TABLE document.documents (
 
     -- correspondence metadata
     originating_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
-    recipient_code VARCHAR(30) NOT NULL,
+    recipient_code VARCHAR(50) NOT NULL,
     subject_code_id varchar(50) REFERENCES document.correspondence_subjects(id) NOT NULL,
     direction document.correspondence_direction NOT NULL,
 
@@ -289,6 +289,10 @@ CREATE TABLE document.documents (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ
 );
+
+-- drop view document.full_document_details;
+-- alter table document.documents
+-- alter column recipient_code type varchar(50);
 
 -- documents versions
 CREATE TABLE document.document_versions (

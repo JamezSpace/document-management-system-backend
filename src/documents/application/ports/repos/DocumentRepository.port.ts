@@ -3,6 +3,8 @@ import type Document from "../../../domain/entities/document/Document.js";
 interface DocumentRepositoryPort {
     save(document: Document): Promise<Document>;
 
+    fetchAllDocumentsAuthoredByStaff(staffId: string): Promise<Document[]>
+
     findDocumentById(id: string): Promise<Document | null>;
 
     editDocument(document: Document): Promise<Document | null>;

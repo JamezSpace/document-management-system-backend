@@ -1,11 +1,16 @@
 import ApplicationError from "../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application.enum.js";
 import type DocumentCreation from "../../../application/usecases/document/CreateDocument.usecase.js";
+import type GetAllDocumentsByStaffUseCase from "../../../application/usecases/document/GetAllDocumentsByStaff.usecase.js";
+import type GetDocumentByIdUsecase from "../../../application/usecases/document/GetDocById.usecase.js";
 import { CorrespondenceAddressee } from "../../../domain/enum/correspondenceAddresee.enum.js";
 import type { DocumentSchemaTypeForCreation } from "../../types/document.type.js";
 
 class DocumentController {
-	constructor(private readonly createDocumentUseCase: DocumentCreation) {}
+	constructor(private readonly createDocumentUseCase: DocumentCreation,
+        private readonly getAllDocumentsByStaffUsecase: GetAllDocumentsByStaffUseCase,
+        private readonly getDocumentByIdUsecase: GetDocumentByIdUsecase
+    ) {}
 
     structureIncomingPayload(payload: DocumentSchemaTypeForCreation) {
         return {
@@ -80,6 +85,18 @@ class DocumentController {
 
 		return newDoc;
 	}
+
+    async fetchAllDocsByStaff(staffId: string) {
+        const docsByStaff = await this.getAllDocumentsByStaffUsecase.getAllDocumentsAuthoredByStaff(staffId);
+
+        return docsByStaff;
+    }
+
+    async fetchDocById(docId: string) {
+        const doc = await this.getDocumentByIdUsecase.getDocById(docId);
+
+        return doc;
+    }
 }
 
 export default DocumentController;

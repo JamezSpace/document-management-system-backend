@@ -5,6 +5,14 @@ import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
 import { SensitivityLevel } from "../../domain/enum/sensitivityLevel.enum.js";
 import { CorrespondenceDirection } from "../../domain/enum/correspondenceDirection.enum.js";
 
+const documentIdSchema = Type.Object({
+    docId: Type.String()
+})
+
+const docStaffIdSchema = Type.Object({
+    staffId: Type.String()
+})
+
 const documentSchema = Type.Object({
 	ownerId: Type.String(),
 	title: Type.String(),
@@ -40,10 +48,16 @@ const documentSchemaForCreation = Type.Object({
 
 type DocumentSchemaType = Static<typeof documentSchema>;
 type DocumentSchemaTypeForCreation = Static<typeof documentSchemaForCreation>;
+type DocumentIdSchemaType = Static<typeof documentIdSchema>;
+type DocStaffIdSchemaType = Static<typeof docStaffIdSchema>;
 
 export {
+    documentIdSchema,
+    docStaffIdSchema,
 	documentSchema,
 	documentSchemaForCreation,
 	type DocumentSchemaType,
 	type DocumentSchemaTypeForCreation,
+    type DocumentIdSchemaType,
+    type DocStaffIdSchemaType
 };

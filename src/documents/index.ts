@@ -30,6 +30,9 @@ import documentTypeRoutes from "./api/routes/docType.route.js";
 import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
 import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
 import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
+import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocumentsByStaff.usecase.js";
+import GetDocumentTypeByIdUsecase from "./application/usecases/documentType/GetDocTypeById.usecase.js";
+import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -62,7 +65,7 @@ export default async function DocumentSubsystem(
 		postgres,
 	);
 	const docTypeRepository = new PostgresDocTypeRepoAdapter(postgres);
-    
+
 	const refSequenceRepository =
 		new PostgresReferenceSequenceRepositoryAdapter(postgres);
 
@@ -74,9 +77,7 @@ export default async function DocumentSubsystem(
 	const bussFunctionEventsAdapter = new BusinessFunctionEventsAdapter(
 		globalEventBus,
 	);
-	const docTypeEventsAdapter = new DocumentTypeEventsAdapter(
-		globalEventBus,
-	);
+	const docTypeEventsAdapter = new DocumentTypeEventsAdapter(globalEventBus);
 
 	// service
 	const refNumberService = new ReferenceNumberService(refSequenceRepository);
@@ -87,11 +88,19 @@ export default async function DocumentSubsystem(
 		idGenerator,
 		documentRepository,
 		docVersionRepository,
-        docTypeRepository,
+		docTypeRepository,
 		documentEventsAdapter,
 		refNumberService,
 		mediaService,
 		retentionService,
+	);
+
+	const getAllDocumentsUseCase = new GetAllDocumentsByStaffUseCase(
+		documentRepository,
+	);
+
+    const getDocumentByIdUseCase = new GetDocumentByIdUsecase(
+		documentRepository,
 	);
 
 	// application layer - correspondence subjects
@@ -103,6 +112,7 @@ export default async function DocumentSubsystem(
 	const getAllCorrespondenceSubjectUseCase =
 		new GetAllCorrespondenceSubjectUseCase(corrSubjectRepository);
 
+	// application layer - business functions
 	const getAllBusinessFunctionUseCase = new GetAllBusinessFunctionsUseCase(
 		bussFunctionRepository,
 	);
@@ -112,6 +122,7 @@ export default async function DocumentSubsystem(
 		bussFunctionRepository,
 	);
 
+	// application layer - document types
 	const createDocumentTypeUseCase = new CreateDocumentTypeUsecase(
 		idGenerator,
 		docTypeRepository,
@@ -122,8 +133,16 @@ export default async function DocumentSubsystem(
 		docTypeRepository,
 	);
 
+	const getDocumentTypeByIdUseCase = new GetDocumentTypeByIdUsecase(
+		docTypeRepository,
+	);
+
 	// controller Layer
-	const documentController = new DocumentController(createNewDocumentUseCase);
+	const documentController = new DocumentController(
+		createNewDocumentUseCase,
+		getAllDocumentsUseCase,
+        getDocumentByIdUseCase
+	);
 
 	const corrSubjectController = new CorrespondenceSubjectController(
 		createCorrSubjectUsecase,
@@ -137,7 +156,8 @@ export default async function DocumentSubsystem(
 
 	const documentTypeController = new DocumentTypeController(
 		createDocumentTypeUseCase,
-        getAllDocumentTypeUseCase
+		getAllDocumentTypeUseCase,
+        getDocumentTypeByIdUseCase
 	);
 
 	await fastify.register(documentRoutes, {
