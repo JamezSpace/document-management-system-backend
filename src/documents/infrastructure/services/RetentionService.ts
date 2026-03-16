@@ -1,5 +1,4 @@
 import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/documentRetentionPolicy.port.js";
-import { DocumentType } from "../../../shared/application/types/documentPolicy/documentPolicy.type.js";
 import type { RetentionServicePort } from "../../application/ports/services/RetentionService.port.js";
 import type { RetentionMetadata } from "../../domain/metadata/Retention.metadata.js";
 
@@ -7,11 +6,11 @@ class RetentionService implements RetentionServicePort {
     constructor(private readonly policyPort: DocumentRetentionPolicyPort) {}
 
     async computeRetention(
-        documentType: DocumentType,
+        documentTypeId: string,
         retentionStartDate: Date
     ): Promise<RetentionMetadata> {
 
-        const policy = await this.policyPort.getRetentionData(documentType);
+        const policy = await this.policyPort.getRetentionData(documentTypeId);
 
         const disposalEligibilityDate = new Date(retentionStartDate);
         disposalEligibilityDate.setFullYear(
@@ -20,7 +19,7 @@ class RetentionService implements RetentionServicePort {
 
         return {
             policyVersion: policy.policyVersion,
-            retentionScheduleId: documentType,
+            retentionScheduleId: policy.retentionScheduleId,
             retentionStartDate,
             disposalEligibilityDate,
             archivalRequired: policy.archivalRequired

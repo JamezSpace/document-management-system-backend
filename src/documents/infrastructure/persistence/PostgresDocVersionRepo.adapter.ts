@@ -4,14 +4,13 @@ import InfrastructureError from "../../../shared/errors/InfrastructureError.erro
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import type { DocumentVersionRepositoryPort } from "../../application/ports/repos/DocumentVersionRepository.port.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
-import type DocumentVersion from "../../domain/DocumentVersion.js";
-import DocumentVersionEntity from "../../domain/DocumentVersion.js";
+import DocumentVersion from "../../domain/entities/document/DocumentVersion.js";
 
 class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
 
 	private toDomain(row: any): DocumentVersion {
-		return new DocumentVersionEntity({
+		return new DocumentVersion({
 			id: row.id,
 			documentId: row.document_id,
 			versionNumber: row.version_number,

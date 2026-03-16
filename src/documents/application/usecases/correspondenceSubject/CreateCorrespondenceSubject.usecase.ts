@@ -1,6 +1,6 @@
+import CorrespondenceSubject from "../../../domain/entities/correspondenceSubject/CorrespondenceSubject.js";
 import type { CorrespondenceSubjectEventsPort } from "../../ports/events/CorrespondenceSubjectEvents.port.js";
 import type { CorrespondenceSubjectRepositoryPort } from "../../ports/repos/CorrespondenceRepository.port.js";
-import CorrespondenceSubject from "../../../domain/CorrespondenceSubject.js";
 
 class CreateCorrespondenceSubjectUseCase {
 	constructor(

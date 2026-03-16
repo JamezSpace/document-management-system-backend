@@ -1,4 +1,4 @@
-import Document from "../../../domain/Document.js";
+import Document from "../../../domain/entities/document/Document.js";
 import type { DocumentEventsPort } from "../../ports/events/DocumentEvents.port.js";
 import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepository.port.js";
 import { DocumentAction } from "../../types/documentDecisionAction.type.js";

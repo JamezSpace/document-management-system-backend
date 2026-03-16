@@ -36,7 +36,7 @@ async function businessFunctionRoutes(
 
 			return reply.code(201).send({
 				success: true,
-				bussFunction: newBusinessFunction,
+				data: newBusinessFunction,
 			});
         }
 	);

@@ -3,9 +3,9 @@ import { Category, GlobalInfrastructureErrors } from "../../../shared/errors/enu
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import type { DocumentRepositoryPort } from "../../application/ports/repos/DocumentRepository.port.js";
-import type Document from "../../domain/Document.js";
-import DocumentEntity from "../../domain/Document.js";
-import DocumentVersion from "../../domain/DocumentVersion.js";
+import type Document from "../../domain/entities/document/Document.js";
+import DocumentEntity from "../../domain/entities/document/Document.js";
+import DocumentVersion from "../../domain/entities/document/DocumentVersion.js";
 
 class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -34,11 +34,12 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				originatingUnitId: row.originating_unit_id,
 				recipientCode: row.recipient_code,
 				subjectCodeId: row.subject_code_id,
+                direction: row.direction
 			},
 			classification: {
 				sensitivity: row.sensitivity,
 				functionCodeId: row.business_function_id,
-				documentType: row.document_type,
+				documentTypeId: row.document_type_id,
 				classifiedBy: row.classified_by,
 				classifiedAt: row.classified_at,
 				lastReclassifiedAt: row.last_reclassified_at,
@@ -89,7 +90,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				document.correspondence.subjectCodeId,
 				document.classification.sensitivity,
 				document.classification.functionCodeId,
-				document.classification.documentType,
+				document.classification.documentTypeId,
 				document.classification.classifiedBy,
 				document.classification.classifiedAt,
 				document.classification.lastReclassifiedAt ?? null,
@@ -177,7 +178,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				document.correspondence.subjectCodeId,
 				document.classification.sensitivity,
 				document.classification.functionCodeId,
-				document.classification.documentType,
+				document.classification.documentTypeId,
 				document.classification.classifiedBy,
 				document.classification.classifiedAt,
 				document.classification.lastReclassifiedAt ?? null,

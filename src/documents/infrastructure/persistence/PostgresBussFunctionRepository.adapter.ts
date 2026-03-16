@@ -3,8 +3,8 @@ import { Category, GlobalInfrastructureErrors } from "../../../shared/errors/enu
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import type { BusinessFunctionRepositoryPort } from "../../application/ports/repos/BusinessFunctionRepository.port.js";
-import type BusinessFunction from "../../domain/BusinessFunction.js";
-import BusinessFunctionEntity from "../../domain/BusinessFunction.js";
+import type BusinessFunction from "../../domain/entities/businessFunction/BusinessFunction.js";
+import BusinessFunctionEntity from "../../domain/entities/businessFunction/BusinessFunction.js";
 
 class PostgresBusinessFunctionRepoAdapter
 	implements BusinessFunctionRepositoryPort

@@ -60,6 +60,10 @@ enum BussFunctionEvents {
     BUSS_FUNCTION_CREATED = "business_function_created"
 }
 
+enum DocTypeEvents {
+    DOC_TYPE_CREATED = "document_type_created"
+}
+
 enum MediaEvents {
     MEDIA_ADDED = "media_added",
     MEDIA_REPLACED = "media_replaced",
@@ -82,7 +86,8 @@ const GlobalEventTypes = {
 	document: {
         document: DocumentEvents,
         correspondence_subject: CorrSubjectEvents,
-        business_function: BussFunctionEvents
+        business_function: BussFunctionEvents,
+        document_type: DocTypeEvents
     },
     media: MediaEvents,
     policy: PolicyEvents

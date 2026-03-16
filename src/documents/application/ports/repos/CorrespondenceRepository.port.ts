@@ -1,4 +1,4 @@
-import type CorrespondenceSubject from "../../../domain/CorrespondenceSubject.js";
+import type CorrespondenceSubject from "../../../domain/entities/correspondenceSubject/CorrespondenceSubject.js";
 
 interface CorrespondenceSubjectRepositoryPort {
 	save(

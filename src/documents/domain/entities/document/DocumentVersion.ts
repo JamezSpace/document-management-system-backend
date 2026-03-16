@@ -1,6 +1,6 @@
-import DocumentTransitions from "./DocumentTransition.js";
-import { LifecycleState } from "./enum/lifecycleState.enum.js";
-import type { LifecycleMetadata } from "./metadata/Lifecycle.metadata.js";
+import DocumentTransitions from "../../DocumentTransition.js";
+import { LifecycleState } from "../../enum/lifecycleState.enum.js";
+import type { LifecycleMetadata } from "../../metadata/Lifecycle.metadata.js";
 
 interface DocumentVersionPayload {
     id: string;

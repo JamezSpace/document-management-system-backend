@@ -24,6 +24,11 @@ import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctio
 import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
 import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
 import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
+import DocumentTypeEventsAdapter from "./infrastructure/adapters/DocumentTypeEvents.adapter.js";
+import DocumentTypeController from "./api/controllers/documentType/DocumentTypeController.js";
+import documentTypeRoutes from "./api/routes/docType.route.js";
+import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
+import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -55,6 +60,8 @@ export default async function DocumentSubsystem(
 	const bussFunctionRepository = new PostgresBusinessFunctionRepoAdapter(
 		postgres,
 	);
+	const docTypeRepository = new PostgresDocTypeRepoAdapter(postgres);
+    
 	const refSequenceRepository =
 		new PostgresReferenceSequenceRepositoryAdapter(postgres);
 
@@ -64,6 +71,9 @@ export default async function DocumentSubsystem(
 		globalEventBus,
 	);
 	const bussFunctionEventsAdapter = new BusinessFunctionEventsAdapter(
+		globalEventBus,
+	);
+	const docTypeEventsAdapter = new DocumentTypeEventsAdapter(
 		globalEventBus,
 	);
 
@@ -76,6 +86,7 @@ export default async function DocumentSubsystem(
 		idGenerator,
 		documentRepository,
 		docVersionRepository,
+        docTypeRepository,
 		documentEventsAdapter,
 		refNumberService,
 		mediaService,
@@ -100,6 +111,12 @@ export default async function DocumentSubsystem(
 		bussFunctionRepository,
 	);
 
+	const createDocumentTypeUseCase = new CreateDocumentTypeUsecase(
+		idGenerator,
+		docTypeRepository,
+		docTypeEventsAdapter,
+	);
+
 	// controller Layer
 	const documentController = new DocumentController(createNewDocumentUseCase);
 
@@ -113,6 +130,10 @@ export default async function DocumentSubsystem(
 		getAllBusinessFunctionUseCase,
 	);
 
+	const documentTypeController = new DocumentTypeController(
+		createDocumentTypeUseCase,
+	);
+
 	await fastify.register(documentRoutes, {
 		controller: documentController,
 	});
@@ -123,5 +144,9 @@ export default async function DocumentSubsystem(
 
 	await fastify.register(businessFunctionRoutes, {
 		controller: bussFunctionController,
+	});
+
+	await fastify.register(documentTypeRoutes, {
+		controller: documentTypeController,
 	});
 }

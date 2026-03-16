@@ -193,3 +193,7 @@ VALUES
     ('BUS-FUNC-DIS', 'CORR-SUBJ-HRM', 'DIS', 'Disciplinary', 'Queries, warnings, and tribunal records.', now()),
     ('BUS-FUNC-LEV', 'CORR-SUBJ-HRM', 'LEV', 'Disciplinary', 'Tracking of staff absences and study leaves.', now());
 
+
+INSERT INTO document.document_type (id, code, name, created_at)
+VALUES 
+    ('DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768', 'memo', 'memorandum', now())

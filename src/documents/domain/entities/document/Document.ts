@@ -1,11 +1,11 @@
-import DomainError from "../../shared/errors/DomainError.error.js";
-import { GlobalDomainErrors } from "../../shared/errors/enum/domain.enum.js";
+import DomainError from "../../../../shared/errors/DomainError.error.js";
+import { GlobalDomainErrors } from "../../../../shared/errors/enum/domain.enum.js";
+import { DisposalAction } from "../../enum/disposalAction.enum.js";
+import { LifecycleState } from "../../enum/lifecycleState.enum.js";
+import type { ClassificationMetadata } from "../../metadata/Classification.metadata.js";
+import type { CorrespondenceMetadata } from "../../metadata/Correspondence.metadata.js";
+import type { RetentionMetadata } from "../../metadata/Retention.metadata.js";
 import DocumentVersion from "./DocumentVersion.js";
-import { DisposalAction } from "./enum/disposalAction.enum.js";
-import { LifecycleState } from "./enum/lifecycleState.enum.js";
-import type { ClassificationMetadata } from "./metadata/Classification.metadata.js";
-import type { CorrespondenceMetadata } from "./metadata/Correspondence.metadata.js";
-import type { RetentionMetadata } from "./metadata/Retention.metadata.js";
 
 interface DocumentPayload {
 	id: string;

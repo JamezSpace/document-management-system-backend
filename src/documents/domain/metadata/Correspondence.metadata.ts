@@ -1,7 +1,9 @@
+import type { CorrespondenceDirection } from "../enum/correspondenceDirection.enum.js";
 
 interface CorrespondenceMetadata {
-	originatingUnitId: string; // ITCC
-	recipientCode: string
+	originatingUnitId: string;
+    direction: CorrespondenceDirection;
+    recipientCode: string
 	subjectCodeId: string;
 }
 

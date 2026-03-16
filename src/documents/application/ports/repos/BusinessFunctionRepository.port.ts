@@ -1,4 +1,4 @@
-import type BusinessFunction from "../../../domain/BusinessFunction.js";
+import type BusinessFunction from "../../../domain/entities/businessFunction/BusinessFunction.js";
 
 interface BusinessFunctionRepositoryPort {
 	save(businessFunction: BusinessFunction): Promise<BusinessFunction>;
@@ -16,3 +16,4 @@ interface BusinessFunctionRepositoryPort {
 }
 
 export type { BusinessFunctionRepositoryPort };
+

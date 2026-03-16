@@ -1,12 +1,11 @@
-import type { DocumentType } from "../types/DocumentRetentionPolicy/DocumentRetentionPolicy.type.js";
-
 interface DocumentRetentionPolicyPort {
 	getRetentionData(
-		documentType: DocumentType,
+		documentTypeId: string,
 	): Promise<{
 		duration: number;
 		archivalRequired: boolean;
 		policyVersion: number;
+        retentionScheduleId: string
 	}>;
 }
 

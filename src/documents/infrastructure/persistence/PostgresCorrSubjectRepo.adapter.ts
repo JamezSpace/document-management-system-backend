@@ -3,8 +3,8 @@ import { Category, GlobalInfrastructureErrors } from "../../../shared/errors/enu
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import type { CorrespondenceSubjectRepositoryPort } from "../../application/ports/repos/CorrespondenceRepository.port.js";
-import type CorrespondenceSubject from "../../domain/CorrespondenceSubject.js";
-import CorrespondenceSubjectEntity from "../../domain/CorrespondenceSubject.js";
+import type CorrespondenceSubject from "../../domain/entities/correspondenceSubject/CorrespondenceSubject.js";
+import CorrespondenceSubjectEntity from "../../domain/entities/correspondenceSubject/CorrespondenceSubject.js";
 
 class PostgresCorrespondenceSubjectRepoAdapter implements CorrespondenceSubjectRepositoryPort {
     constructor(private readonly dbPool: PostgresDb) {}

@@ -1,6 +1,6 @@
+import BusinessFunction from "../../../domain/entities/businessFunction/BusinessFunction.js";
 import type { BusinessFunctionEventsPort } from "../../ports/events/BusinessFunctionEvents.port.js";
 import type { BusinessFunctionRepositoryPort } from "../../ports/repos/BusinessFunctionRepository.port.js";
-import BusinessFunction from "../../../domain/BusinessFunction.js";
 
 class CreateBusinessFunctionUseCase {
 	constructor(

@@ -24,11 +24,11 @@ CREATE TYPE identity.capability_class_category AS ENUM(
 );
 
 -- DOCUMENT SCHEMA TYPES
-CREATE TYPE document.document_type AS ENUM(
-	'memorandum', 'letter', 'report'
-);
 CREATE TYPE document.sensitivity_level AS ENUM(
 	'public', 'internal', 'confidential', 'restricted'
+);
+CREATE TYPE document.correspondence_direction AS ENUM(
+	'internal', 'external'
 );
 
 -- NOTIFICATIONS SCHEMA TYPES
@@ -210,6 +210,14 @@ CREATE TABLE media.media_assets (
 
 
 -- DOCUMENTS SCHEMA
+-- documents types
+CREATE TABLE document.document_type (
+    id VARCHAR(50) PRIMARY KEY,
+    code varchar(10) UNIQUE NOT NULL,
+    name varchar(30) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ
+);
 
 -- documents volumes
 CREATE TABLE document.correspondence_subjects (
@@ -218,7 +226,7 @@ CREATE TABLE document.correspondence_subjects (
     name varchar(50) NOT NULL,
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL,
-    uploaded_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ
 );
 
 CREATE TABLE document.business_functions (
@@ -228,7 +236,7 @@ CREATE TABLE document.business_functions (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL,
-    uploaded_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ
 );
 
 -- ref number
@@ -257,11 +265,12 @@ CREATE TABLE document.documents (
     originating_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
     recipient_code VARCHAR(30) NOT NULL,
     subject_code_id varchar(50) REFERENCES document.correspondence_subjects(id) NOT NULL,
+    direction document.correspondence_direction NOT NULL,
 
     -- classification metadata
     sensitivity document.sensitivity_level NOT NULL,
     business_function_id varchar(50) REFERENCES document.business_functions(id) NOT NULL,
-    document_type document.document_type NOT NULL,
+    document_type_id varchar(50) REFERENCES document.document_type(id) NOT NULL,
 
     classified_by varchar(50) REFERENCES identity.staff(id) NOT NULL,
     classified_at TIMESTAMPTZ NOT NULL,
@@ -271,7 +280,7 @@ CREATE TABLE document.documents (
 
     -- retention metadata
     policy_version INT NOT NULL,
-    retention_schedule_id VARCHAR(50) NOT NULL,
+    retention_schedule_id VARCHAR(50) REFERENCES policy.document_retention(id) NOT NULL,
     retention_start_date TIMESTAMPTZ NOT NULL,
     disposal_eligibility_date TIMESTAMPTZ NOT NULL,
     archival_required BOOLEAN NOT NULL,
@@ -279,14 +288,6 @@ CREATE TABLE document.documents (
     -- audit sake
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ
-);
-
--- documents classification
-CREATE TABLE document.document_classification (
-    id VARCHAR(50) PRIMARY KEY,
-    sensitivity document.sensitivity_level NOT NULL,
-    business_function_id varchar(50) REFERENCES document.business_functions(id),
-    document_type 
 );
 
 -- documents versions
@@ -321,13 +322,13 @@ CREATE TABLE document.document_media_assets (
 CREATE TABLE policy.document_retention (
     id VARCHAR(50) PRIMARY KEY,
     policy_version INT NOT NULL,
-    document_type document.document_type NOT NULL,
+    document_type_id varchar(50) REFERENCES document.document_type(id) NOT NULL,
     archival_required BOOLEAN NOT NULL,
     retention_duration INT NOT NULL,
     effective_from DATE NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-	UNIQUE(document_type, policy_version)
+	UNIQUE(document_type_id, policy_version)
 );
 
 -- NOTIFICATIONS SCHEMA

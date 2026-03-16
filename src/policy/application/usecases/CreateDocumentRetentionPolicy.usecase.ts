@@ -1,4 +1,3 @@
-import type { DocumentType } from "../../../shared/application/enum/documentTypes.enum.js";
 import type { IdGeneratorPort } from "../../../shared/application/port/IdGenerator.port.js";
 import DocumentRetentionPolicy from "../../domain/DocumentRetentionPolicy.js";
 import type { DocumentRetentionPolicyEventsPort } from "../port/events/DocRetPolicyEvents.port.js";
@@ -14,7 +13,7 @@ class CreateDocumentRetentionPolicyUsecase {
     async createDocumentRetentionPolicy(
         actorId: string,
         payload: {
-            documentType: DocumentType;
+            documentTypeId: string;
             archivalRequired: boolean;
             retentionDuration: number;
             effectiveFrom: Date;
@@ -24,7 +23,7 @@ class CreateDocumentRetentionPolicyUsecase {
 
         const retentionPolicy = new DocumentRetentionPolicy({
             id: policyId,
-            documentType: payload.documentType,
+            documentTypeId: payload.documentTypeId,
             archivalRequired: payload.archivalRequired,
             retentionDuration: payload.retentionDuration,
             effectiveFrom: payload.effectiveFrom,
