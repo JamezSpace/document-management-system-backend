@@ -21,7 +21,7 @@ class PostgresDocumentRetentionPolicyAdapter
             WHERE document_type_id = $1 ORDER BY policy_version DESC`,
 				[documentTypeId],
 			);
-
+            
 			const policyLoadedFromDb = result.rows[0];
 
 			return {

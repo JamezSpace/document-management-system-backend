@@ -19,12 +19,13 @@ class DocumentController {
                 addressedTo: payload.addressedTo,
                 subjectCodeId: payload.subjectCodeId,
                 subjectCode: payload.subjectCode,
+                direction: payload.direction
             },
             classification: {
                 functionCode: payload.functionCode,
                 functionCodeId: payload.functionCodeId,
                 sensitivity: payload.sensitivity,
-                documentType: payload.documentType
+                documentTypeId: payload.documentTypeId
             }
         }
     }
@@ -63,14 +64,15 @@ class DocumentController {
                 originatingUnitId: incomingDocument.correspondence.originatingUnitId,
                 recipientCode,
                 subjectCodeId: incomingDocument.correspondence.subjectCodeId,
-                subjectCode: incomingDocument.correspondence.subjectCode
+                subjectCode: incomingDocument.correspondence.subjectCode,
+                direction: incomingDocument.correspondence.direction
             },
             action: incomingDocument.action,
             classification: {
                 functionCodeId: incomingDocument.classification.functionCodeId,
                 functionCode: incomingDocument.classification.functionCode,
                 sensitivity: incomingDocument.classification.sensitivity,
-                documentType: incomingDocument.classification.documentType,
+                documentTypeId: incomingDocument.classification.documentTypeId,
                 classifiedBy: incomingDocument.createdBy,
                 classifiedAt: new Date(),
             }

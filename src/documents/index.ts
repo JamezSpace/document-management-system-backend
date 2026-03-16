@@ -29,6 +29,7 @@ import DocumentTypeController from "./api/controllers/documentType/DocumentTypeC
 import documentTypeRoutes from "./api/routes/docType.route.js";
 import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
 import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
+import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -117,6 +118,10 @@ export default async function DocumentSubsystem(
 		docTypeEventsAdapter,
 	);
 
+	const getAllDocumentTypeUseCase = new GetAllDocumentTypesUsecase(
+		docTypeRepository,
+	);
+
 	// controller Layer
 	const documentController = new DocumentController(createNewDocumentUseCase);
 
@@ -132,6 +137,7 @@ export default async function DocumentSubsystem(
 
 	const documentTypeController = new DocumentTypeController(
 		createDocumentTypeUseCase,
+        getAllDocumentTypeUseCase
 	);
 
 	await fastify.register(documentRoutes, {

@@ -26,7 +26,7 @@ AS $$
 
     SELECT
         seq.current_value AS next_count,
-        unit.full_name AS origin_unit,
+        unit.code AS origin_unit,
         COALESCE(unit.code, seq.recipient_code) AS recipient_code
     FROM seq
     JOIN identity.organizational_units unit

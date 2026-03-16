@@ -20,17 +20,19 @@ async function documentRoutes(
 			request: FastifyRequest<{ Body: DocumentSchemaTypeForCreation }>,
 			reply: FastifyReply,
 		) => {
-			const payload = request.body;
+			const payload = request.body;            
 
 			const newDocument =
 				await documentController.createDocument(payload);
 
 			return reply.code(201).send({
 				success: true,
-				document: newDocument,
+				data: newDocument,
 			});
 		},
 	);
+
+    
 }
 
 export default documentRoutes;

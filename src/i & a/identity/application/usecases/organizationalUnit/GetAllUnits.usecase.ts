@@ -1,4 +1,4 @@
-import type OrganizationalUnit from "../../../domain/unit/OrganizationalUnit.js";
+import type OrganizationalUnit from "../../../domain/entities/unit/OrganizationalUnit.js";
 import type { OrgUnitRepositoryPort } from "../../ports/repos/unit/OrgUnitRepository.port.js";
 
 

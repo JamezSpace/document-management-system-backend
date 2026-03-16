@@ -10,6 +10,10 @@ class ReferenceNumberService implements ReferenceNumberServicePort {
 
 		const padded = result.nextCount.toString().padStart(4, "0");
 
+        // e.g. an internal memo has both origin unit and recipient unit to be the same
+        if(result.originUnit === result.recipientCode)
+            return `${payload.year}/${result.recipientCode}/${payload.subjectCode}/${payload.functionCode}/${padded}`;
+
 		return `${payload.year}/${result.originUnit}/${result.recipientCode}/${payload.subjectCode}/${payload.functionCode}/${padded}`;
 	}
 }

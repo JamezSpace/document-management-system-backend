@@ -15,7 +15,7 @@ async function orgUnitRoutes(
 
 			return reply.code(200).send({
 				success: true,
-				units,
+				data: units,
 			});
 		},
 	);
@@ -33,7 +33,7 @@ async function orgUnitRoutes(
 
             return reply.code(201).send({
                 success: true,
-                newUnit
+                data: newUnit
             });
         }
 	);

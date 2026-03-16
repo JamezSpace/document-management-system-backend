@@ -42,6 +42,26 @@ async function documentTypeRoutes(
 			});
 		},
 	);
+
+    fastify.get(
+		"/types",
+		async (request: FastifyRequest, reply: FastifyReply) => {
+            const { uid } = request.user!;
+
+             if(!uid) 
+                return reply.code(401).send({
+                    success: true,
+                    message: "No uid extracted from access token"
+                })
+
+            // fetch document types
+            const docTypes = await docTypeController.getAllDocTypes();
+
+            return reply.code(200).send({
+                success: true,
+                data: docTypes
+            })
+        });
 }
 
 export default documentTypeRoutes;
