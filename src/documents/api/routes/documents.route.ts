@@ -1,13 +1,17 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type DocumentController from "../controllers/document/DocumentController.js";
 import {
-    docStaffIdSchema,
-    documentIdSchema,
-    documentSchemaForCreation,
-    type DocStaffIdSchemaType,
-    type DocumentIdSchemaType,
-    type DocumentSchemaTypeForCreation,
+	docStaffIdSchema,
+	documentIdSchema,
+	documentSchemaForCreation,
+	documentSchemaForSave,
+	type DocStaffIdSchemaType,
+	type DocumentIdSchemaType,
+	type DocumentSchemaForSaveType,
+	type DocumentSchemaTypeForCreation,
 } from "../types/document.type.js";
+import ApiError from "../../../shared/errors/ApiError.error.js";
+import { ApiErrorEnum } from "../../../shared/errors/enum/api.enum.js";
 
 async function documentRoutes(
 	fastify: FastifyInstance,
@@ -64,6 +68,7 @@ async function documentRoutes(
 		},
 	);
 
+	// get a document with id
 	fastify.get(
 		"/:docId",
 		{ schema: { params: documentIdSchema } },
@@ -71,7 +76,7 @@ async function documentRoutes(
 			request: FastifyRequest<{ Params: DocumentIdSchemaType }>,
 			reply: FastifyReply,
 		) => {
-            const { uid } = request.user!;
+			const { uid } = request.user!;
 			const { docId } = request.params;
 
 			if (!uid)
@@ -81,20 +86,61 @@ async function documentRoutes(
 				});
 
 			// fetch document by id
-			const doc =
-				await documentController.fetchDocById(docId);
+			const doc = await documentController.fetchDocById(docId);
 
-            return doc 
-            ? 
-			 reply.code(200).send({
+			if (!doc)
+				throw new ApiError(ApiErrorEnum.NOT_FOUND, {
+					message: `Document with id: ${docId} doesn't exist`,
+				});
+
+			return reply.code(200).send({
 				success: true,
 				data: doc,
-			}) :
-            reply.code(404).send({
+			});
+		},
+	);
+
+	// save document changes
+	fastify.post(
+		"/:docId/save",
+		{ schema: { params: documentIdSchema, body: documentSchemaForSave } },
+		async (
+			request: FastifyRequest<{
+				Params: DocumentIdSchemaType;
+				Body: DocumentSchemaForSaveType;
+			}>,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.user!;
+			const { docId } = request.params;
+			const { contentDelta, document: documentToSave } = request.body;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+            if(docId !== documentToSave.id)
+                throw new ApiError(ApiErrorEnum.BAD_REQUEST, {
+                    message: "Mismatch between document ID input and id of the document!"
+                })
+
+			const savedDoc = await documentController.saveDocument(
+				documentToSave,
+				contentDelta,
+			);
+
+			if (!savedDoc)
+				throw new ApiError(ApiErrorEnum.NOT_FOUND, {
+					message: `Document with id: ${docId} doesn't exist`,
+				});
+
+			return reply.status(200).send({
 				success: true,
-				data: null
-			})
-        }
+				data: savedDoc,
+			});
+		},
 	);
 }
 

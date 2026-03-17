@@ -5,23 +5,26 @@ import type { LifecycleMetadata } from "../../metadata/Lifecycle.metadata.js";
 interface DocumentVersionPayload {
     id: string;
 	documentId: string;
+    contentDelta: unknown;
 	versionNumber: number;
-	mediaId: string;
+	mediaId?: string | null;
 	lifecycle: LifecycleMetadata;
 }
 
 class DocumentVersion {
 	id: string;
     documentId: string;
+    contentDelta: unknown;
 	versionNumber: number;
-	mediaId: string;
+	mediaId: string | null;
 	lifecycle: LifecycleMetadata;
 
 	constructor(payload: DocumentVersionPayload) {
         this.id = payload.id;
 		this.documentId = payload.documentId;
+        this.contentDelta = payload.contentDelta;
 		this.versionNumber = payload.versionNumber;
-		this.mediaId = payload.mediaId;
+		this.mediaId = payload.mediaId ?? null;
 		this.lifecycle = payload.lifecycle;
 	}
 

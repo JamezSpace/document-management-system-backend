@@ -18,7 +18,8 @@ interface DocumentPayload {
 	correspondence: CorrespondenceMetadata;
 	retention: RetentionMetadata;
 
-    createdAt?: Date
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
 /**
@@ -45,7 +46,7 @@ class Document {
 
 	// Audit
 	readonly createdAt: Date;
-	private modifiedAt: Date | null;
+	private updatedAt: Date | null;
 
 	// system flags
 	// isLatestVersion!: boolean;
@@ -63,23 +64,31 @@ class Document {
 		this.retention = payload.retention;
 
 		this.createdAt = payload.createdAt ?? new Date();
-		this.modifiedAt = null;
+		this.updatedAt = payload.updatedAt ?? null;
 	}
 
 	getCurrentVersion(): DocumentVersion | null {
 		return this.currentVersion;
 	}
 
-	public addVersion(mediaId: string, actorId: string, uuid: string): DocumentVersion {
+	public addVersion(
+		payload: {
+			contentDelta: unknown;
+			uuid: string;
+			mediaId?: string;
+		},
+		actorId: string,
+	): DocumentVersion {
 		const versionNumber = this.currentVersion
 			? this.currentVersion.versionNumber + 1
 			: 1;
 
 		const version = new DocumentVersion({
-			id: "DOC-VERSION-" + uuid,
+			id: "DOC-VERSION-" + payload.uuid,
 			documentId: this.id,
+			contentDelta: payload.contentDelta,
 			versionNumber,
-			mediaId,
+			mediaId: payload.mediaId ?? null,
 			lifecycle: {
 				currentState: LifecycleState.DRAFT,
 				stateEnteredAt: new Date(),
@@ -91,33 +100,44 @@ class Document {
 		return version;
 	}
 
-	public createNextVersion(mediaId: string, uuid: string): DocumentVersion {
+	public createNextVersion(payload: {
+		contentDelta: unknown;
+		mediaId: string;
+		uuid: string;
+	}): DocumentVersion {
 		if (!this.currentVersion) {
-			throw new DomainError(GlobalDomainErrors.document.INVALID_OPERATION, {
-                details: {
-                    message: "Document has no version yet."
-                }
-            })
+			throw new DomainError(
+				GlobalDomainErrors.document.INVALID_OPERATION,
+				{
+					details: {
+						message: "Document has no version yet.",
+					},
+				},
+			);
 		}
 
 		if (
 			this.currentVersion.lifecycle.currentState ===
 			LifecycleState.DECLARED_RECORD
 		) {
-            throw new DomainError(GlobalDomainErrors.document.INVALID_OPERATION, {
-                details: {
-                    message: "Records cannot be versioned."
-                }
-            })
+			throw new DomainError(
+				GlobalDomainErrors.document.INVALID_OPERATION,
+				{
+					details: {
+						message: "Records cannot be versioned.",
+					},
+				},
+			);
 		}
 
 		const versionNumber = this.currentVersion.versionNumber + 1;
 
 		const newVersion = new DocumentVersion({
-			id: "DOC-VERS-" + uuid,
+			id: "DOC-VERS-" + payload.uuid,
 			documentId: this.id,
 			versionNumber,
-			mediaId: mediaId,
+            contentDelta: payload.contentDelta,
+			mediaId: payload.mediaId ?? null,
 			lifecycle: {
 				currentState: LifecycleState.DRAFT,
 				stateEnteredAt: new Date(),
@@ -147,7 +167,7 @@ class Document {
 			lastReclassifiedAt: new Date(),
 		};
 
-		this.modifiedAt = new Date();
+		this.updatedAt = new Date();
 	}
 
 	// retention metadata

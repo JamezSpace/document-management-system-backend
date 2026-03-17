@@ -46,7 +46,7 @@ class DocumentCreation {
 				},
 			);
 
-		if (documentType.code === 'memo') {
+		if (documentType.code === "memo") {
 			referenceNumber = await this.refNumService.generate({
 				year: new Date().getFullYear(),
 				subjectCode: payload.correspondence.subjectCode,
@@ -75,15 +75,18 @@ class DocumentCreation {
 	}
 
 	// this assumes document version has not been created but document has been created
-	async saveDocument(payload: Document, file: Buffer) {
+	async saveDocument(payload: Document, contentDelta: unknown) {
 		const uuid = this.idGenerator.generate();
 
-		const { mediaId } = await this.mediaService.uploadDoc(
-			file,
+		// const { mediaId } = await this.mediaService.uploadDoc(
+		// 	file,
+		// 	payload.ownerId,
+		// );
+        
+		const firstVersion = payload.addVersion(
+			{ contentDelta, uuid },
 			payload.ownerId,
 		);
-
-		const firstVersion = payload.addVersion(mediaId, payload.ownerId, uuid);
 
 		const savedVersionedDoc =
 			await this.documentVersionRepo.save(firstVersion);

@@ -12,3 +12,5 @@ select * from identity.staff_details;
 -- select * from identity.designations;
 
 -- drop VIEW cascade identity.staff_details;
+
+select * from document.documents;

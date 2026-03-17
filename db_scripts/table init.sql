@@ -111,22 +111,17 @@ CREATE TABLE identity.staff(
 
 -- staff media
 CREATE TABLE identity.staff_media_assets (
-    staff_id VARCHAR(50) NOT NULL,
-    media_id VARCHAR(50) NOT NULL,
+    staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE CASCADE NOT NULL,
+    media_id VARCHAR(50) REFERENCES media.media_assets(id) ON DELETE CASCADE NOT NULL,
+
+    asset_role VARCHAR(50) NOT NULL, 
+    -- e.g. PROFILE_PICTURE, SIGNATURE,
+    is_active BOOLEAN DEFAULT FALSE,
 
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (staff_id, media_id),
-
-    CONSTRAINT fk_staff
-        FOREIGN KEY (staff_id)
-        REFERENCES identity.staff(id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_staff_media
-        FOREIGN KEY (media_id)
-        REFERENCES media.media_assets(id)
-        ON DELETE CASCADE
+    CONSTRAINT unique_staff_media UNIQUE (staff_id, media_id)
 );
 
 -- capability class
@@ -189,9 +184,6 @@ CREATE TABLE identity.role_assignments(
 CREATE TABLE media.media_assets (
     id VARCHAR(50) PRIMARY KEY,
 
-    asset_role VARCHAR(50) NOT NULL, 
-    -- e.g. PROFILE_PICTURE, SIGNATURE, PRIMARY_CONTENT, ATTACHMENT
-
     storage_provider VARCHAR(50) NOT NULL, 
     -- e.g. LOCAL, S3, AZURE
 
@@ -203,9 +195,7 @@ CREATE TABLE media.media_assets (
     checksum VARCHAR(255) NOT NULL, -- SHA-256 recommended
 
     uploaded_at TIMESTAMPTZ NOT NULL,
-    uploaded_by VARCHAR(50) NOT NULL,
-
-    is_active BOOLEAN DEFAULT TRUE
+    uploaded_by VARCHAR(50) REFERENCES identity.staff(id) NOT NULL,
 );
 
 
@@ -299,7 +289,10 @@ CREATE TABLE document.document_versions (
     id VARCHAR(50) PRIMARY KEY,
     document_id varchar(50) REFERENCES document.documents(id)  ON DELETE CASCADE NOT NULL,
     version_number INT NOT NULL,
-    media_id varchar(50) REFERENCES media.media_assets(id) NOT NULL,
+
+    content_delta JSONB NOT NULL,
+
+    media_id varchar(50) REFERENCES media.media_assets(id) NULL,
     created_at TIMESTAMPTZ NOT NULL,
     created_by varchar(50) REFERENCES identity.staff(id) NOT NULL,
     lifecycle_state VARCHAR(50) NOT NULL
@@ -315,7 +308,12 @@ ON DELETE SET NULL;
 -- documents media
 CREATE TABLE document.document_media_assets (
     document_id VARCHAR(50) REFERENCES document.documents(id) ON DELETE CASCADE NOT NULL,
+    document_version_id VARCHAR(50) REFERENCES document.document_versions(id) ON DELETE CASCADE,
     media_id VARCHAR(50) REFERENCES media.media_assets(id) ON DELETE CASCADE NOT NULL,
+    
+    asset_role VARCHAR(50) NOT NULL, 
+    -- e.g. PRIMARY_CONTENT, ATTACHMENT
+
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (document_id, media_id)

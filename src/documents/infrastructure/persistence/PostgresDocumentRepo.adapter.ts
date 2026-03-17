@@ -16,6 +16,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
             documentId: row.id,
             id: row.version_id,
             mediaId: row.media_id,
+            contentDelta: row.content_delta,
             versionNumber: row.version_number,
             lifecycle: {
                 currentState: row.lifecycle_state,
@@ -52,6 +53,8 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				disposalEligibilityDate: row.disposal_eligibility_date,
 				archivalRequired: row.archival_required,
 			},
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
 		});
 	}
 
@@ -156,7 +159,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 					subject_code_id = $8,
 					sensitivity = $9,
 					business_function_id = $10,
-					document_type = $11,
+					document_type_id = $11,
 					classified_by = $12,
 					classified_at = $13,
 					last_reclassified_at = $14,

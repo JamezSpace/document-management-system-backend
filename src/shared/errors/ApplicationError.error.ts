@@ -18,8 +18,6 @@ class ApplicationError extends Error implements NexusAppError {
     errorCode: string;
     errorMessage: string = '';
 
-
-
     constructor(code: ApplicationErrorType, context: ErrorContext) {
         // constructor call to parent class 'Error'
         super(code.codeName);

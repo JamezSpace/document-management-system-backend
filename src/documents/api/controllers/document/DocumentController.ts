@@ -3,8 +3,9 @@ import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application
 import type DocumentCreation from "../../../application/usecases/document/CreateDocument.usecase.js";
 import type GetAllDocumentsByStaffUseCase from "../../../application/usecases/document/GetAllDocumentsByStaff.usecase.js";
 import type GetDocumentByIdUsecase from "../../../application/usecases/document/GetDocById.usecase.js";
+import Document from "../../../domain/entities/document/Document.js";
 import { CorrespondenceAddressee } from "../../../domain/enum/correspondenceAddresee.enum.js";
-import type { DocumentSchemaTypeForCreation } from "../../types/document.type.js";
+import type { DocumentSchemaType, DocumentSchemaTypeForCreation } from "../../types/document.type.js";
 
 class DocumentController {
 	constructor(private readonly createDocumentUseCase: DocumentCreation,
@@ -96,6 +97,28 @@ class DocumentController {
         const doc = await this.getDocumentByIdUsecase.getDocById(docId);
 
         return doc;
+    }
+    
+    async saveDocument(doc: DocumentSchemaType, contentDelta: unknown) {
+        const document = new Document({
+            ...doc,
+            classification: {
+                ...doc.classification,
+                classifiedAt: new Date(doc.classification.classifiedAt),
+                lastReclassifiedAt: doc.classification.lastReclassifiedAt ? new Date(doc.classification.lastReclassifiedAt) : null
+            },
+            retention: {
+                ...doc.retention,
+                retentionStartDate: new Date(doc.retention.retentionStartDate),
+                disposalEligibilityDate: new Date(doc.retention.disposalEligibilityDate)
+            },
+            createdAt: new Date(doc.createdAt),
+            updatedAt: new Date(doc.updatedAt),
+        });
+
+        const savedDoc = await this.createDocumentUseCase.saveDocument(document, contentDelta);
+
+        return savedDoc;
     }
 }
 

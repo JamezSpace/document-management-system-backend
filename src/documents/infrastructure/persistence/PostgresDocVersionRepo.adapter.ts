@@ -13,6 +13,7 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 		return new DocumentVersion({
 			id: row.id,
 			documentId: row.document_id,
+            contentDelta: row.content_delta,
 			versionNumber: row.version_number,
 			mediaId: row.media_id,
 			lifecycle: {
@@ -26,15 +27,16 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 	async save(document: DocumentVersion): Promise<DocumentVersion> {
 		try {
 			const query = `
-				INSERT INTO documents.document_versions (
-					id, document_id, version_number, media_id, created_at, created_by, lifecycle_state
-				) VALUES ($1, $2, $3, $4, $5, $6, $7)
+				INSERT INTO document.document_versions (
+					id, document_id, content_delta, version_number, media_id, created_at, created_by, lifecycle_state
+				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 				RETURNING *;
 			`;
 
 			const result = await this.dbPool.query(query, [
 				document.id,
 				document.documentId,
+                document.contentDelta,
 				document.versionNumber,
 				document.mediaId,
 				document.lifecycle.stateEnteredAt,
@@ -59,7 +61,7 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 
 	async findVersionedDocumentById(id: string): Promise<DocumentVersion | null> {
 		try {
-			const query = "SELECT * FROM documents.document_versions WHERE id = $1 LIMIT 1;";
+			const query = "SELECT * FROM document.document_versions WHERE id = $1 LIMIT 1;";
 			const result = await this.dbPool.query(query, [id]);
 
 			if (!result.rows || result.rows.length === 0) return null;
@@ -81,14 +83,15 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 	): Promise<DocumentVersion | null> {
 		try {
 			const query = `
-				UPDATE documents.document_versions
+				UPDATE document.document_versions
 				SET
 					document_id = $2,
-					version_number = $3,
-					media_id = $4,
-					created_at = $5,
-					created_by = $6,
-					lifecycle_state = $7
+                    content_delta = $3,
+					version_number = $4,
+					media_id = $5,
+					created_at = $6,
+					created_by = $7,
+					lifecycle_state = $8
 				WHERE id = $1
 				RETURNING *;
 			`;
@@ -96,6 +99,7 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 			const result = await this.dbPool.query(query, [
 				document.id,
 				document.documentId,
+                document.contentDelta,
 				document.versionNumber,
 				document.mediaId,
 				document.lifecycle.stateEnteredAt,
@@ -119,14 +123,14 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 
 	async softDeleteDocument(id: string): Promise<void> {
 		await this.dbPool.query(
-			"UPDATE documents.document_versions SET lifecycle_state = $2 WHERE id = $1;",
+			"UPDATE document.document_versions SET lifecycle_state = $2 WHERE id = $1;",
 			[id, LifecycleState.CANCELLED],
 		);
 	}
 
 	async hardDeleteDocument(id: string): Promise<void> {
 		await this.dbPool.query(
-			"DELETE FROM documents.document_versions WHERE id = $1;",
+			"DELETE FROM document.document_versions WHERE id = $1;",
 			[id],
 		);
 	}

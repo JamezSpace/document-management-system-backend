@@ -3,7 +3,7 @@ import type { CorrespondenceDirection } from "../enum/correspondenceDirection.en
 interface CorrespondenceMetadata {
 	originatingUnitId: string;
     direction: CorrespondenceDirection;
-    recipientCode: string
+    recipientCode: string;
 	subjectCodeId: string;
 }
 
