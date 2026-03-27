@@ -19,7 +19,7 @@ interface DocumentPayload {
 	retention: RetentionMetadata;
 
 	createdAt?: Date;
-	updatedAt?: Date;
+	updatedAt?: Date| null;
 }
 
 /**
@@ -79,6 +79,7 @@ class Document {
 		},
 		actorId: string,
 	): DocumentVersion {
+		const now = new Date();
 		const versionNumber = this.currentVersion
 			? this.currentVersion.versionNumber + 1
 			: 1;
@@ -89,9 +90,11 @@ class Document {
 			contentDelta: payload.contentDelta,
 			versionNumber,
 			mediaId: payload.mediaId ?? null,
+			createdAt: now,
+			createdBy: actorId,
 			lifecycle: {
 				currentState: LifecycleState.DRAFT,
-				stateEnteredAt: new Date(),
+				stateEnteredAt: now,
 				stateEnteredBy: actorId,
 			},
 		});
@@ -100,11 +103,29 @@ class Document {
 		return version;
 	}
 
+	public save(
+		payload: {
+			contentDelta: unknown;
+			uuid: string;
+			mediaId?: string;
+		},
+		actorId: string,
+	): DocumentVersion {
+		if (!this.currentVersion) {
+			return this.addVersion(payload, actorId);
+		}
+
+		return this.createNextVersion({
+			...payload,
+			mediaId: payload.mediaId ?? null
+		}, actorId);
+	}
+
 	public createNextVersion(payload: {
 		contentDelta: unknown;
-		mediaId: string;
+		mediaId?: string | null;
 		uuid: string;
-	}): DocumentVersion {
+	}, actorId: string): DocumentVersion {
 		if (!this.currentVersion) {
 			throw new DomainError(
 				GlobalDomainErrors.document.INVALID_OPERATION,
@@ -130,18 +151,21 @@ class Document {
 			);
 		}
 
+		const now = new Date();
 		const versionNumber = this.currentVersion.versionNumber + 1;
 
 		const newVersion = new DocumentVersion({
 			id: "DOC-VERS-" + payload.uuid,
 			documentId: this.id,
 			versionNumber,
-            contentDelta: payload.contentDelta,
+			contentDelta: payload.contentDelta,
 			mediaId: payload.mediaId ?? null,
+			createdAt: now,
+			createdBy: actorId,
 			lifecycle: {
 				currentState: LifecycleState.DRAFT,
-				stateEnteredAt: new Date(),
-				stateEnteredBy: this.ownerId,
+				stateEnteredAt: now,
+				stateEnteredBy: actorId,
 			},
 		});
 

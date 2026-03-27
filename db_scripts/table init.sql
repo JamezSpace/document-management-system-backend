@@ -330,7 +330,11 @@ CREATE TABLE document.document_versions (
     media_id varchar(50) REFERENCES media.media_assets(id) NULL,
     created_at TIMESTAMPTZ NOT NULL,
     created_by varchar(50) REFERENCES identity.staff(id) NOT NULL,
-    lifecycle_state VARCHAR(50) NOT NULL
+    lifecycle_state document.lifecycle_state NOT NULL,
+
+    state_entered_at TIMESTAMPTZ NOT NULL,
+    state_entered_by VARCHAR(50) 
+    REFERENCES identity.staff(id) NOT NULL
 );
 
 -- MUST RUN TO ENFORCE FOREIGN KEY CONSTRAINT BETWEEN document.documents and document.document_versions

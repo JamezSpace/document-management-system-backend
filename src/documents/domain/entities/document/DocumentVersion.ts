@@ -8,6 +8,8 @@ interface DocumentVersionPayload {
     contentDelta: unknown;
 	versionNumber: number;
 	mediaId?: string | null;
+	createdAt: Date;
+	createdBy: string;
 	lifecycle: LifecycleMetadata;
 }
 
@@ -17,6 +19,8 @@ class DocumentVersion {
     contentDelta: unknown;
 	versionNumber: number;
 	mediaId: string | null;
+	createdAt: Date;
+	createdBy: string;
 	lifecycle: LifecycleMetadata;
 
 	constructor(payload: DocumentVersionPayload) {
@@ -25,6 +29,8 @@ class DocumentVersion {
         this.contentDelta = payload.contentDelta;
 		this.versionNumber = payload.versionNumber;
 		this.mediaId = payload.mediaId ?? null;
+		this.createdAt = payload.createdAt;
+		this.createdBy = payload.createdBy;
 		this.lifecycle = payload.lifecycle;
 	}
 

@@ -28,7 +28,9 @@ const server: FastifyInstance = fastify({
 
 // load plugins (from the Fastify ecosystem) next
 server.register(fastifyCors, {
-    origin: process.env.ORIGIN!
+    origin: process.env.ORIGIN!,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 })
 server.register(fastifyPostgres, dbConfig);
 server.register(fastifyMultipart, {

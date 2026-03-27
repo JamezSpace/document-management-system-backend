@@ -47,21 +47,23 @@ const documentSchemaForCreation = Type.Object({
 });
 
 const documentSchema = Type.Object({
-	id: Type.String(),
+	id: Type.String({ minLength: 1 }),
 	ownerId: Type.String(),
 	title: Type.String(),
 	currentVersion: Type.Object({
-        id: Type.String(),
-        documentId: Type.String(),
-        contentDelta: Type.Unknown(),
-        versionNumber: Type.Number(),
-        mediaId: Type.Union([Type.Null(), Type.String()]),
-        lifecycle: Type.Object({
-            currentState: Type.Enum(LifecycleState),
-            stateEnteredAt: Type.String({format: 'date-time'}),
-            stateEnteredBy: Type.String()
-        })
-    }),
+		id: Type.String({ minLength: 1 }),
+		documentId: Type.String({ minLength: 1 }),
+		contentDelta: Type.Unknown(),
+		versionNumber: Type.Number(),
+		mediaId: Type.Union([Type.Null(), Type.String()]),
+		lifecycle: Type.Object({
+			currentState: Type.Enum(LifecycleState),
+			stateEnteredAt: Type.String({ format: "date-time" }),
+			stateEnteredBy: Type.String(),
+		}),
+		createdAt: Type.String({ format: "date-time" }),
+		createdBy: Type.String(),
+	}),
 	referenceNumber: Type.String(),
 	classification: Type.Object({
 		sensitivity: Type.Enum(SensitivityLevel),
@@ -69,8 +71,14 @@ const documentSchema = Type.Object({
 		documentTypeId: Type.String(),
 		classifiedBy: Type.String(),
 		classifiedAt: Type.String({ format: "date-time" }),
-		lastReclassifiedAt: Type.String({ format: "date-time" }),
-		lastReclassifiedBy: Type.String(),
+		lastReclassifiedAt: Type.Union([
+			Type.String({ format: "date-time" }),
+			Type.Null(),
+		]),
+		lastReclassifiedBy: Type.Union([
+			Type.String({ minLength: 1 }),
+			Type.Null(),
+		]),
 	}),
 	correspondence: Type.Object({
 		originatingUnitId: Type.String(),
@@ -86,10 +94,11 @@ const documentSchema = Type.Object({
 		archivalRequired: Type.Boolean(),
 	}),
 	createdAt: Type.String({ format: "date-time" }),
-	updatedAt: Type.String({ format: "date-time" }),
+	updatedAt: Type.Union([Type.String({ format: "date-time" }), Type.Null()]),
 });
 
 const documentSchemaForSave = Type.Object({
+	actorId: Type.String(),
 	contentDelta: Type.Unknown(),
 	document: Type.Any(),
 });

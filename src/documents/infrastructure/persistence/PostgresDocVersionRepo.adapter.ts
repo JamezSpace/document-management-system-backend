@@ -16,10 +16,12 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
             contentDelta: row.content_delta,
 			versionNumber: row.version_number,
 			mediaId: row.media_id,
+			createdAt: row.created_at,
+			createdBy: row.created_by,
 			lifecycle: {
 				currentState: row.lifecycle_state,
-				stateEnteredAt: row.created_at,
-				stateEnteredBy: row.created_by,
+				stateEnteredAt: row.version_state_entered_at,
+				stateEnteredBy: row.version_state_entered_by,
 			},
 		});
 	}
@@ -28,8 +30,9 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 		try {
 			const query = `
 				INSERT INTO document.document_versions (
-					id, document_id, content_delta, version_number, media_id, created_at, created_by, lifecycle_state
-				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+					id, document_id, content_delta, version_number, media_id, created_at, created_by, lifecycle_state,
+					state_entered_at, state_entered_by
+				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 				RETURNING *;
 			`;
 
@@ -39,9 +42,11 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
                 document.contentDelta,
 				document.versionNumber,
 				document.mediaId,
+				document.createdAt,
+				document.createdBy,
+				document.lifecycle.currentState,
 				document.lifecycle.stateEnteredAt,
 				document.lifecycle.stateEnteredBy,
-				document.lifecycle.currentState,
 			]);
 
 			return this.toDomain(result.rows[0]);
@@ -89,9 +94,9 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
                     content_delta = $3,
 					version_number = $4,
 					media_id = $5,
-					created_at = $6,
-					created_by = $7,
-					lifecycle_state = $8
+					lifecycle_state = $6,
+					state_entered_at = $7,
+					state_entered_by = $8
 				WHERE id = $1
 				RETURNING *;
 			`;
@@ -102,9 +107,9 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
                 document.contentDelta,
 				document.versionNumber,
 				document.mediaId,
+				document.lifecycle.currentState,
 				document.lifecycle.stateEnteredAt,
 				document.lifecycle.stateEnteredBy,
-				document.lifecycle.currentState,
 			]);
 
 			if (!result.rows || result.rows.length === 0) return null;

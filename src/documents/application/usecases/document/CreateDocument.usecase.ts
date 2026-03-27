@@ -75,27 +75,22 @@ class DocumentCreation {
 	}
 
 	// this assumes document version has not been created but document has been created
-	async saveDocument(payload: Document, contentDelta: unknown) {
+	async saveDocument(document: Document, contentDelta: unknown, actorId: string) {
 		const uuid = this.idGenerator.generate();
 
-		// const { mediaId } = await this.mediaService.uploadDoc(
-		// 	file,
-		// 	payload.ownerId,
-		// );
-        
-		const firstVersion = payload.addVersion(
-			{ contentDelta, uuid },
-			payload.ownerId,
-		);
+        const version = document.save(
+        { contentDelta, uuid },
+        actorId
+    );
 
 		const savedVersionedDoc =
-			await this.documentVersionRepo.save(firstVersion);
+			await this.documentVersionRepo.save(version);
 
-		const savedDoc = await this.documentRepo.editDocument(payload);
+		const savedDoc = await this.documentRepo.editDocument(document);
 
 		await this.documentEvents.documentVersionCreated({
-			documentId: payload.id,
-			versionedBy: payload.ownerId,
+			documentId: document.id,
+			versionedBy: document.ownerId,
 		});
 
 		return savedDoc;

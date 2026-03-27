@@ -23,6 +23,7 @@ async function documentRoutes(
 ) {
 	const documentController = options.controller;
 
+    // create a new document
 	fastify.post(
 		"/",
 		{ schema: { body: documentSchemaForCreation } },
@@ -115,7 +116,7 @@ async function documentRoutes(
 		) => {
 			const { uid } = request.user!;
 			const { docId } = request.params;
-			const { contentDelta, document: documentToSave } = request.body;
+			const { contentDelta, document: documentToSave, actorId } = request.body;
 
 			if (!uid)
 				return reply.code(401).send({
@@ -132,6 +133,7 @@ async function documentRoutes(
 			const savedDoc = await documentController.saveDocument(
 				documentToSave,
 				contentDelta,
+                actorId
 			);
 
 			if (!savedDoc)
@@ -169,10 +171,36 @@ async function documentRoutes(
             
             const submitedDoc = await documentController.submitDocument(uid, documentToSubmit);
 
-            return reply.code(200).send({
+			return reply.code(200).send({
                 success: true,
                 data: submitedDoc
             })
+		},
+	);
+
+	// delete document
+	fastify.delete(
+		"/:docId",
+		{ schema: { params: documentIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: DocumentIdSchemaType }>,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.user!;
+			const { docId } = request.params;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+			const deletedDoc = await documentController.deleteDocument(docId, uid);
+
+			return reply.code(200).send({
+				success: true,
+				data: deletedDoc,
+			});
 		},
 	);
 }

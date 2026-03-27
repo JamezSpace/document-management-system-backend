@@ -18,10 +18,12 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
             mediaId: row.media_id,
             contentDelta: row.content_delta,
             versionNumber: row.version_number,
+			createdAt: row.version_created_at,
+			createdBy: row.version_created_by,
             lifecycle: {
                 currentState: row.lifecycle_state,
-                stateEnteredAt: row.created_at,
-                stateEnteredBy: row.created_by
+                stateEnteredAt: row.version_state_entered_at,
+                stateEnteredBy: row.version_state_entered_by
             }
          }) : null
 
@@ -174,6 +176,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				RETURNING *;
 			`;
 
+            console.log("lastReclassifiedBy:", document.classification.lastReclassifiedBy);
 			const result = await this.dbPool.query(query, [
 				document.id,
 				document.title,

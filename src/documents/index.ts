@@ -17,8 +17,10 @@ import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunct
 import CreateCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/CreateCorrespondenceSubject.usecase.js";
 import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
 import DocumentCreation from "./application/usecases/document/CreateDocument.usecase.js";
+import DeleteDocumentUseCase from "./application/usecases/document/DeleteDocument.usecase.js";
 import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocumentsByStaff.usecase.js";
 import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
+import DocumentSubmission from "./application/usecases/document/SubmitDocument.usecase.js";
 import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
 import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
 import GetDocumentTypeByIdUsecase from "./application/usecases/documentType/GetDocTypeById.usecase.js";
@@ -99,8 +101,18 @@ export default async function DocumentSubsystem(
 		documentRepository,
 	);
 
-    const getDocumentByIdUseCase = new GetDocumentByIdUsecase(
+	const getDocumentByIdUseCase = new GetDocumentByIdUsecase(
 		documentRepository,
+	);
+
+	const submitDocumentUseCase = new DocumentSubmission(
+		documentRepository,
+		documentEventsAdapter,
+	);
+
+	const deleteDocumentUseCase = new DeleteDocumentUseCase(
+		documentRepository,
+		documentEventsAdapter,
 	);
 
 	// application layer - correspondence subjects
@@ -141,7 +153,9 @@ export default async function DocumentSubsystem(
 	const documentController = new DocumentController(
 		createNewDocumentUseCase,
 		getAllDocumentsUseCase,
-        getDocumentByIdUseCase
+        getDocumentByIdUseCase,
+		submitDocumentUseCase,
+		deleteDocumentUseCase,
 	);
 
 	const corrSubjectController = new CorrespondenceSubjectController(

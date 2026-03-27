@@ -1,10 +1,12 @@
 import ApplicationError from "../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application.enum.js";
 import type DocumentCreation from "../../../application/usecases/document/CreateDocument.usecase.js";
+import type DeleteDocumentUseCase from "../../../application/usecases/document/DeleteDocument.usecase.js";
 import type GetAllDocumentsByStaffUseCase from "../../../application/usecases/document/GetAllDocumentsByStaff.usecase.js";
 import type GetDocumentByIdUsecase from "../../../application/usecases/document/GetDocById.usecase.js";
 import type DocumentSubmission from "../../../application/usecases/document/SubmitDocument.usecase.js";
 import Document from "../../../domain/entities/document/Document.js";
+import DocumentVersion from "../../../domain/entities/document/DocumentVersion.js";
 import { CorrespondenceAddressee } from "../../../domain/enum/correspondenceAddresee.enum.js";
 import type {
 	DocumentSchemaType,
@@ -17,6 +19,7 @@ class DocumentController {
 		private readonly getAllDocumentsByStaffUsecase: GetAllDocumentsByStaffUseCase,
 		private readonly getDocumentByIdUsecase: GetDocumentByIdUsecase,
 		private readonly submitDocUsecase: DocumentSubmission,
+		private readonly deleteDocumentUseCase: DeleteDocumentUseCase,
 	) {}
 
 	structureIncomingPayload(payload: DocumentSchemaTypeForCreation) {
@@ -109,7 +112,11 @@ class DocumentController {
 		return doc;
 	}
 
-	async saveDocument(doc: DocumentSchemaType, contentDelta: unknown) {
+	async saveDocument(
+		doc: DocumentSchemaType,
+		contentDelta: unknown,
+		actorId: string,
+	) {
 		const document = new Document({
 			...doc,
 			classification: {
@@ -127,34 +134,48 @@ class DocumentController {
 				),
 			},
 			createdAt: new Date(doc.createdAt),
-			updatedAt: new Date(doc.updatedAt),
+			updatedAt: doc.updatedAt
+  ? new Date(doc.updatedAt)
+  : null,
 		});
 
 		const savedDoc = await this.createDocumentUseCase.saveDocument(
 			document,
 			contentDelta,
+			actorId,
 		);
 
 		return savedDoc;
 	}
 
 	async submitDocument(actorId: string, doc: DocumentSchemaType) {
+		const version = doc.currentVersion
+			? new DocumentVersion({
+					id: doc.currentVersion.id,
+					documentId: doc.id,
+					contentDelta: doc.currentVersion.contentDelta,
+					versionNumber: doc.currentVersion.versionNumber,
+					mediaId: doc.currentVersion.mediaId ?? null,
+					createdAt: new Date(doc.currentVersion.createdAt),
+					createdBy: doc.currentVersion.createdBy,
+					lifecycle: {
+						currentState: doc.currentVersion.lifecycle.currentState,
+						stateEnteredAt: new Date(
+							doc.currentVersion.lifecycle.stateEnteredAt,
+						),
+						stateEnteredBy:
+							doc.currentVersion.lifecycle.stateEnteredBy,
+					},
+				})
+			: null;
+            
 		const document = {
 			...doc,
-			currentVersion: {
-				lifecycle: {
-					...doc.currentVersion.lifecycle,
-					stateEnteredAt: new Date(
-						doc.currentVersion.lifecycle.stateEnteredAt,
-					),
-				},
-			},
 			classification: {
 				...doc.classification,
 				classifiedAt: new Date(doc.classification.classifiedAt),
-				lastReclassifiedAt: new Date(
-					doc.classification.lastReclassifiedAt,
-				),
+				lastReclassifiedAt: doc.classification.lastReclassifiedAt
+                ? new Date(doc.classification.lastReclassifiedAt) : null,
 			},
 			retention: {
 				...doc.retention,
@@ -164,15 +185,27 @@ class DocumentController {
 				),
 			},
 			createdAt: new Date(doc.createdAt),
-			updatedAt: new Date(doc.updatedAt),
+			updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : null,
 		};
 
 		const submittedDocument = await this.submitDocUsecase.submitDocument(
 			actorId,
-			new Document(document),
+			new Document({...document, version}),
 		);
 
 		return submittedDocument;
+	}
+
+	async deleteDocument(documentId: string, deletedBy: string) {
+		await this.deleteDocumentUseCase.deleteDocument({
+			documentId,
+			deletedBy,
+		});
+
+		return {
+			documentId,
+			deleted: true,
+		};
 	}
 }
 
