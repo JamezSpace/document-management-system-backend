@@ -1,4 +1,4 @@
-import type { EventType } from "../enum/event.enum.js";
+import type { EventType } from "../../enum/event.enum.js";
 
 interface EventDetails {
 	eventName: EventType;
@@ -6,7 +6,7 @@ interface EventDetails {
 	payload: any;
 }
 
-interface EventBus {
+interface EventBusPort {
 	emit(event: EventDetails): Promise<void>;
 	subscribe(
 		eventName: EventType,
@@ -14,5 +14,5 @@ interface EventBus {
 	): void;
 }
 
-export type { EventBus, EventDetails };
+export type { EventBusPort, EventDetails };
 

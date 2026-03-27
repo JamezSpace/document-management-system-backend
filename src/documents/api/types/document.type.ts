@@ -50,7 +50,18 @@ const documentSchema = Type.Object({
 	id: Type.String(),
 	ownerId: Type.String(),
 	title: Type.String(),
-	currentVersion: Type.Null(),
+	currentVersion: Type.Object({
+        id: Type.String(),
+        documentId: Type.String(),
+        contentDelta: Type.Unknown(),
+        versionNumber: Type.Number(),
+        mediaId: Type.Union([Type.Null(), Type.String()]),
+        lifecycle: Type.Object({
+            currentState: Type.Enum(LifecycleState),
+            stateEnteredAt: Type.String({format: 'date-time'}),
+            stateEnteredBy: Type.String()
+        })
+    }),
 	referenceNumber: Type.String(),
 	classification: Type.Object({
 		sensitivity: Type.Enum(SensitivityLevel),

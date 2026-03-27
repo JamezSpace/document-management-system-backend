@@ -1,9 +1,9 @@
-import type { IdGeneratorPort } from "../../../shared/application/port/IdGenerator.port.js";
-import type { MediaEventsPort } from "../port/events/MediaEvents.port.js";
-import type { MediaRepositoryPort } from "../port/repos/MediaRepository.port.js";
-import MediaAsset from "../../domain/MediaAsset.js";
+import type { IdGeneratorPort } from "../../../shared/application/port/services/IdGenerator.port.js";
 import ApplicationError from "../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../shared/errors/enum/application.enum.js";
+import MediaAsset from "../../domain/MediaAsset.js";
+import type { MediaEventsPort } from "../port/events/MediaEvents.port.js";
+import type { MediaRepositoryPort } from "../port/repos/MediaRepository.port.js";
 import type { MediaTypeForReplacement } from "../types/media.type.js";
 
 class ReplaceMediaUseCase {

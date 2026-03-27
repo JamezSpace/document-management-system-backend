@@ -1,7 +1,7 @@
-import type { IdGeneratorPort } from "../../../shared/application/port/IdGenerator.port.js";
+import type { IdGeneratorPort } from "../../../shared/application/port/services/IdGenerator.port.js";
+import MediaAsset from "../../domain/MediaAsset.js";
 import type { MediaEventsPort } from "../port/events/MediaEvents.port.js";
 import type { MediaRepositoryPort } from "../port/repos/MediaRepository.port.js";
-import MediaAsset from "../../domain/MediaAsset.js";
 import type { MediaTypeForCreation } from "../types/media.type.js";
 
 class UploadMediaUseCase {

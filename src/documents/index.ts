@@ -1,41 +1,42 @@
 import type { FastifyInstance } from "fastify";
+import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
 import MediaServiceAdapter from "../shared/infrastructure/adapters/MediaService.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
+import BusinessFunctionController from "./api/controllers/businessFunction/BusinessFunctionController.js";
 import CorrespondenceSubjectController from "./api/controllers/correspondenceSubject/CorrespondenceSubjectController.js";
 import DocumentController from "./api/controllers/document/DocumentController.js";
+import DocumentTypeController from "./api/controllers/documentType/DocumentTypeController.js";
+import businessFunctionRoutes from "./api/routes/bussFunction.route.js";
 import correspondenceSubjectRoutes from "./api/routes/corrSubject.route.js";
+import documentTypeRoutes from "./api/routes/docType.route.js";
 import documentRoutes from "./api/routes/documents.route.js";
+import type { RetentionServicePort } from "./application/ports/services/RetentionService.port.js";
+import CreateBusinessFunctionUseCase from "./application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
+import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
 import CreateCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/CreateCorrespondenceSubject.usecase.js";
+import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
 import DocumentCreation from "./application/usecases/document/CreateDocument.usecase.js";
+import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocumentsByStaff.usecase.js";
+import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
+import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
+import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
+import GetDocumentTypeByIdUsecase from "./application/usecases/documentType/GetDocTypeById.usecase.js";
+import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctionEvents.adapter.js";
 import CorrespondenceSubjectEventsAdapter from "./infrastructure/adapters/CorrSubjectEvents.adapter.js";
 import DocumentEventsAdapter from "./infrastructure/adapters/DocumentEvents.adapter.js";
+import DocumentTypeEventsAdapter from "./infrastructure/adapters/DocumentTypeEvents.adapter.js";
+import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
 import PostgresCorrespondenceSubjectRepoAdapter from "./infrastructure/persistence/PostgresCorrSubjectRepo.adapter.js";
+import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
 import PostgresqlDocumentRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentRepo.adapter.js";
 import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/PostgresDocVersionRepo.adapter.js";
 import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
-import RetentionService from "./infrastructure/services/RetentionService.js";
-import type { RetentionServicePort } from "./application/ports/services/RetentionService.port.js";
-import businessFunctionRoutes from "./api/routes/bussFunction.route.js";
-import BusinessFunctionController from "./api/controllers/businessFunction/BusinessFunctionController.js";
-import CreateBusinessFunctionUseCase from "./application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
-import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctionEvents.adapter.js";
-import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
-import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
-import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
-import DocumentTypeEventsAdapter from "./infrastructure/adapters/DocumentTypeEvents.adapter.js";
-import DocumentTypeController from "./api/controllers/documentType/DocumentTypeController.js";
-import documentTypeRoutes from "./api/routes/docType.route.js";
-import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
-import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
-import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
-import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocumentsByStaff.usecase.js";
-import GetDocumentTypeByIdUsecase from "./application/usecases/documentType/GetDocTypeById.usecase.js";
-import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
+    globalEventBus: EventBusPort
 }
 
 export default async function DocumentSubsystem(
@@ -43,12 +44,11 @@ export default async function DocumentSubsystem(
 	dependencies: DocumentSubsystemDependencies,
 ) {
 	// dependencies
-	const { retentionService } = dependencies;
+	const { retentionService, globalEventBus } = dependencies;
 
 	// infrastructure Layer
 	const postgres = fastify.pg;
 
-	const globalEventBus = new InMemoryEventBusAdapter();
 	const idGenerator = new UuidV7Generator();
 
 	// all module repos in documents subsystem

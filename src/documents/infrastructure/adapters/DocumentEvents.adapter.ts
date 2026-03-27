@@ -1,9 +1,9 @@
 import { GlobalEventTypes } from "../../../shared/application/enum/event.enum.js";
-import type { EventBus } from "../../../shared/application/port/eventbus.port.js";
+import type { EventBusPort } from "../../../shared/application/port/services/eventbus.port.js";
 import type { DocumentEventsPort } from "../../application/ports/events/DocumentEvents.port.js";
 
 class DocumentEventsAdapter implements DocumentEventsPort {
-	constructor(private readonly eventBus: EventBus) {}
+	constructor(private readonly eventBus: EventBusPort) {}
 
 	async documentInitialized(payload: {
 		documentId: string;

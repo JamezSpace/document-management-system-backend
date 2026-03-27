@@ -8,13 +8,19 @@ import fastify, {
     type FastifyRequest,
 } from "fastify";
 import DocumentSubsystem from "./documents/index.js";
+import PostgresWorkflowDocumentAdapter from "./documents/infrastructure/persistence/PostgresWorkflowDocument.adapter.js";
 import RetentionService from "./documents/infrastructure/services/RetentionService.js";
+import PostgresWorkflowAccessRepositoryAdapter from "./i & a/access/infrastructure/persistence/PostgresWorkflowStaffReportingRepository.adapter.js";
 import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
 import IdentityAccessSubsystem from "./i & a/index.js";
+import NotificationSubsystem from "./notifications/index.js";
 import PolicySubsystem from "./policy/index.js";
+import PostgresDocumentRetentionPolicyAdapter from "./policy/infrastructre/persistence/PostgresDocRetentionPolicy.adapter.js";
+import PostgresWorkflowPolicyAdapter from "./policy/infrastructre/persistence/PostgresWorkflowPolicy.adapter.js";
 import type { NexusAppError } from "./shared/errors/api/nexusAppError.type.js";
+import InMemoryEventBusAdapter from "./shared/infrastructure/InMemoryEventBus.js";
 import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.config.js";
-import PostgresDocumentRetentionPolicyAdapter from "./policy/infrastructre/persistence/PostgresDocumentPolicy.adapter.js";
+import WorkflowSubsystem from "./workflow/index.js";
 
 const server: FastifyInstance = fastify({
 	logger: true,
@@ -32,22 +38,44 @@ server.register(fastifyMultipart, {
 	},
 });
 
+// global event bus
+const eventBusAdapter = new InMemoryEventBusAdapter();
+
 // load your plugins (your custom plugins) next
 server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
 
 server.after(() => {
-	// documents subsystem
-	const policyAdapter = new PostgresDocumentRetentionPolicyAdapter(
+	// documents subsystem - cross system repo adapters
+	const documentPolicyAdapter = new PostgresDocumentRetentionPolicyAdapter(
 		server.pg,
 	);
-	const retentionService = new RetentionService(policyAdapter);
+    const documentWorkflowAdapter = new PostgresWorkflowDocumentAdapter(server.pg);
+    const policyWorkflowAdapter = new PostgresWorkflowPolicyAdapter(server.pg);
+    const accessWorkflowAdapter = new PostgresWorkflowAccessRepositoryAdapter(server.pg);
+
+    // documents subsystem - services
+	const retentionService = new RetentionService(documentPolicyAdapter);
 
 	server.register(DocumentSubsystem, {
 		prefix: "api/document",
 		retentionService,
+        globalEventBus: eventBusAdapter
 	});
 
 	server.register(PolicySubsystem, { prefix: "api/policy" });
+
+    server.register(WorkflowSubsystem, {
+        prefix: "workflow",
+        documentWorkflowAdapter,
+        policyWorkflowAdapter,
+        accessWorkflowAdapter,
+        globalEventBus: eventBusAdapter
+    })
+
+    server.register(NotificationSubsystem, {
+        prefix: 'notifs',
+        globalEventBus: eventBusAdapter
+    })
 });
 
 // load decorators next

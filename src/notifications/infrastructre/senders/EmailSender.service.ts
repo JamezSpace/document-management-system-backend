@@ -1,4 +1,4 @@
-import type { NotificationIdentityPort } from "../../../shared/application/port/notificationIdentity.port.js";
+import type { NotificationIdentityPort } from "../../../shared/application/port/NotificationIdentity.port.js";
 import type { EmailServicePort } from "../../../shared/application/port/services/emailService.port.js";
 import Notification from "../../domain/entities/Notifications.js";
 

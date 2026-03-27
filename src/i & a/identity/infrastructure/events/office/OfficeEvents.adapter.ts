@@ -1,9 +1,9 @@
 import { GlobalEventTypes } from "../../../../../shared/application/enum/event.enum.js";
-import type { EventBus } from "../../../../../shared/application/port/eventbus.port.js";
+import type { EventBusPort } from "../../../../../shared/application/port/services/eventbus.port.js";
 import type { OfficeEventsPort } from "../../../application/ports/events/office/OfficeEvents.port.js";
 
 class OfficeEventsAdapter implements OfficeEventsPort {
-    constructor(private readonly eventBus: EventBus) {
+    constructor(private readonly eventBus: EventBusPort) {
         }
 
     async officeCreated(payload: { officeId: string; }): Promise<void> {

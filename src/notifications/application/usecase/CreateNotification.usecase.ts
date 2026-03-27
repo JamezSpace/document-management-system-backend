@@ -1,4 +1,4 @@
-import type { IdGeneratorPort } from "../../../shared/application/port/IdGenerator.port.js";
+import type { IdGeneratorPort } from "../../../shared/application/port/services/IdGenerator.port.js";
 import Notification from "../../domain/entities/Notifications.js";
 import { NotificationPreference } from "../../domain/enum/NotificationPreference.enum.js";
 import type { NotificationRepositoryPort } from "../port/NotificationsRepo.port.js";

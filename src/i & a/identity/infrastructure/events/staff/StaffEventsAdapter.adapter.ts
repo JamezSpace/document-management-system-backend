@@ -1,9 +1,9 @@
 import { GlobalEventTypes } from "../../../../../shared/application/enum/event.enum.js";
-import type { EventBus } from "../../../../../shared/application/port/eventbus.port.js";
+import type { EventBusPort } from "../../../../../shared/application/port/services/eventbus.port.js";
 import type { StaffEventsPort } from "../../../application/ports/events/staff/StaffEvent.port.js";
 
 class StaffEventsAdapter implements StaffEventsPort {
-	constructor(private readonly eventBus: EventBus) {}
+	constructor(private readonly eventBus: EventBusPort) {}
 
 	async staffAdded(payload: { staffId: string }): Promise<void> {
 		await this.eventBus.emit({

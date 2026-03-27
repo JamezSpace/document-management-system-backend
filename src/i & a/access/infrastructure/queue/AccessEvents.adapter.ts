@@ -1,5 +1,5 @@
-import type { EventBus } from "../../../../shared/application/port/eventbus.port.js";
 import { GlobalEventTypes } from "../../../../shared/application/enum/event.enum.js";
+import type { EventBusPort } from "../../../../shared/application/port/services/eventbus.port.js";
 import type { AccessEventsPort } from "../../application/ports/AccessEvents.port.js";
 import type Role from "../../domain/role/Role.js";
 
@@ -7,7 +7,7 @@ import type Role from "../../domain/role/Role.js";
  * This is a wrapper class implementation of the authority event types. This class establishes communication between the subsystem and the eventBus
  */
 class AccessEventsAdapter implements AccessEventsPort {
-	constructor(private readonly eventBus: EventBus) {}
+	constructor(private readonly eventBus: EventBusPort) {}
 
 	async officialRoleAssigned(payload: {
 		staffId: string;

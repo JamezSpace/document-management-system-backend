@@ -16,7 +16,10 @@ interface DocumentEventsPort {
 
 	documentSubmitted(payload: {
 		documentId: string;
+		documentVersionId: string;
 		submittedBy: string;
+		fromState: string;
+		toState: string;
 	}): Promise<void>;
 
 	documentApproved(payload: {
@@ -67,7 +70,7 @@ interface DocumentEventsPort {
 		attachedBy: string;
 	}): Promise<void>;
 
-    documentMediaReplaced(payload: {
+	documentMediaReplaced(payload: {
 		documentId: string;
 		oldMediaId: string;
 		newMediaId: string;

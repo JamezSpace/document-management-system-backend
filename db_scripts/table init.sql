@@ -1,7 +1,9 @@
+
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
 CREATE SCHEMA IF NOT EXISTS document;
 CREATE SCHEMA IF NOT EXISTS policy;
+CREATE SCHEMA IF NOT EXISTS workflow;
 CREATE SCHEMA IF NOT EXISTS notifications;
 
 drop table if exists identity.users cascade;
@@ -30,6 +32,22 @@ CREATE TYPE document.sensitivity_level AS ENUM(
 CREATE TYPE document.correspondence_direction AS ENUM(
 	'internal', 'external'
 );
+CREATE TYPE document.lifecycle_state AS ENUM(
+	'draft', 'in_review','approved', 'active', 'declared_record', 'archived', 'cancelled', 'disposed'
+);
+CREATE TYPE document.lifecycle_actions AS ENUM(
+	'save', 'create', 'submit', 'approve', 'reject',  'cancel', 'activate', 'declare_record', 'archive', 'delete',   'dispose'
+);
+
+-- WORKFLOW SCHEMA TYPES
+CREATE TYPE workflow.instance_status as ENUM(
+    'in_progress','completed', 'rejected'
+);
+
+CREATE TYPE workflow.task_status as ENUM(
+    'pending','approved', 'rejected'
+);
+
 
 -- NOTIFICATIONS SCHEMA TYPES
 CREATE TYPE notifications.recipient_type as ENUM (
@@ -109,6 +127,23 @@ CREATE TABLE identity.staff(
 	updated_at TIMESTAMPTZ
 );
 
+-- staff reporting line
+CREATE TABLE identity.staff_reporting_lines (
+    id VARCHAR(50) PRIMARY KEY,
+    staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+    supervisor_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+
+    type VARCHAR(30) NOT NULL, 
+    -- 'PRIMARY', 'DELEGATED'
+
+    delegated_by VARCHAR(50) REFERENCES identity.staff(id),
+
+    effective_from TIMESTAMPTZ NOT NULL,
+    effective_to TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL
+);
+
 -- staff media
 CREATE TABLE identity.staff_media_assets (
     staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE CASCADE NOT NULL,
@@ -171,7 +206,7 @@ CREATE TABLE identity.role_assignments(
 	id varchar(50) PRIMARY KEY,
 	staff_id varchar(50) REFERENCES identity.staff(id),
 	role_id varchar(50) REFERENCES identity.roles(id),
-	scope JSONB, -- e.g { unitId: "...", officeId: "..." }
+	scope JSONB, -- e.g { unitId: '...', officeId: '...' }
 	delegated_by varchar(50) REFERENCES identity.staff(id),
 	valid_from TIMESTAMPTZ NOT NULL,
 	valid_to TIMESTAMPTZ,
@@ -305,6 +340,25 @@ FOREIGN KEY (current_version_id)
 REFERENCES document.document_versions(id)
 ON DELETE SET NULL;
 
+-- documents history
+CREATE TABLE document.document_lifecycle_history (
+    id VARCHAR(50) PRIMARY KEY,
+
+    document_id VARCHAR(50) NOT NULL REFERENCES document.documents(id),
+    document_version_id VARCHAR(50) REFERENCES document.document_versions(id),
+
+    from_state document.lifecycle_state,
+    to_state document.lifecycle_state NOT NULL,
+
+    action document.lifecycle_actions NOT NULL,
+
+    actor_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+
+    metadata JSONB, -- optional (reason, comments, etc.)
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- documents media
 CREATE TABLE document.document_media_assets (
     document_id VARCHAR(50) REFERENCES document.documents(id) ON DELETE CASCADE NOT NULL,
@@ -332,6 +386,39 @@ CREATE TABLE policy.document_retention (
 
 	UNIQUE(document_type_id, policy_version)
 );
+
+-- WORKFLOW SCHEMA
+CREATE TABLE workflow.workflow_instances (
+    id VARCHAR(50) PRIMARY KEY,
+    document_id VARCHAR(50) REFERENCES document.documents(id) ON DELETE CASCADE,
+
+    current_step INT NOT NULL,
+    status workflow.instance_status NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE workflow.workflow_tasks (
+    id VARCHAR(50) PRIMARY KEY,
+
+    workflow_instance_id VARCHAR(50)
+        REFERENCES workflow.workflow_instances(id)
+        ON DELETE CASCADE,
+
+    step_order INT NOT NULL,
+
+    assigned_to VARCHAR(50)
+        REFERENCES identity.staff(id),
+
+    role VARCHAR(100) NOT NULL,
+
+    status workflow.task_status NOT NULL, 
+
+    acted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- NOTIFICATIONS SCHEMA
 CREATE TABLE notifications.notifications (

@@ -4,14 +4,14 @@
  * E.g. the action is 'APRROVE', the lifecycle state of the document after the action is 'APPROVED'.
  */
 enum LifecycleState {
-  DRAFT = "DRAFT",
-  IN_REVIEW = "IN_REVIEW",
-  APPROVED = "APPROVED",
-  ACTIVE = "ACTIVE",
-  DECLARED_RECORD = "DECLARED_RECORD",
-  ARCHIVED = "ARCHIVED",
-  CANCELLED = "CANCELLED", // The "Soft Delete" state for Drafts/Reviews
-  DISPOSED = "DISPOSED"    // The "Legal End-of-Life" state
+  DRAFT = "draft",
+  IN_REVIEW = "in_review",
+  APPROVED = "approved",
+  ACTIVE = "active",
+  DECLARED_RECORD = "declared_record",
+  ARCHIVED = "archived",
+  CANCELLED = "cancelled", // The "Soft Delete" state for Drafts/Reviews
+  DISPOSED = "disposed"    // The "Legal End-of-Life" state
 }
 
 export {

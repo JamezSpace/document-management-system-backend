@@ -1,4 +1,4 @@
-import type { IdGeneratorPort } from "../../../../../shared/application/port/IdGenerator.port.js";
+import type { IdGeneratorPort } from "../../../../../shared/application/port/services/IdGenerator.port.js";
 import Staff from "../../../domain/entities/staff/Staff.js";
 import type { StaffEventsPort } from "../../ports/events/staff/StaffEvent.port.js";
 import type { StaffRepositoryPort } from "../../ports/repos/staff/StaffRepository.port.js";

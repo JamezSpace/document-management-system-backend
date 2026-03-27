@@ -1,5 +1,5 @@
 import type { PostgresDb } from "@fastify/postgres";
-import type { NotificationIdentityPort } from "../../../../../shared/application/port/notificationIdentity.port.js";
+import type { NotificationIdentityPort } from "../../../../../shared/application/port/NotificationIdentity.port.js";
 import type { StaffIdentity } from "../../../../../shared/application/types/notificationIdentity/notificationIdentity.type.js";
 
 class PostgresNotificationIdentityAdapter implements NotificationIdentityPort {

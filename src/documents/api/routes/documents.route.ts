@@ -3,11 +3,13 @@ import type DocumentController from "../controllers/document/DocumentController.
 import {
 	docStaffIdSchema,
 	documentIdSchema,
+	documentSchema,
 	documentSchemaForCreation,
 	documentSchemaForSave,
 	type DocStaffIdSchemaType,
 	type DocumentIdSchemaType,
 	type DocumentSchemaForSaveType,
+	type DocumentSchemaType,
 	type DocumentSchemaTypeForCreation,
 } from "../types/document.type.js";
 import ApiError from "../../../shared/errors/ApiError.error.js";
@@ -121,10 +123,11 @@ async function documentRoutes(
 					message: "No uid extracted from access token",
 				});
 
-            if(docId !== documentToSave.id)
-                throw new ApiError(ApiErrorEnum.BAD_REQUEST, {
-                    message: "Mismatch between document ID input and id of the document!"
-                })
+			if (docId !== documentToSave.id)
+				throw new ApiError(ApiErrorEnum.BAD_REQUEST, {
+					message:
+						"Mismatch between document ID input and id of the document!",
+				});
 
 			const savedDoc = await documentController.saveDocument(
 				documentToSave,
@@ -140,6 +143,36 @@ async function documentRoutes(
 				success: true,
 				data: savedDoc,
 			});
+		},
+	);
+
+	// submit document
+	fastify.post(
+		"/:docId/submit",
+		{ schema: { params: documentIdSchema, body: documentSchema } },
+		async (
+			request: FastifyRequest<{
+				Params: DocumentIdSchemaType;
+                Body: DocumentSchemaType
+			}>,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.user!;
+			const { docId } = request.params;
+            const documentToSubmit = request.body
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+            
+            const submitedDoc = await documentController.submitDocument(uid, documentToSubmit);
+
+            return reply.code(200).send({
+                success: true,
+                data: submitedDoc
+            })
 		},
 	);
 }

@@ -1,9 +1,9 @@
 import { GlobalEventTypes } from "../../../../../shared/application/enum/event.enum.js";
-import type { EventBus } from "../../../../../shared/application/port/eventbus.port.js";
+import type { EventBusPort } from "../../../../../shared/application/port/services/eventbus.port.js";
 import type { OrgUnitEventsPort } from "../../../application/ports/events/unit/OrgUnitEvents.port.js";
 
 class OrgUnitsEventsAdapter implements OrgUnitEventsPort {
-    constructor(private readonly eventBus: EventBus) {
+    constructor(private readonly eventBus: EventBusPort) {
         }
     async unitCreated(payload: { unitId: string; }): Promise<void> {
          await this.eventBus.emit({

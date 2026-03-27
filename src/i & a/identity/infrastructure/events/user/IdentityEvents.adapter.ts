@@ -1,12 +1,12 @@
 import { GlobalEventTypes } from "../../../../../shared/application/enum/event.enum.js";
-import type { EventBus } from "../../../../../shared/application/port/eventbus.port.js";
+import type { EventBusPort } from "../../../../../shared/application/port/services/eventbus.port.js";
 import type { UserEventsPort } from "../../../application/ports/events/user/UserEvents.port.js";
 
 /**
  * This is a wrapper class implementation of the identity & authority event types. This class establishes communication between the subsystem and the eventBus
  */
 class IdentityEventsAdapter implements UserEventsPort {
-	constructor(private readonly eventBus: EventBus) {}
+	constructor(private readonly eventBus: EventBusPort) {}
     
     async userActivated(payload: { userId: string }): Promise<void> {
         await this.eventBus.emit({

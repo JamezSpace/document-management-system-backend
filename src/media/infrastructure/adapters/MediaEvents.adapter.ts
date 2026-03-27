@@ -1,9 +1,9 @@
 import { GlobalEventTypes } from "../../../shared/application/enum/event.enum.js";
-import type { EventBus } from "../../../shared/application/port/eventbus.port.js";
+import type { EventBusPort } from "../../../shared/application/port/services/eventbus.port.js";
 import type { MediaEventsPort } from "../../application/port/events/MediaEvents.port.js";
 
 class MediaEventsAdapter implements MediaEventsPort {
-	constructor(private readonly eventBus: EventBus) {}
+	constructor(private readonly eventBus: EventBusPort) {}
 
 	async mediaAdded(payload: {
 		mediaId: string;

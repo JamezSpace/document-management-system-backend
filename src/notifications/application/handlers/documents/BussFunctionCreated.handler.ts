@@ -1,4 +1,4 @@
-import type { EventDetails } from "../../../../shared/application/port/eventbus.port.js";
+import type { EventDetails } from "../../../../shared/application/port/services/eventbus.port.js";
 import { NotificationPriority } from "../../../domain/enum/NotificationPriority.enum.js";
 import { NotificationRecipientType } from "../../../domain/enum/NotificationRecipientType.enum.js";
 import type CreateNotificationUseCase from "../../usecase/CreateNotification.usecase.js";

@@ -1,5 +1,5 @@
 enum LifecycleActions {
-    SAVE = "save",
+    SAVE = 'save',
     CREATE = 'create',
     SUBMIT = 'submit',
     APPROVE = 'approve',

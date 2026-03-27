@@ -1,4 +1,4 @@
-import type { IdGeneratorPort } from "../../../shared/application/port/IdGenerator.port.js";
+import type { IdGeneratorPort } from "../../../shared/application/port/services/IdGenerator.port.js";
 import DocumentRetentionPolicy from "../../domain/DocumentRetentionPolicy.js";
 import type { DocumentRetentionPolicyEventsPort } from "../port/events/DocRetPolicyEvents.port.js";
 import type { DocumentRetentionPolicyRepositoryPort } from "../port/repo/DocRetPolicyRepo.port.js";

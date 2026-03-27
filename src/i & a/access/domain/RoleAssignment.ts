@@ -1,4 +1,4 @@
-import DomainError from "../../../shared/errors/enum/domain.enum.js";
+import { AccessDomainErrors } from "../../../shared/errors/enum/domain.enum.js";
 import AccessDomainError from "./errors/AccessDomainError.js";
 import type Role from "./role/Role.js";
 
@@ -33,7 +33,7 @@ class RoleAssignment {
 
 		if (dto.delegatedBy && !dto.validTo) {
 			throw new AccessDomainError(
-				DomainError.DELEGATED_ROLE_MISSING_EXPIRY,
+				AccessDomainErrors.DELEGATED_ROLE_MISSING_EXPIRY,
 			);
 		}
 
@@ -53,12 +53,12 @@ class RoleAssignment {
 	close(revokedAt: Date): void {
 		if (revokedAt < this.validFrom) {
 			throw new AccessDomainError(
-				DomainError.INVALID_ROLE_REVOCATION_DATE,
+				AccessDomainErrors.INVALID_ROLE_REVOCATION_DATE,
 			);
 		}
 
 		if (this.validTo && revokedAt >= this.validTo) {
-			throw new AccessDomainError(DomainError.ROLE_ALREADY_CLOSED);
+			throw new AccessDomainError(AccessDomainErrors.ROLE_ALREADY_CLOSED);
 		}
 
 		this.validTo = revokedAt;

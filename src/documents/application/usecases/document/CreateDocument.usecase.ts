@@ -1,4 +1,4 @@
-import type { IdGeneratorPort } from "../../../../shared/application/port/IdGenerator.port.js";
+import type { IdGeneratorPort } from "../../../../shared/application/port/services/IdGenerator.port.js";
 import type { MediaServicePort } from "../../../../shared/application/port/services/mediaService.port.js";
 import ApplicationError from "../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application.enum.js";

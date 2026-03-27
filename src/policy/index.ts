@@ -5,7 +5,7 @@ import DocumentRetentionPolicyController from "./api/controllers/DocumentRetenti
 import documentRetentionPolicyRoutes from "./api/routes/docRetPolicy.route.js";
 import CreateDocumentRetentionPolicyUsecase from "./application/usecases/CreateDocumentRetentionPolicy.usecase.js";
 import DocumentRetentionPolicyEventsAdapter from "./infrastructre/adapters/DocRetPolicyEvents.adapter.js";
-import PostgresDocumentRetentionPolicyAdapter from "./infrastructre/persistence/PostgresDocumentPolicy.adapter.js";
+import PostgresDocumentRetentionPolicyAdapter from "./infrastructre/persistence/PostgresDocRetentionPolicy.adapter.js";
 
 export default async function PolicySubsystem(fastify: FastifyInstance) {
     const postgres = fastify.pg;

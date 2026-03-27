@@ -1,6 +1,6 @@
-import type { EventBus, EventDetails } from "../application/port/eventbus.port.js";
+import type { EventBusPort, EventDetails } from "../application/port/services/eventbus.port.js";
 
-class InMemoryEventBusAdapter implements EventBus {
+class InMemoryEventBusAdapter implements EventBusPort {
 	private handlers: Map<string, Function[]> = new Map();
 
 	async emit(event: EventDetails): Promise<void> {

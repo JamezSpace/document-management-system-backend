@@ -1,4 +1,4 @@
-import type { IdGeneratorPort } from "../../../../../shared/application/port/IdGenerator.port.js";
+import type { IdGeneratorPort } from "../../../../../shared/application/port/services/IdGenerator.port.js";
 import Identity from "../../../domain/entities/user/Identity.js";
 import { IdentityStatus } from "../../../domain/entities/user/IdentityStatus.js";
 import { Status } from "../../../domain/enum/staff.enum.js";

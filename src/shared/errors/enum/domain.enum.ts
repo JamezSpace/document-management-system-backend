@@ -47,6 +47,10 @@ export const AccessDomainErrors = {
     ROLE_ALREADY_CLOSED: {
         codeName: "role_already_closed",
         httpStatusCode: StatusCodes.CONFLICT
+    },
+    INVALID_CREDEDNTIALS: {
+        codeName: "invalid_request_parameters",
+        httpStatusCode: StatusCodes.BAD_REQUEST
     }
 } as const;
 
@@ -62,6 +66,10 @@ export const DocumentDomainErrors = {
 } as const;
 
 export const WorkflowDomainErrors = {
+    INVALID_OPERATION: {
+        codeName: "invalid_operation",
+        httpStatusCode: StatusCodes.NOT_ACCEPTABLE
+    },
     INVALID_WORKFLOW_STATE: {
         codeName: "invalid_workflow_state",
         httpStatusCode: StatusCodes.BAD_REQUEST
@@ -73,6 +81,10 @@ export const WorkflowDomainErrors = {
     EXPIRED_APPROVAL: {
         codeName: "expired_approval",
         httpStatusCode: StatusCodes.GONE
+    },
+    UNAUTHORISED_APPROVAL: {
+        codeName: "unauthorised_approval",
+        httpStatusCode: StatusCodes.UNAUTHORIZED
     }
 } as const;
 
