@@ -112,7 +112,7 @@ async function staffRoutes(
                 })
 
             // fetch staff details
-            const staff = await staffController.fetchStaffDetailsForLogin(uid);
+            const staff = await staffController.fetchStaffWithAuthority(uid);
 
             return staff ? reply.code(200).send({
                 success: true,

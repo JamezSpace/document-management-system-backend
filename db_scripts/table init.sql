@@ -48,6 +48,12 @@ CREATE TYPE workflow.task_status as ENUM(
     'pending','approved', 'rejected'
 );
 
+-- POLICY SCHEMA TYPES
+CREATE TYPE policy.resolution_strategy AS ENUM (
+    'direct_supervisor',
+    'role_in_unit',
+    'role_in_office'
+);
 
 -- NOTIFICATIONS SCHEMA TYPES
 CREATE TYPE notifications.recipient_type as ENUM (
@@ -389,6 +395,29 @@ CREATE TABLE policy.document_retention (
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
 	UNIQUE(document_type_id, policy_version)
+);
+
+CREATE TABLE policy.approval_workflow_steps (
+    id VARCHAR(50) PRIMARY KEY,
+    policy_version INT NOT NULL,
+    document_type_id VARCHAR(50)
+        REFERENCES document.document_type(id)
+        NOT NULL,
+
+    step_order INT NOT NULL,
+
+    role_id VARCHAR(50)
+        REFERENCES identity.roles(id)
+        NOT NULL,
+
+    resolution_strategy policy.resolution_strategy NOT NULL,
+
+    -- optional but useful
+    description TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (document_type_id, policy_version, step_order)
 );
 
 -- WORKFLOW SCHEMA

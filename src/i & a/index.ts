@@ -53,6 +53,7 @@ import IdentityEmailServiceAdapter from "./identity/infrastructure/services/Emai
 import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
 import ActivateStaffUseCase from "./identity/application/usecases/staff/ActivateStaff.usecase.js";
 import MediaServiceAdapter from "../shared/infrastructure/adapters/MediaService.adapter.js";
+import ResolveStaffAuthority from "./access/application/usecases/ResolveStaffAuthority.usecase.js";
 
 
 export default async function IdentityAccessSubsystem(
@@ -70,8 +71,8 @@ export default async function IdentityAccessSubsystem(
 		postgres,
 	);
 	const orgUnitRepository = new PostgresOrgUnitRepositoryAdapter(postgres);
-	const roleRepository = new PostgresqlRoleRepositoryAdapter();
-	const accessRepository = new PostgresqlRoleAssignmentRepositoryAdapter();
+	const roleRepository = new PostgresqlRoleRepositoryAdapter(postgres);
+	const accessRepository = new PostgresqlRoleAssignmentRepositoryAdapter(postgres);
 	const officeRepository = new PostgresOfficeRepositoryAdapter(postgres);
 	const officeDesignationRepository =
 		new PostgresOfficeDesignationRepositoryAdapter(postgres);
@@ -198,6 +199,8 @@ export default async function IdentityAccessSubsystem(
 		staffClassificationRepository,
 	);
 
+    const resolveStaffAuthority = new ResolveStaffAuthority(accessRepository);
+
 	// controller Layer
 	const authenticationController = new AuthenticationController(
 		authenticateUserUseCase,
@@ -231,7 +234,8 @@ export default async function IdentityAccessSubsystem(
         registerNewStaffUseCase,
         activateStaffUseCase,
 		editStaffUseCase,
-		fetchStaffUseCase
+		fetchStaffUseCase,
+        resolveStaffAuthority
 	);
 
 	const staffClassificationController = new StaffClassificationController(

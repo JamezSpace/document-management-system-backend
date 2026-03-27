@@ -76,6 +76,11 @@ VALUES
     ('perm.directive.enforce','directive.enforce','monitor compliance'),
     -- permission data
     ('perm.permission.view','permission.view','view permissions');
+    (
+    'perm.staff.pending_activation.list',
+    'staff.pending_activation.list',
+    'list staff pending activation'
+);
 
 
 
@@ -197,3 +202,66 @@ VALUES
 INSERT INTO document.document_type (id, code, name, created_at)
 VALUES 
     ('DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768', 'memo', 'memorandum', now())
+
+-- POLICY SCHEMA
+-- retention policy
+INSERT INTO policy.document_retention (id, policy_version, document_type_id, archival_required,retention_duration, effective_from)
+VALUES (
+    'DOC-RET-POL-019cf628-9799-7bf5-a302-a4ed506e8d15',
+    1,
+    'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
+    true,
+    5,
+    '2026-03-15'
+)
+
+
+-- MEMO approval policy (version 1)
+INSERT INTO policy.approval_workflow_steps (
+    id, policy_version, document_type_id,
+    step_order, role_id, resolution_strategy, description
+) VALUES
+
+-- supervisor review (context-driven)
+(
+    'wf-step-1',
+    1,
+    'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
+    1,
+    'role.reviewing_officer',
+    'direct_supervisor',
+    'Immediate supervisor reviews and validates document'
+),
+
+-- department-level approval
+(
+    'wf-step-2',
+    1,
+    'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
+    2,
+    'role.reviewing_officer',
+    'role_in_unit',
+    'Reviewing officer within originating unit approves'
+),
+
+-- workflow control (optional )
+(
+    'wf-step-3',
+    1,
+    'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
+    3,
+    'role.workflow_coordinator',
+    'role_in_office',
+    'Workflow coordinator validates routing and compliance'
+),
+
+-- final authority approval
+(
+    'wf-step-4',
+    1,
+    'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
+    4,
+    'role.directive_authority',
+    'role_in_office',
+    'Final approval by directive authority'
+);

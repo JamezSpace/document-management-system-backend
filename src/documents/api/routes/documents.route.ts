@@ -150,17 +150,17 @@ async function documentRoutes(
 
 	// submit document
 	fastify.post(
-		"/:docId/submit",
-		{ schema: { params: documentIdSchema, body: documentSchema } },
+		"/:staffId/submit",
+		{ schema: { params: docStaffIdSchema, body: documentSchema } },
 		async (
 			request: FastifyRequest<{
-				Params: DocumentIdSchemaType;
+				Params: DocStaffIdSchemaType;
                 Body: DocumentSchemaType
 			}>,
 			reply: FastifyReply,
 		) => {
 			const { uid } = request.user!;
-			const { docId } = request.params;
+			const { staffId } = request.params;
             const documentToSubmit = request.body
 
 			if (!uid)
@@ -169,7 +169,7 @@ async function documentRoutes(
 					message: "No uid extracted from access token",
 				});
             
-            const submitedDoc = await documentController.submitDocument(uid, documentToSubmit);
+            const submitedDoc = await documentController.submitDocument(staffId, documentToSubmit);
 
 			return reply.code(200).send({
                 success: true,

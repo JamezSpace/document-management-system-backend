@@ -23,8 +23,8 @@ class RoleAssignment {
 	readonly staffId: string;
 	readonly role: Role;
 	readonly validFrom: Date;
-	readonly delegatedBy?: string | undefined;
-	private validTo?: Date | undefined;
+	readonly delegatedBy: string | null;
+	private validTo: Date | null;
 
 	constructor(dto: RoleAssignmentDTO) {
 		this.staffId = dto.identityId;
@@ -37,8 +37,8 @@ class RoleAssignment {
 			);
 		}
 
-		this.delegatedBy = dto.delegatedBy;
-		this.validTo = dto.validTo;
+		this.delegatedBy = dto.delegatedBy ?? null;
+		this.validTo = dto.validTo ?? null;
 	}
 
 	isActive(): boolean {
@@ -62,6 +62,10 @@ class RoleAssignment {
 		}
 
 		this.validTo = revokedAt;
+	}
+
+	getValidTo(): Date | null {
+		return this.validTo;
 	}
 }
 

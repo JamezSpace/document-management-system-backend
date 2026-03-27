@@ -4,19 +4,15 @@ import Document from "../../../domain/entities/document/Document.js";
 import { LifecycleState } from "../../../domain/enum/lifecycleState.enum.js";
 import type { DocumentEventsPort } from "../../ports/events/DocumentEvents.port.js";
 import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepository.port.js";
+import type { DocumentVersionRepositoryPort } from "../../ports/repos/DocumentVersionRepository.port.js";
 
 
 class DocumentSubmission {
-    private readonly documentRepo: DocumentRepositoryPort;
-	private readonly documentEvents: DocumentEventsPort;
-
 	constructor(
-		documentRepoInstance: DocumentRepositoryPort,
-		documentEventInstance: DocumentEventsPort,
-	) {
-		this.documentEvents = documentEventInstance;
-		this.documentRepo = documentRepoInstance;
-	}
+		private readonly documentRepo: DocumentRepositoryPort,
+		private readonly documentVersionRepo: DocumentVersionRepositoryPort,
+	private readonly documentEvents: DocumentEventsPort
+	) {}
 
     async submitDocument(actorId: string, document: Document) {
         const versionedDocument = document.getCurrentVersion();
@@ -31,8 +27,11 @@ class DocumentSubmission {
 
         // this only changes the state within the domain not the database
         versionedDocument.submit(actorId)
+                
 
         // this persists the changed document state to database
+        const savedVersionedDoc = await this.documentVersionRepo.editVersionedDocument(versionedDocument);
+
         const submittedDocument = await this.documentRepo.editDocument(document);
 
         // emit document submitted event

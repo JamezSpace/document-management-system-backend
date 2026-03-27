@@ -22,7 +22,7 @@ class DeleteDocumentUseCase {
 
 		const version = doc.getCurrentVersion();
 
-		if (version && version.getState() !== LifecycleState.DRAFT) {
+		if (version && version.getState().toLowerCase() !== LifecycleState.DRAFT) {
 			throw new ApplicationError(ApplicationErrorEnum.NOT_ALLOWED, {
 				message: "Only draft documents can be deleted.",
 				details: {

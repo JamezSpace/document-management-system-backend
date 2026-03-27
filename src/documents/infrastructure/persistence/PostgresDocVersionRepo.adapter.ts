@@ -52,7 +52,8 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 			return this.toDomain(result.rows[0]);
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
-			throw new InfrastructureError(
+			
+            throw new InfrastructureError(
 				postgresError.summary,
 				{
 					category: Category.PERSISTENCE,

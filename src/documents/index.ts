@@ -107,6 +107,7 @@ export default async function DocumentSubsystem(
 
 	const submitDocumentUseCase = new DocumentSubmission(
 		documentRepository,
+        docVersionRepository,
 		documentEventsAdapter,
 	);
 
