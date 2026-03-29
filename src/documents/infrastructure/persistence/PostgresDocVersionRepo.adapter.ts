@@ -20,8 +20,8 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 			createdBy: row.created_by,
 			lifecycle: {
 				currentState: row.lifecycle_state,
-				stateEnteredAt: row.version_state_entered_at,
-				stateEnteredBy: row.version_state_entered_by,
+				stateEnteredAt: row.state_entered_at,
+				stateEnteredBy: row.state_entered_by,
 			},
 		});
 	}

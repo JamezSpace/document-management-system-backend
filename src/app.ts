@@ -10,7 +10,7 @@ import fastify, {
 import DocumentSubsystem from "./documents/index.js";
 import PostgresWorkflowDocumentAdapter from "./documents/infrastructure/persistence/PostgresWorkflowDocument.adapter.js";
 import RetentionService from "./documents/infrastructure/services/RetentionService.js";
-import PostgresWorkflowAccessRepositoryAdapter from "./i & a/access/infrastructure/persistence/PostgresWorkflowStaffReportingRepository.adapter.js";
+import PostgresWorkflowAccessRepositoryAdapter from "./i & a/access/infrastructure/persistence/PostgresWorkflowAccessRepository.adapter.js";
 import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
 import IdentityAccessSubsystem from "./i & a/index.js";
 import NotificationSubsystem from "./notifications/index.js";

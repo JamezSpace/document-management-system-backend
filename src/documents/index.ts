@@ -35,6 +35,7 @@ import PostgresqlDocumentRepositoryAdapter from "./infrastructure/persistence/Po
 import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/PostgresDocVersionRepo.adapter.js";
 import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
+import PostgresLifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/PostgresLifecycleHistoryRepository.adapter.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -58,6 +59,9 @@ export default async function DocumentSubsystem(
 		postgres,
 	);
 	const docVersionRepository = new PostgresDocVersionRepositoryAdapter(
+		postgres,
+	);
+	const lifecycleHistoryRepository = new PostgresLifecycleHistoryRepositoryAdapter(
 		postgres,
 	);
 	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(
@@ -90,6 +94,7 @@ export default async function DocumentSubsystem(
 		idGenerator,
 		documentRepository,
 		docVersionRepository,
+        lifecycleHistoryRepository,
 		docTypeRepository,
 		documentEventsAdapter,
 		refNumberService,
@@ -106,13 +111,17 @@ export default async function DocumentSubsystem(
 	);
 
 	const submitDocumentUseCase = new DocumentSubmission(
+        idGenerator,
 		documentRepository,
         docVersionRepository,
+        lifecycleHistoryRepository,
 		documentEventsAdapter,
 	);
 
 	const deleteDocumentUseCase = new DeleteDocumentUseCase(
+        idGenerator,
 		documentRepository,
+        lifecycleHistoryRepository,
 		documentEventsAdapter,
 	);
 

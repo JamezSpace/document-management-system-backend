@@ -3,10 +3,13 @@ import type { MediaServicePort } from "../../../../shared/application/port/servi
 import ApplicationError from "../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application.enum.js";
 import Document from "../../../domain/entities/document/Document.js";
+import { LifecycleActions } from "../../../domain/enum/lifecycleActions.enum.js";
+import { LifecycleState } from "../../../domain/enum/lifecycleState.enum.js";
 import type { DocumentEventsPort } from "../../ports/events/DocumentEvents.port.js";
 import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepository.port.js";
 import type { DocumentTypeRepositoryPort } from "../../ports/repos/DocumentTypeRepo.port.js";
 import type { DocumentVersionRepositoryPort } from "../../ports/repos/DocumentVersionRepository.port.js";
+import type { LifecycleHistoryRepositoryPort } from "../../ports/repos/LifecycleHistoryRepository.port.js";
 import type { ReferenceNumberServicePort } from "../../ports/services/ReferenceNumberService.port.js";
 import type { RetentionServicePort } from "../../ports/services/RetentionService.port.js";
 import type { DocumentTypeForCreation } from "../../types/doc.type.js";
@@ -16,6 +19,7 @@ class DocumentCreation {
 		private readonly idGenerator: IdGeneratorPort,
 		private readonly documentRepo: DocumentRepositoryPort,
 		private readonly documentVersionRepo: DocumentVersionRepositoryPort,
+        private readonly lifecycleHistoryRepo: LifecycleHistoryRepositoryPort,
 		private readonly docTypeRepo: DocumentTypeRepositoryPort,
 		private readonly documentEvents: DocumentEventsPort,
 		private readonly refNumService: ReferenceNumberServicePort,
@@ -81,19 +85,33 @@ class DocumentCreation {
         const version = document.save(
         { contentDelta, uuid },
         actorId
-    );
-
+    );  
+    
 		const savedVersionedDoc =
-			await this.documentVersionRepo.save(version);
+			await this.documentVersionRepo.save(version);        
 
 		const savedDoc = await this.documentRepo.editDocument(document);
+
+        await this.lifecycleHistoryRepo.save({
+            id: "CYCLE-HSTORY-" + this.idGenerator.generate(),
+            action: LifecycleActions.SAVE,
+            actorId,
+            documentId: savedVersionedDoc.documentId,
+            documentVersionId: savedVersionedDoc.id,
+            fromState: null,
+            toState: LifecycleState.DRAFT,
+            metadata: null
+        })
 
 		await this.documentEvents.documentVersionCreated({
 			documentId: document.id,
 			versionedBy: document.ownerId,
 		});
 
-		return savedDoc;
+		return {
+            ...savedDoc,
+            currentVersion: savedVersionedDoc
+        };
 	}
 }
 

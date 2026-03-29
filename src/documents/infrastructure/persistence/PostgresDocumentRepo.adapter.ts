@@ -176,7 +176,6 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				RETURNING *;
 			`;
 
-            console.log("lastReclassifiedBy:", document.classification.lastReclassifiedBy);
 			const result = await this.dbPool.query(query, [
 				document.id,
 				document.title,

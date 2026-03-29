@@ -1,10 +1,13 @@
+import type { LifecycleActions } from "../enum/lifecycleActions.enum.js";
+import type { LifecycleState } from "../enum/lifecycleState.enum.js";
+
 interface LifecycleHistoryPayload {
 	id: string;
 	documentId: string;
 	documentVersionId?: string;
-	fromState: string | null;
-	toState: string;
-	action: string;
+	fromState: LifecycleState | null;
+	toState: LifecycleState;
+	action: LifecycleActions;
 	actorId: string;
 	metadata?: Record<string, unknown>;
 }
@@ -13,9 +16,9 @@ class LifecycleHistory {
     id: string;
     documentId: string;
     documentVersionId: string | null;
-    fromState: string | null;
-    toState: string;
-    action: string;
+    fromState: LifecycleState | null;
+    toState: LifecycleState;
+    action: LifecycleActions;
     actorId: string;
     metadata: Record<string, unknown> | null;
 

@@ -2,6 +2,7 @@
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
 CREATE SCHEMA IF NOT EXISTS document;
+CREATE SCHEMA IF NOT EXISTS directive;
 CREATE SCHEMA IF NOT EXISTS policy;
 CREATE SCHEMA IF NOT EXISTS workflow;
 CREATE SCHEMA IF NOT EXISTS notifications;
@@ -53,6 +54,21 @@ CREATE TYPE policy.resolution_strategy AS ENUM (
     'direct_supervisor',
     'role_in_unit',
     'role_in_office'
+);
+
+-- DIRECTIVE SCHEMA TYPES
+CREATE TYPE directive.priority AS ENUM (
+    'urgent',
+    'standard'
+);
+CREATE TYPE directive.registry_volume AS ENUM (
+    'operations',
+    'official'
+);
+CREATE TYPE directive.status AS ENUM (
+    'draft',
+    'active',
+    'cancelled'
 );
 
 -- NOTIFICATIONS SCHEMA TYPES
@@ -450,6 +466,96 @@ CREATE TABLE workflow.workflow_tasks (
 
     acted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- DIRECTIVES SCHEMA
+CREATE TABLE directive.directives (
+    id VARCHAR(50) PRIMARY KEY,
+
+    heading TEXT NOT NULL,
+    instruction TEXT NOT NULL,
+
+    issued_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+
+    priority directive.priority NOT NULL,
+    registry_volume directive.registry_volume NOT NULL,
+
+    status directive.status NOT NULL DEFAULT 'draft',
+
+    issued_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE directive.directive_staff_recipients (
+    id VARCHAR(50) PRIMARY KEY,
+
+    directive_id VARCHAR(50)
+        REFERENCES directive.directives(id)
+        ON DELETE CASCADE
+        NOT NULL,
+
+    staff_id VARCHAR(50)
+        REFERENCES identity.staff(id)
+        NOT NULL,
+
+    seen_at TIMESTAMPTZ,
+    acknowledged_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (directive_id, staff_id)
+);
+
+CREATE TABLE directive.directive_unit_targets (
+    id VARCHAR(50) PRIMARY KEY,
+
+    directive_id VARCHAR(50)
+        REFERENCES directive.directives(id)
+        ON DELETE CASCADE
+        NOT NULL,
+
+    unit_id VARCHAR(50)
+        REFERENCES identity.organizational_units(id)
+        NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (directive_id, unit_id)
+);
+
+CREATE TABLE directive.directive_office_targets (
+    id VARCHAR(50) PRIMARY KEY,
+
+    directive_id VARCHAR(50)
+        REFERENCES directive.directives(id)
+        ON DELETE CASCADE
+        NOT NULL,
+
+    office_id VARCHAR(50)
+        REFERENCES identity.offices(id)
+        NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (directive_id, office_id)
+);
+
+CREATE TABLE directive.directive_role_targets (
+    id VARCHAR(50) PRIMARY KEY,
+
+    directive_id VARCHAR(50)
+        REFERENCES directive.directives(id)
+        ON DELETE CASCADE
+        NOT NULL,
+
+    role_id VARCHAR(50)
+        REFERENCES identity.roles(id)
+        NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE (directive_id, role_id)
 );
 
 

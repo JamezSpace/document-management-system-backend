@@ -114,7 +114,7 @@ class Document {
 		if (!this.currentVersion) {
 			return this.addVersion(payload, actorId);
 		}
-
+        
 		return this.createNextVersion({
 			...payload,
 			mediaId: payload.mediaId ?? null

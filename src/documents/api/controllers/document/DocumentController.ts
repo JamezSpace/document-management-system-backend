@@ -119,6 +119,14 @@ class DocumentController {
 	) {
 		const document = new Document({
 			...doc,
+            version: new DocumentVersion({
+                ...doc.currentVersion,
+                createdAt: new Date(doc.currentVersion.createdAt),
+                lifecycle: {
+                    ...doc.currentVersion.lifecycle,
+                    stateEnteredAt: new Date(doc.currentVersion.lifecycle.stateEnteredAt)
+                }
+            }),
 			classification: {
 				...doc.classification,
 				classifiedAt: new Date(doc.classification.classifiedAt),
@@ -134,9 +142,7 @@ class DocumentController {
 				),
 			},
 			createdAt: new Date(doc.createdAt),
-			updatedAt: doc.updatedAt
-  ? new Date(doc.updatedAt)
-  : null,
+			updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : null,
 		});
 
 		const savedDoc = await this.createDocumentUseCase.saveDocument(
@@ -168,14 +174,15 @@ class DocumentController {
 					},
 				})
 			: null;
-            
+
 		const document = {
 			...doc,
 			classification: {
 				...doc.classification,
 				classifiedAt: new Date(doc.classification.classifiedAt),
 				lastReclassifiedAt: doc.classification.lastReclassifiedAt
-                ? new Date(doc.classification.lastReclassifiedAt) : null,
+					? new Date(doc.classification.lastReclassifiedAt)
+					: null,
 			},
 			retention: {
 				...doc.retention,
@@ -190,7 +197,7 @@ class DocumentController {
 
 		const submittedDocument = await this.submitDocUsecase.submitDocument(
 			actorId,
-			new Document({...document, version}),
+			new Document({ ...document, version }),
 		);
 
 		return submittedDocument;
