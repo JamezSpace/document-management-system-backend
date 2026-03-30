@@ -73,6 +73,10 @@ enum PolicyEvents {
     DOC_RET_POLICY_CREATED = "document_retention_policy_created"
 }
 
+enum WorkflowEvents {
+    WORKFLOW_TASKS_ASSIGNED = "workflow_tasks_assigned"
+}
+
 const GlobalEventTypes = {
 	identity_authority: {
         identity: {
@@ -90,7 +94,8 @@ const GlobalEventTypes = {
         document_type: DocTypeEvents
     },
     media: MediaEvents,
-    policy: PolicyEvents
+    policy: PolicyEvents,
+    workflow: WorkflowEvents
 };
 
 

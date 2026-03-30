@@ -21,6 +21,7 @@ VALUES
     ('CC-019cc29e-aea8-7e6b-baa3-9322a9629222', 'facilities & logistics liaison', 'operational support', 'A staff member responsible for coordinating operational logistics, facilities-related documentation, and support requests between offices and institutional service departments. This role ensures that logistical processes and supporting documentation move efficiently across units.', '2026-03-06 11:08:25.256612+01'),
 
 
+
 -- permissions data
 INSERT INTO identity.permissions
 VALUES 
@@ -169,6 +170,58 @@ VALUES
     ('role.sys_admin', 'perm.staff.activate'),
     ('role.sys_admin', 'perm.staff.deactivate'),
 
+
+-- role assignments table
+INSERT INTO identity.role_assignments VALUES (
+    'ra-002',
+    'staff.admin',
+    'role.processing_officer',
+    NULL,
+    NULL,
+    NOW(),
+    NULL,
+    NOW()
+),
+(
+    'ra-003',
+    'staff.admin',
+    'role.reviewing_officer',
+    NULL,
+    NULL,
+    NOW(),
+    NULL,
+    NOW()
+),
+(
+    'ra-004',
+    'staff.admin',
+    'role.workflow_coordinator',
+    NULL,
+    NULL,
+    NOW(),
+    NULL,
+    NOW()
+),
+(
+    'ra-005',
+    'staff.admin',
+    'role.directive_authority',
+    NULL,
+    NULL,
+    NOW(),
+    NULL,
+    NOW()
+),
+(
+    'ra-006',
+    'staff.admin',
+    'role.staff_admin',
+    NULL,
+    NULL,
+    NOW(),
+    NULL,
+    NOW()
+);
 
 -- DOCUMENTS SCHEMA
 INSERT INTO document.correspondence_subjects (id, code, name, description, created_at)

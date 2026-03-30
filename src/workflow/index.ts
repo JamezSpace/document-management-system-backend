@@ -10,6 +10,7 @@ import WorkflowEngine from "./domain/WorkflowEngine.service.js";
 import WorkflowStarterAdapter from "./infrastructure/adapters/WorkflowStarterAdapter.adapter.js";
 import PostgresWorkflowRepository from "./infrastructure/persistence/PostgresWorkflowRepository.adapter.js";
 import ApproverResolverServiceAdapter from "./infrastructure/services/ApproverResolverService.adapter.js";
+import WorkflowEventsAdapter from "./infrastructure/adapters/events/WorkflowEventsAdapter.js";
 
 
 interface WorkflowSubsystemDependencies {
@@ -26,14 +27,17 @@ export default async function WorkflowSubsystem(fastify: FastifyInstance, depend
     const postgres = fastify.pg;
     const idGenerator = new UuidV7Generator();
 
-    // persistence
+    // adapter - events
+    const workflowEventsAdapter = new WorkflowEventsAdapter(globalEventBus);
+
+    // adapter - persistence
     const workflowRepository = new PostgresWorkflowRepository(postgres);
 
     // use cases
     const workflowEngine = new WorkflowEngine(idGenerator);
     const approverResolver = new ApproverResolverServiceAdapter(accessWorkflowAdapter);
 
-    const startWorkflowUseCase = new StartWorkflowUseCase(idGenerator, documentWorkflowAdapter, policyWorkflowAdapter, workflowEngine, approverResolver, workflowRepository)
+    const startWorkflowUseCase = new StartWorkflowUseCase(idGenerator, documentWorkflowAdapter, policyWorkflowAdapter, workflowEngine, approverResolver, workflowRepository, workflowEventsAdapter)
 
     const workflowStarterAdapter = new WorkflowStarterAdapter(startWorkflowUseCase);
 

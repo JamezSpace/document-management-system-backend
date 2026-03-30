@@ -4,6 +4,7 @@ import type { WorkflowPolicyPort } from "../../../shared/application/port/Workfl
 import ApplicationError from "../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../shared/errors/enum/application.enum.js";
 import type WorkflowEngine from "../../domain/WorkflowEngine.service.js";
+import type { WorkflowEventsPort } from "../port/events/WorkflowEvents.port.js";
 import type { WorkflowRepositoryPort } from "../port/repos/WorkflowRepository.port.js";
 import type { ApproverResolverServicePort } from "../port/services/ApproverResolverServicePort.js";
 
@@ -15,6 +16,7 @@ class StartWorkflowUseCase {
 		private readonly workflowEngine: WorkflowEngine,
 		private readonly approverResolverService: ApproverResolverServicePort,
 		private readonly workflowRepository: WorkflowRepositoryPort,
+        private readonly workflowEventsPort: WorkflowEventsPort
 	) {}
 
 	async execute(documentId: string) {
@@ -83,6 +85,15 @@ class StartWorkflowUseCase {
         // persist everything
         await this.workflowRepository.saveInstance(workflowInstance);
 		await this.workflowRepository.saveTasks(tasks);
+
+        await this.workflowEventsPort.wrkflowAssigned({
+            workflowInstanceId: workflowInstance.id,
+            stepOrder: firstStep.stepOrder,
+            role: firstStep.role,
+            assignedTo: userIds,
+            documentId,
+        })
+
 
         // audit
         // await this.auditPort.log({

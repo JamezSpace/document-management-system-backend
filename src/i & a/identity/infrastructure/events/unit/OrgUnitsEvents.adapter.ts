@@ -5,6 +5,7 @@ import type { OrgUnitEventsPort } from "../../../application/ports/events/unit/O
 class OrgUnitsEventsAdapter implements OrgUnitEventsPort {
     constructor(private readonly eventBus: EventBusPort) {
         }
+        
     async unitCreated(payload: { unitId: string; }): Promise<void> {
          await this.eventBus.emit({
             eventName: GlobalEventTypes.identity_authority.identity.org_unit.ORG_UNIT_CREATED,
