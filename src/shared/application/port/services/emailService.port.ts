@@ -1,6 +1,6 @@
-interface EmailServicePort {
-    sendTo(recipientEmail: string, message: string): Promise<void>;
+interface GlobalEmailServicePort {
+    sendTo(payload: {recipientEmail: string, message: string}, type: 'onboarding' | 'notif'): Promise<void>;
 }
 
-export type {EmailServicePort};
+export type {GlobalEmailServicePort};
 

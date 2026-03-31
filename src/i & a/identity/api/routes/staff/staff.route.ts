@@ -2,22 +2,19 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type StaffController from "../../controllers/staff/Staff.controller.js";
 import {
 	activateStaffSchema,
+	authProviderIdSchema,
 	createStaffSchema,
 	editStaffSchema,
 	registerStaffSchema,
 	staffIdSchema,
-	staffMediaNeededBySchema,
-	StaffMediaRequester,
 	unitIdSchema,
-	userIdSchema,
 	type ActivateStaffType,
+	type AuthProviderIdType,
 	type CreateStaffType,
 	type EditStaffType,
 	type RegisterStaffType,
 	type StaffIdType,
-	type StaffMediaNeededByType,
 	type UnitIdType,
-	type UserIdType,
 } from "../../types/staff/staff.type.js";
 
 async function staffRoutes(
@@ -63,7 +60,7 @@ async function staffRoutes(
 
 			return reply.code(201).send({
 				success: true,
-				staffId: newStaff.staffId,
+				data: newStaff.staffId,
 			});
 		},
 	);
@@ -91,7 +88,7 @@ async function staffRoutes(
 
 			return reply.code(201).send({
 				success: true,
-				message: "Staff activated successfully",
+				data: "Staff activated successfully",
 			});
 		},
 	);
@@ -99,28 +96,27 @@ async function staffRoutes(
 	// staff login
 	fastify.get(
 		"/staff/me",
-		async (
-			request: FastifyRequest,
-			reply: FastifyReply,
-		) => {
+		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { uid, email } = request.user!;
 
-            if(!uid) 
-                return reply.code(401).send({
-                    success: true,
-                    message: "No uid extracted from access token"
-                })
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
 
-            // fetch staff details
-            const staff = await staffController.fetchStaffWithAuthority(uid);
+			// fetch staff details
+			const staff = await staffController.fetchStaffWithAuthority(uid);
 
-            return staff ? reply.code(200).send({
-                success: true,
-                data: staff
-            }) : reply.code(404).send({
-                success: true,
-                message: "Staff not found"
-            })
+			return staff
+				? reply.code(200).send({
+						success: true,
+						data: staff,
+					})
+				: reply.code(404).send({
+						success: true,
+						message: "Staff not found",
+					});
 		},
 	);
 
@@ -167,12 +163,65 @@ async function staffRoutes(
 
 			return reply.code(200).send({
 				success: true,
-				staff: existingStaff,
+				data: existingStaff,
 			});
 		},
 	);
 
-	// this retrieves all staff members in an office
+	// get staff via auth provider id
+	fastify.get(
+		"/staff/provider/:authProviderId",
+		{ schema: { params: authProviderIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: AuthProviderIdType }>,
+			reply: FastifyReply,
+		) => {
+			const { authProviderId } = request.params;
+
+			const existingStaff =
+				await staffController.fetchExistingStaffByAuthProviderId(
+					authProviderId,
+				);
+
+			if (!existingStaff)
+				return reply.code(404).send({
+					success: true,
+				});
+			else
+				return reply.code(200).send({
+					success: true,
+					data: existingStaff,
+				});
+		},
+	);
+
+    // get all staff - hr usage
+    fastify.get(
+		"/staff",
+		async (
+			request: FastifyRequest,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.user!;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+			const allStaff =
+				await staffController.fetchAll();
+
+				return reply.code(200).send({
+					success: true,
+					data: allStaff,
+				});
+		},
+	);
+
+
+	// this retrieves all staff members in a unit
 	fastify.get(
 		"/:unitId/staff-members",
 		{ schema: { params: unitIdSchema } },

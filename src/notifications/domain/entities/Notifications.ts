@@ -16,7 +16,7 @@ interface NotificationDTO {
 	subjectType: string; // DOCUMENT, APPROVAL_TASK
 	subjectId: string;
 
-	messageTemplate: string; // Not raw text
+	messageTemplate: string; 
 	payload: Record<string, any>;
 
 	channel: NotificationPreference;

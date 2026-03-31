@@ -8,6 +8,14 @@ class GetAllOfficesUseCase {
 
         return allOffices;
     }
+
+    async getAllOfficesByUnit(unitId: string) {
+        const allOffices = await this.officeRepo.findOfficesByUnitId(unitId);
+
+        return allOffices;
+    }
+
+
 }
 
 export default GetAllOfficesUseCase;

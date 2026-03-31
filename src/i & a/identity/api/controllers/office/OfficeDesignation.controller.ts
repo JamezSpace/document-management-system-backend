@@ -1,11 +1,11 @@
 import type AddNewOfficeDesignationUseCase from "../../../application/usecases/office/AddNewDesignation.usecase.js";
-import type GetAllOfficeDesignationsUseCase from "../../../application/usecases/office/GetAllOfficeDesignations.usecase.js";
+import type GetAllOfficeDesignationUseCase from "../../../application/usecases/office/GetAllOfficeDesignations.usecase.js";
 import type { CreateOfficeDesignationType } from "../../types/office.type.js";
 
 class OfficeDesignationController {
 	constructor(
 		private readonly addOfficeDesignationUseCase: AddNewOfficeDesignationUseCase,
-		private readonly getAllOfficeDesignationUseCase: GetAllOfficeDesignationsUseCase,
+		private readonly getAllOfficeDesignationUseCase: GetAllOfficeDesignationUseCase,
 	) {}
 
 	async addNewOfficeDesignation(payload: CreateOfficeDesignationType) {
@@ -27,7 +27,7 @@ class OfficeDesignationController {
 		return newOfficeDesignation;
 	}
 
-	async getAllOfficeDesignations(officeId: string) {
+	async getAllDesignationsWithinAnOffice(officeId: string) {
 		const allDesignations =
 			this.getAllOfficeDesignationUseCase.getAllDesignationsByOffice(
 				officeId,
@@ -36,7 +36,7 @@ class OfficeDesignationController {
 		return allDesignations;
 	}
 
-    async getAllODesignations(officeId: string) {
+    async getAllDesignations() {
 		const allDesignations =
 			this.getAllOfficeDesignationUseCase.getAllDesignations()
 

@@ -7,7 +7,7 @@ interface OfficeDesignationRepositoryPort {
 
 	fetchAll(): Promise<OfficeDesignation[]>;
 
-	fetchAllOfficesDesignations(
+	fetchAllDesignationsWithinAnOffice(
 		officeId: string,
 	): Promise<{ 
         officeName: string;

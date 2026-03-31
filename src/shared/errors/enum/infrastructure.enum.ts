@@ -33,6 +33,10 @@ export const AuthErrors = {
 		codeName: "invalid_credentials",
 		httpStatusCode: StatusCodes.UNAUTHORIZED,
 	},
+	EMAIL_ALREADY_EXISTS: {
+		codeName: "email_already_exists",
+		httpStatusCode: StatusCodes.CONFLICT,
+	},
 } as const;
 
 // mapping enum values to their respective error sets

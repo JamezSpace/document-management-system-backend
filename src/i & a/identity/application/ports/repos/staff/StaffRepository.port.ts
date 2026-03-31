@@ -14,6 +14,10 @@ interface StaffRepositoryPort {
     updateStaff(staffId: string, changesToMake: Partial<Staff>): Promise<Staff>;
 
     fetchAllStaffMembersByUnit(unitId: string): Promise<AbstractStaffDetails[]>
+
+    fetchAll(): Promise<AbstractStaffDetails[]>
+    
+    fetchAllStaffWithMedia(): Promise<StaffDetailsWithMedia[]>
 }
 
 export type { StaffRepositoryPort };

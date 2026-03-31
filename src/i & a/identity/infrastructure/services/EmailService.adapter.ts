@@ -1,12 +1,22 @@
-import type { EmailServicePort } from "../../../../shared/application/port/services/emailService.port.js";
+import type { GlobalEmailServicePort } from "../../../../shared/application/port/services/emailService.port.js";
 import type { IdentityEmailServicePort } from "../../application/ports/services/EmailService.port.js";
 
 class IdentityEmailServiceAdapter implements IdentityEmailServicePort {
-    constructor(private readonly emailService: EmailServicePort) {}
+	constructor(private readonly emailService: GlobalEmailServicePort) {}
 
-    async sendOnboardingLink(recipientEmail: string, message: string): Promise<void> {
-        await this.emailService.sendTo(recipientEmail, message);
-    }
+	async sendOnboardingLink(
+		recipientEmail: string,
+		message: string,
+	): Promise<void> {
+		try {
+			await this.emailService.sendTo(
+				{ recipientEmail, message },
+				"onboarding",
+			);
+		} catch (err) {
+			console.error("Email failed to send, but user was created:", err);
+		}
+	}
 }
 
 export default IdentityEmailServiceAdapter;

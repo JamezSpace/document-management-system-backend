@@ -14,6 +14,51 @@ import StaffDetailsWithMedia from "../../../domain/views/staff/StaffDetailsWithM
 class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
 
+	async fetchAll(): Promise<AbstractStaffDetails[]> {
+		const query =
+			"select * from identity.staff_details where id <> 'staff.system';";
+
+		const result = await this.dbPool.query(query);
+
+		let staffDetails: AbstractStaffDetails[] = [];
+		result.rows.forEach((staffDetail) => {
+			let camelCasedStaffDetail = transformToCamelCase(staffDetail);
+
+			const {
+				auth_provider_id,
+				unitId,
+				unitSector,
+				unitName,
+				officeId,
+				officeName,
+				designationId,
+				designationTitle,
+				...restOfStaffDetails
+			} = camelCasedStaffDetail;
+
+			let preparedStaffDetail = {
+				unit: {
+					id: unitId,
+					name: unitName,
+					sector: unitSector,
+				},
+				office: {
+					id: officeId,
+					name: officeName,
+				},
+				designation: {
+					id: designationId,
+					title: designationTitle,
+				},
+				...restOfStaffDetails,
+			} as AbstractStaffDetails;
+
+			staffDetails.push(preparedStaffDetail);
+		});
+
+		return staffDetails;
+	}
+
 	async fetchAllStaffMembersByUnit(
 		unitId: string,
 	): Promise<AbstractStaffDetails[]> {
@@ -183,6 +228,61 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 			});
 		} catch (error: any) {
 			console.log("error fetching staff details by id", error);
+
+			throw new InfrastructureError(
+				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
+				{
+					category: Category.PERSISTENCE,
+					message: error.message,
+				},
+			);
+		}
+	}
+
+	async fetchAllStaffWithMedia(): Promise<StaffDetailsWithMedia[]> {
+		try {
+			const query =
+				"SELECT * FROM identity.staff_details_with_media WHERE id <> 'staff.system'";
+			const result = await this.dbPool.query(query);
+
+			if (result.rows.length === 0) {
+				return [];
+			}
+
+			return result.rows.map(
+				(staffData) =>
+					new StaffDetailsWithMedia({
+						id: staffData.id,
+						authProviderId: staffData.ap_id,
+						identityId: staffData.identity_id,
+						firstName: staffData.first_name,
+						lastName: staffData.last_name,
+						middleName: staffData.middle_name,
+						fullName: staffData.full_name,
+						email: staffData.email,
+						staffNumber: staffData.staff_number,
+						employmentType: staffData.employment_type,
+						status: staffData.status,
+						designationId: staffData.designation_id,
+						designationTitle: staffData.designation_title,
+						officeId: staffData.office_id,
+						officeName: staffData.office_name,
+						unitId: staffData.unit_id,
+						unitName: staffData.unit_name,
+						unitSector: staffData.unit_sector,
+						assetRole: staffData.asset_role,
+						bucketName: staffData.bucket_name,
+						storageProvider: staffData.storage_provider,
+						objectKey: staffData.object_key,
+						createdAt: staffData.created_at,
+						createdBy: staffData.created_by,
+						activatedBy: staffData.activated_by,
+						activatedAt: staffData.activated_at,
+						updatedAt: staffData.updated_at,
+					}),
+			);
+		} catch (error: any) {
+			console.log("error fetching staff details with media", error);
 
 			throw new InfrastructureError(
 				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,

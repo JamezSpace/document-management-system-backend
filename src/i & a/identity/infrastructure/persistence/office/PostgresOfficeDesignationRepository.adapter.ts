@@ -68,7 +68,7 @@ class PostgresOfficeDesignationRepositoryAdapter implements OfficeDesignationRep
 
 	async fetchAll(): Promise<OfficeDesignation[]> {
 		const result = await this.dbPool.query(
-			"SELECT * FROM identity.designations GROUP BY identity.designations.office_id",
+			"SELECT * FROM identity.designations ORDER BY office_id;",
 		);
 
 		const allDesignations: OfficeDesignation[] = [];
@@ -78,10 +78,10 @@ class PostgresOfficeDesignationRepositoryAdapter implements OfficeDesignationRep
 				id: designation.id,
 				title: designation.title,
 				description: designation.description,
-				hierarchyLevel: designation.hierarchyLevel,
-				officeId: designation.officeId,
-				createdAt: designation.createdAt,
-				updatedAt: designation.updatedAt,
+				hierarchyLevel: designation.hierarchy_level,
+				officeId: designation.office_id,
+				createdAt: designation.created_at,
+				updatedAt: designation.updated_at,
 			});
 
 			allDesignations.push(designationObj);
@@ -90,7 +90,7 @@ class PostgresOfficeDesignationRepositoryAdapter implements OfficeDesignationRep
 		return allDesignations;
 	}
 
-	async fetchAllOfficesDesignations(officeId: string): Promise<{
+	async fetchAllDesignationsWithinAnOffice(officeId: string): Promise<{
 		officeName: string;
 		designations: OfficeDesignation[];
 	}> {

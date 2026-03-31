@@ -65,12 +65,25 @@ class StaffController {
 		return staff;
 	}
 
+	async fetchExistingStaffByAuthProviderId(authProviderId: string) {
+		const staff = this.fetchStaffUseCase.fetchStaffByAuthProviderId(authProviderId);
+
+		return staff;
+	}
+
 	async fetchAllStaffMembersByUnit(unitId: string) {
 		const allStaffMembers =
 			this.getAllStaffUseCase.getAllStaffMembersByUnit(unitId);
 
 		return allStaffMembers;
 	}
+
+    async fetchAll() {
+        const allStaffMembers =
+			this.getAllStaffUseCase.getAllStaff();
+
+		return allStaffMembers;
+    }
 
 	async fetchStaffDetailsForLogin(uid: string) {
 		const me = this.fetchStaffUseCase.fetchStaffDetails(uid);

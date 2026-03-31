@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
-import EmailServiceAdapter from "../shared/infrastructure/adapters/EmailService.adapter.js";
+import NodemailerEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/NodemailerEmailService.adapter.js";
+import MediaServiceAdapter from "../shared/infrastructure/adapters/services/media/MediaService.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
 import GetEffectivePermissionsUseCase from "./access/application/usecases/GetEffectivePermissions.usecase.js";
+import ResolveStaffAuthority from "./access/application/usecases/ResolveStaffAuthority.usecase.js";
 import PostgresqlRoleAssignmentRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleAssignmentRepository.adapter.js";
 import PostgresqlRoleRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleRepository.adapter.js";
 import AccessEventsAdapter from "./access/infrastructure/queue/AccessEvents.adapter.js";
@@ -21,10 +23,11 @@ import orgUnitRoutes from "./identity/api/routes/unit/orgUnits.route.js";
 import identityRoutes from "./identity/api/routes/user/identity.route.js";
 import AddNewOfficeDesignationUseCase from "./identity/application/usecases/office/AddNewDesignation.usecase.js";
 import AddNewOfficeUseCase from "./identity/application/usecases/office/AddNewOffice.usecase.js";
-import GetAllOfficeDesignationsUseCase from "./identity/application/usecases/office/GetAllOfficeDesignations.usecase.js";
+import GetAllOfficeDesignationUseCase from "./identity/application/usecases/office/GetAllOfficeDesignations.usecase.js";
 import GetAllOfficesUseCase from "./identity/application/usecases/office/GetAllOffices.usecase.js";
 import AddNewOrgUnitUseCase from "./identity/application/usecases/organizationalUnit/AddNewOrgUnit.usecase.js";
 import GetAllUnitsUseCase from "./identity/application/usecases/organizationalUnit/GetAllUnits.usecase.js";
+import ActivateStaffUseCase from "./identity/application/usecases/staff/ActivateStaff.usecase.js";
 import AddNewStaffUseCase from "./identity/application/usecases/staff/AddNewStaff.usecase.js";
 import CloseStaffClassificationUseCase from "./identity/application/usecases/staff/classification/CloseStaffClassification.usecase.js";
 import CreateStaffClassificationUseCase from "./identity/application/usecases/staff/classification/CreateStaffClassification.usecase.js";
@@ -36,6 +39,7 @@ import RegisterNewStaffUseCase from "./identity/application/usecases/staff/Regis
 import ActivatePendingUserUseCase from "./identity/application/usecases/user/ActivatePendingUser.usercase.js";
 import AddNewUserUseCase from "./identity/application/usecases/user/AddNewUser.usecase.js";
 import AuthenticateUserUseCase from "./identity/application/usecases/user/AuthenticateUser.usecase.js";
+import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
 import OfficeDesignationEventsAdapter from "./identity/infrastructure/events/office/OfficeDesignationsEvents.adapter.js";
 import OfficeEventsAdapter from "./identity/infrastructure/events/office/OfficeEvents.adapter.js";
 import StaffClassEventsAdapter from "./identity/infrastructure/events/staff/StaffClassEventsAdapter.adapter.js";
@@ -50,10 +54,7 @@ import PostgresOrgUnitRepositoryAdapter from "./identity/infrastructure/persiste
 import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresIdentityRepository.adapter.js";
 import FirebaseAuthAdapter from "./identity/infrastructure/services/auth/FirebaseAuth.adapter.js";
 import IdentityEmailServiceAdapter from "./identity/infrastructure/services/EmailService.adapter.js";
-import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
-import ActivateStaffUseCase from "./identity/application/usecases/staff/ActivateStaff.usecase.js";
-import MediaServiceAdapter from "../shared/infrastructure/adapters/MediaService.adapter.js";
-import ResolveStaffAuthority from "./access/application/usecases/ResolveStaffAuthority.usecase.js";
+import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/ResendEmailService.adapter.js";
 
 
 export default async function IdentityAccessSubsystem(
@@ -63,7 +64,8 @@ export default async function IdentityAccessSubsystem(
 	const postgres = fastify.pg;
 
 	const globalEventBus = new InMemoryEventBusAdapter();
-	const globalEmailService = new EmailServiceAdapter();
+	const globalNodemailerEmailService = new NodemailerEmailServiceAdapter();
+	const globalResendEmailService = new ResendEmailServiceAdapter();
 	const idGenerator = new UuidV7Generator();
 
 	// all module repos in identity subsystem
@@ -95,7 +97,7 @@ export default async function IdentityAccessSubsystem(
 
 	// service layer
 	const identityEmailService = new IdentityEmailServiceAdapter(
-		globalEmailService,
+		globalResendEmailService,
 	);
 
     const mediaService = new MediaServiceAdapter();
@@ -149,7 +151,7 @@ export default async function IdentityAccessSubsystem(
 		officeDesignationRepository,
 	);
 
-	const getAllOfficeDesignationsUseCase = new GetAllOfficeDesignationsUseCase(
+	const getAllOfficeDesignationUseCase = new GetAllOfficeDesignationUseCase(
 		officeDesignationRepository,
 	);
 
@@ -225,7 +227,7 @@ export default async function IdentityAccessSubsystem(
 
 	const officeDesignationController = new OfficeDesignationController(
 		addNewDesignationUseCase,
-		getAllOfficeDesignationsUseCase,
+		getAllOfficeDesignationUseCase,
 	);
 
 	const staffController = new StaffController(

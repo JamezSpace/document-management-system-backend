@@ -1,8 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
-import MediaServiceAdapter from "../shared/infrastructure/adapters/MediaService.adapter.js";
+import MediaServiceAdapter from "../shared/infrastructure/adapters/services/media/MediaService.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
-import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
 import BusinessFunctionController from "./api/controllers/businessFunction/BusinessFunctionController.js";
 import CorrespondenceSubjectController from "./api/controllers/correspondenceSubject/CorrespondenceSubjectController.js";
 import DocumentController from "./api/controllers/document/DocumentController.js";
@@ -33,9 +32,9 @@ import PostgresCorrespondenceSubjectRepoAdapter from "./infrastructure/persisten
 import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
 import PostgresqlDocumentRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentRepo.adapter.js";
 import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/PostgresDocVersionRepo.adapter.js";
+import PostgresLifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/PostgresLifecycleHistoryRepository.adapter.js";
 import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
-import PostgresLifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/PostgresLifecycleHistoryRepository.adapter.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;

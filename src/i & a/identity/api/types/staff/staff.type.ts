@@ -39,6 +39,10 @@ const staffIdSchema = Type.Object({
 	staffId: Type.String(),
 });
 
+const authProviderIdSchema = Type.Object({
+	authProviderId: Type.String(),
+});
+
 const userIdSchema = Type.Object({
 	uid: Type.String(),
 });
@@ -63,6 +67,7 @@ type RegisterStaffType = Static<typeof registerStaffSchema>;
 type ActivateStaffType = Static<typeof activateStaffSchema>;
 type EditStaffType = Static<typeof editStaffSchema>;
 type StaffIdType = Static<typeof staffIdSchema>;
+type AuthProviderIdType = Static<typeof authProviderIdSchema>;
 type UserIdType = Static<typeof userIdSchema>;
 type UnitIdType = Static<typeof unitIdSchema>;
 type StaffMediaNeededByType = Static<typeof staffMediaNeededBySchema>;
@@ -73,6 +78,7 @@ export {
 	registerStaffSchema,
     activateStaffSchema,
 	staffIdSchema,
+    authProviderIdSchema,
 	staffMediaNeededBySchema,
 	StaffMediaRequester,
 	unitIdSchema,
@@ -83,6 +89,7 @@ export {
 	type RegisterStaffType,
     type ActivateStaffType,
 	type StaffIdType,
+    type AuthProviderIdType,
 	type StaffMediaNeededByType,
 	type UnitIdType,
 };

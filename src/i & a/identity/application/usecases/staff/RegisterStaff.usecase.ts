@@ -4,8 +4,9 @@ import { IdentityStatus } from "../../../domain/entities/user/IdentityStatus.js"
 import { Status } from "../../../domain/enum/staff.enum.js";
 import type { UserEventsPort } from "../../ports/events/user/UserEvents.port.js";
 import type { UserRepositoryPort } from "../../ports/repos/user/UserRepository.port.js";
-import type { AuthService } from "../../ports/services/AuthService.port.js";
+import type { AuthServicePort } from "../../ports/services/AuthService.port.js";
 import type { IdentityEmailServicePort } from "../../ports/services/EmailService.port.js";
+import { generateTemplate } from "../../templates/OnboardingTemplate.template.js";
 import type { RegisterStaffPayload } from "../../types/staff/staff.type.js";
 import type AddNewStaffUseCase from "./AddNewStaff.usecase.js";
 
@@ -15,7 +16,7 @@ class RegisterNewStaffUseCase {
 		private readonly identityEvents: UserEventsPort,
 		private readonly identityRepo: UserRepositoryPort,
 		private readonly addNewStaffUsecase: AddNewStaffUseCase,
-		private readonly authService: AuthService,
+		private readonly authService: AuthServicePort,
 		private readonly emailService: IdentityEmailServicePort,
 	) {}
 
@@ -64,18 +65,21 @@ class RegisterNewStaffUseCase {
 			createdBy: payload.createdBy,
 		});
 
+        const staffId = newStaff.getStaffId();
+
 		// generate password setup link
 		const setupLink = await this.authService.generatePasswordSetupLink(
 			payload.email,
+            staffId
 		);
 
 		// 3️⃣ Send onboarding email
 		await this.emailService.sendOnboardingLink(
 			newUserIdentity.getEmail(),
-			setupLink,
+            generateTemplate(setupLink),
 		);
 
-		return { staffId: newStaff.getStaffId() };
+		return { staffId };
 	}
 }
 

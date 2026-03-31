@@ -12,9 +12,15 @@ class OfficeController {
     }
 
     async getAllOffices() {
-        const allUnits = this.getAllOfficesUseCase.getAllOffices()
+        const allOffices = this.getAllOfficesUseCase.getAllOffices()
 
-        return allUnits;
+        return allOffices;
+    }
+
+    async getAllOfficesWithinAUnit(unitId: string) {
+        const allUnitOffices = this.getAllOfficesUseCase.getAllOfficesByUnit(unitId);
+
+        return allUnitOffices;
     }
 }
 

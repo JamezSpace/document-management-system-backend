@@ -10,6 +10,12 @@ class GetAllStaffUseCase {
 
         return staffMembers;
     }
+
+    async getAllStaff() {
+        const staff = await this.staffRepo.fetchAllStaffWithMedia()
+
+        return staff;
+    }
 }
 
 export default GetAllStaffUseCase;

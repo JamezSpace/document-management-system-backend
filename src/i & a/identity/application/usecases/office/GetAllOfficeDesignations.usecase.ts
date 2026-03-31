@@ -1,7 +1,7 @@
 import type { OfficeDesignationRepositoryPort } from "../../ports/repos/office/OfficeDesignationRepository.port.js";
 
 
-class GetAllOfficeDesignationsUseCase {
+class GetAllOfficeDesignationUseCase {
     constructor(private readonly designationRepo: OfficeDesignationRepositoryPort) {}
 
     async getAllDesignations() {
@@ -11,10 +11,10 @@ class GetAllOfficeDesignationsUseCase {
     }
 
     async getAllDesignationsByOffice(officeId: string) {
-        const officeDesignations = await this.designationRepo.fetchAllOfficesDesignations(officeId)
+        const officeDesignations = await this.designationRepo.fetchAllDesignationsWithinAnOffice(officeId)
 
         return officeDesignations;
     }
 }
 
-export default GetAllOfficeDesignationsUseCase;
+export default GetAllOfficeDesignationUseCase;

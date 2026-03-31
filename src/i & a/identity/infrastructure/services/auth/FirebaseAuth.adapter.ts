@@ -1,13 +1,13 @@
 import { type Auth, getAuth } from "firebase-admin/auth";
 import InfrastructureError from "../../../../../shared/errors/InfrastructureError.error.js";
 import {
-    Category,
-    GlobalInfrastructureErrors,
+	Category,
+	GlobalInfrastructureErrors,
 } from "../../../../../shared/errors/enum/infrastructure.enum.js";
-import type { AuthService } from "../../../application/ports/services/AuthService.port.js";
+import type { AuthServicePort } from "../../../application/ports/services/AuthService.port.js";
 import firebaseApp from "./Firebase.config.js";
 
-class FirebaseAuthAdapter implements AuthService {
+class FirebaseAuthAdapter implements AuthServicePort {
 	private authInstance!: Auth;
 
 	constructor() {
@@ -49,17 +49,37 @@ class FirebaseAuthAdapter implements AuthService {
 	}
 
 	async createUser(email: string) {
-		const userRecord = await this.authInstance.createUser({ email });
+		try {
+			const userRecord = await this.authInstance.createUser({ email });
 
-		return {
-			authProviderId: userRecord.uid,
-		};
+			return {
+				authProviderId: userRecord.uid,
+			};
+		} catch (error: any) {
+			// if(error.code.includes('email-alreay-exists'))
+			throw new InfrastructureError(
+				GlobalInfrastructureErrors.auth.EMAIL_ALREADY_EXISTS,
+				{
+					category: Category.AUTH,
+					message: error.message,
+				},
+			);
+		}
 	}
 
-	async generatePasswordSetupLink(email: string) {
+	async generatePasswordSetupLink(email: string, staffId: string) {
 		const link = await this.authInstance.generatePasswordResetLink(email);
 
-		return link;
+		const url = new URL(link);
+		const oobCode = url.searchParams.get("oobCode");
+
+		if (!oobCode) {
+			throw new Error("Failed to extract oobCode from reset link");
+		}
+
+		const customLink = `${process.env.FRONTEND_ORIGIN}/staff/passwordReset?oobCode=${oobCode}&id=${staffId}`;
+
+		return customLink;
 	}
 }
 

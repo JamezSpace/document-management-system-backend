@@ -1,4 +1,4 @@
-import type { MediaServicePort } from "../../application/port/services/mediaService.port.js";
+import type { MediaServicePort } from "../../../../application/port/services/mediaService.port.js";
 
 class MediaServiceAdapter implements MediaServicePort {
     async uploadDoc(file: Buffer, ownerId: string): Promise<{ mediaId: string; }> {

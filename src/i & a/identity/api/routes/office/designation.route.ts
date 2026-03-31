@@ -1,13 +1,11 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type OfficeDesignationController from "../../controllers/office/OfficeDesignation.controller.js";
 import {
     createOfficeDesignationSchema,
-    createOfficeSchema,
     editOfficeDesignationSchema,
     type CreateOfficeDesignationType,
-    type CreateOfficeType,
-    type EditOfficeDesignationType,
+    type EditOfficeDesignationType
 } from "../../types/office.type.js";
-import type OfficeDesignationController from "../../controllers/office/OfficeDesignation.controller.js";
 
 async function officeDesignationRoutes(
     fastify: FastifyInstance,
@@ -18,12 +16,24 @@ async function officeDesignationRoutes(
     const designationController = options.controller;
 
     fastify.get(
+        "/office/designations",
+        async (request: FastifyRequest, reply: FastifyReply) => {            
+            const officeDesignations = await designationController.getAllDesignations();
+
+            return reply.code(200).send({
+                success: true,
+                data: officeDesignations
+            });
+        },
+    );
+
+    fastify.get(
         "/office/:officeId/designations",
         {schema: {params: editOfficeDesignationSchema}},
         async (request: FastifyRequest<{Params: EditOfficeDesignationType}>, reply: FastifyReply) => {
             const officeId = request.params.officeId;
             
-            const officeDesignations = await designationController.getAllOfficeDesignations(officeId);
+            const officeDesignations = await designationController.getAllDesignationsWithinAnOffice(officeId);
 
             return reply.code(200).send({
                 success: true,

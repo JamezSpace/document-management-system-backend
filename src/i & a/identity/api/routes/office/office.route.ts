@@ -4,6 +4,7 @@ import {
 	createOfficeSchema,
 	type CreateOfficeType,
 } from "../../types/office.type.js";
+import { unitIdSchema, type UnitIdType } from "../../types/staff/staff.type.js";
 
 async function officeRoutes(
 	fastify: FastifyInstance,
@@ -14,13 +15,31 @@ async function officeRoutes(
 	const officeController = options.controller;
 
 	fastify.get(
+		"/:unitId/offices",
+		{ schema: { params: unitIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: UnitIdType }>,
+			reply: FastifyReply,
+		) => {
+            const { unitId } = request.params;
+
+			const offices = await officeController.getAllOfficesWithinAUnit(unitId);
+
+			return reply.code(200).send({
+				success: true,
+				data: offices,
+			});
+		},
+	);
+
+	fastify.get(
 		"/offices",
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const offices = await officeController.getAllOffices();
 
 			return reply.code(200).send({
 				success: true,
-				offices,
+				data: offices,
 			});
 		},
 	);
@@ -38,7 +57,7 @@ async function officeRoutes(
 
 			return reply.code(201).send({
 				success: true,
-				newOffice,
+				data: newOffice,
 			});
 		},
 	);

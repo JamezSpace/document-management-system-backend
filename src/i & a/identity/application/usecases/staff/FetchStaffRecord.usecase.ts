@@ -14,6 +14,12 @@ class FetchStaffRecordUsecase {
 
         return staffDetails;
     }
+
+    async fetchStaffByAuthProviderId(authProviderId: string) {
+        const staff = await this.staffRepo.findStaffByAuthProviderId(authProviderId);
+
+        return staff;
+    }
 }
 
 export default FetchStaffRecordUsecase;
