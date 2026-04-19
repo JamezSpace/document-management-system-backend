@@ -223,6 +223,7 @@ INSERT INTO identity.role_assignments VALUES (
     NOW()
 );
 
+
 -- DOCUMENTS SCHEMA
 INSERT INTO document.correspondence_subjects (id, code, name, description, created_at)
 VALUES 

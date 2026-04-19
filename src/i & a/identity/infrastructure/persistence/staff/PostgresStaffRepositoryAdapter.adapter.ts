@@ -16,7 +16,7 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 
 	async fetchAll(): Promise<AbstractStaffDetails[]> {
 		const query =
-			"select * from identity.staff_details where id <> 'staff.system';";
+			"select * from identity.staff_details where id <> 'staff.system' and status <> 'deleted';";
 
 		const result = await this.dbPool.query(query);
 
@@ -63,7 +63,7 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 		unitId: string,
 	): Promise<AbstractStaffDetails[]> {
 		const query =
-			"select * from identity.staff_details where unit_id = $1;";
+			"select * from identity.staff_details where unit_id = $1 and status <> 'deleted';";
 
 		const result = await this.dbPool.query(query, [unitId]);
 
@@ -242,7 +242,7 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 	async fetchAllStaffWithMedia(): Promise<StaffDetailsWithMedia[]> {
 		try {
 			const query =
-				"SELECT * FROM identity.staff_details_with_media WHERE id <> 'staff.system'";
+				"SELECT * FROM identity.staff_details_with_media WHERE id <> 'staff.system' and status <> 'deleted'";
 			const result = await this.dbPool.query(query);
 
 			if (result.rows.length === 0) {
@@ -291,6 +291,34 @@ class PostgresStaffRepositoryAdapter implements StaffRepositoryPort {
 					message: error.message,
 				},
 			);
+		}
+	}
+
+	async deleteStaff(staffId: string): Promise<void> {
+		try {
+			const query =
+				"UPDATE identity.staff SET status = 'deleted' WHERE id = $1 RETURNING id";
+			const result = await this.dbPool.query(query, [staffId]);
+
+			if (result.rows.length === 0) {
+				throw new InfrastructureError(
+					GlobalInfrastructureErrors.persistence.NOT_FOUND,
+					{
+						category: Category.PERSISTENCE,
+						message: "No staff record found for deletion",
+					},
+				);
+			}
+		} catch (error: any) {
+			console.log("error deleting staff", error);
+
+			const postgresError = mapPostgresError(error);
+
+			throw new InfrastructureError(postgresError.summary, {
+				category: Category.PERSISTENCE,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+			});
 		}
 	}
 

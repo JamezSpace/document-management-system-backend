@@ -51,9 +51,16 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
 			const row = result.rows[0];
 
 			return this.toIdentity(row);
-		} catch (error) {
+		} catch (error: any) {
 			console.log("error in postgres adapter", error);
-			throw error;
+
+            const err = mapPostgresError(error);
+
+			throw new InfrastructureError(err.summary, {
+				category: Category.PERSISTENCE,
+				message: err.details?.message ?? error.message,
+				table: err.details?.table,
+			});
 		}
 	}
 
@@ -72,8 +79,16 @@ class PostgresqlIdentityRepositoryAdapter implements UserRepositoryPort {
 
 			// map DB row to domain
 			return this.toIdentity(row);
-		} catch (error) {
+		} catch (error: any) {
 			console.log("error in postgres adapter", error);
+
+            const err = mapPostgresError(error);
+
+			throw new InfrastructureError(err.summary, {
+				category: Category.PERSISTENCE,
+				message: err.details?.message ?? error.message,
+				table: err.details?.table,
+			});
 
 			return null;
 		}

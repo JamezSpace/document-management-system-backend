@@ -14,6 +14,14 @@ enum Status {
 	RETIRED = "retired",
 	RESIGNED = "resigned",
 	TERMINATED = "terminated",
+	DELETED = "deleted",
 }
 
-export { Status, EmploymentType };
+enum InviteStatus {
+	PENDING = "pending",
+	ACCEPTED = "accepted",
+	REJECTED = "rejected",
+	EXPIRED = "expired"
+}
+
+export { Status, InviteStatus, EmploymentType };

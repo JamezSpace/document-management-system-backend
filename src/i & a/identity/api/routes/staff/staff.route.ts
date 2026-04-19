@@ -5,6 +5,7 @@ import {
 	authProviderIdSchema,
 	createStaffSchema,
 	editStaffSchema,
+	inviteStaffSchema,
 	registerStaffSchema,
 	staffIdSchema,
 	unitIdSchema,
@@ -12,6 +13,7 @@ import {
 	type AuthProviderIdType,
 	type CreateStaffType,
 	type EditStaffType,
+	type InviteStaffType,
 	type RegisterStaffType,
 	type StaffIdType,
 	type UnitIdType,
@@ -43,6 +45,19 @@ async function staffRoutes(
 			});
 		},
 	);
+
+    // invite new staff
+    fastify.post("/staff/invite", {schema: {body: inviteStaffSchema}}, async (request: FastifyRequest<{Body: InviteStaffType}>, reply: FastifyReply) => {
+        // extract information from request body
+        const payload = request.body;
+
+        const inviteResult = await staffController.inviteNewStaff(payload);
+
+        return reply.code(201).send({
+				success: true,
+				data: inviteResult.inviteId,
+			});
+    })
 
 	// register a new staff
 	fastify.post(
@@ -168,6 +183,25 @@ async function staffRoutes(
 		},
 	);
 
+	// delete a staff member
+	fastify.delete(
+		"/staff/:staffId",
+		{ schema: { params: staffIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: StaffIdType }>,
+			reply: FastifyReply,
+		) => {
+			const { staffId } = request.params;
+
+			await staffController.deleteExistingStaff(staffId);
+
+			return reply.code(200).send({
+				success: true,
+				message: "Staff deleted successfully",
+			});
+		},
+	);
+
 	// get staff via auth provider id
 	fastify.get(
 		"/staff/provider/:authProviderId",
@@ -211,7 +245,7 @@ async function staffRoutes(
 				});
 
 			const allStaff =
-				await staffController.fetchAll();
+				await staffController.fetchAllNonDeletedStaff();
 
 				return reply.code(200).send({
 					success: true,
@@ -219,7 +253,6 @@ async function staffRoutes(
 				});
 		},
 	);
-
 
 	// this retrieves all staff members in a unit
 	fastify.get(
@@ -232,7 +265,7 @@ async function staffRoutes(
 			const { unitId } = request.params;
 
 			const officeStaffMembers =
-				await staffController.fetchAllStaffMembersByUnit(unitId);
+				await staffController.fetchAllNonDeletedStaffMembersByUnit(unitId);
 
 			return reply.code(200).send({
 				success: true,

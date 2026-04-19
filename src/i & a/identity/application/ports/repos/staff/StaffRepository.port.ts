@@ -18,6 +18,8 @@ interface StaffRepositoryPort {
     fetchAll(): Promise<AbstractStaffDetails[]>
     
     fetchAllStaffWithMedia(): Promise<StaffDetailsWithMedia[]>
+
+	deleteStaff(staffId: string): Promise<void>
 }
 
 export type { StaffRepositoryPort };

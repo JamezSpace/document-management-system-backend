@@ -23,6 +23,9 @@ importers:
       '@sinclair/typebox':
         specifier: ^0.34.48
         version: 0.34.48
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
       '@types/lodash':
         specifier: ^4.17.24
         version: 4.17.24
@@ -47,6 +50,9 @@ importers:
       http-status-codes:
         specifier: ^2.3.0
         version: 2.3.0
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       kysely:
         specifier: ^0.28.11
         version: 0.28.11

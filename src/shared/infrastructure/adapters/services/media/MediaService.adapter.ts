@@ -5,9 +5,62 @@ class MediaServiceAdapter implements MediaServicePort {
         return {mediaId: '124r4'};
     }
 
-    async uploadStaffMedia(staffId: string, mediaUploads: { signatureFile: Buffer; profilePic: Buffer; }): Promise<void> {
+    async uploadStaffMedia(staffId: string, mediaUploads: { signatureFile?: Buffer; profilePic?: Buffer; }): Promise<void> {
         return;
     }
+
+	async uploadOnboardingMedia(
+		sessionId: string,
+		mediaUploads: { signatureFile?: Buffer; profilePic?: Buffer },
+	): Promise<{
+		signatureFile?: {
+			storageProvider: string;
+			bucketName?: string | null;
+			objectKey: string;
+			sizeBytes?: number;
+		};
+		profilePic?: {
+			storageProvider: string;
+			bucketName?: string | null;
+			objectKey: string;
+			sizeBytes?: number;
+		};
+	}> {
+		const result: {
+			profilePic?: {
+				storageProvider: string;
+				bucketName?: string | null;
+				objectKey: string;
+				sizeBytes?: number;
+			};
+			signatureFile?: {
+				storageProvider: string;
+				bucketName?: string | null;
+				objectKey: string;
+				sizeBytes?: number;
+			};
+		} = {};
+
+		if (mediaUploads.profilePic) {
+			result.profilePic = {
+				storageProvider: "LOCAL",
+				bucketName: "mock",
+				objectKey: `onboarding/${sessionId}/profile_picture`,
+				sizeBytes: mediaUploads.profilePic.length,
+			};
+		}
+
+		if (mediaUploads.signatureFile) {
+			result.signatureFile = {
+				storageProvider: "LOCAL",
+				bucketName: "mock",
+				objectKey: `onboarding/${sessionId}/signature`,
+				sizeBytes: mediaUploads.signatureFile.length,
+			};
+		}
+
+		return result;
+	}
 }
 
 export default MediaServiceAdapter;

@@ -5,13 +5,13 @@ class GetAllStaffUseCase {
 		private readonly staffRepo: StaffRepositoryPort,
 	) {}
 
-    async getAllStaffMembersByUnit(unitId: string) {
+    async getAllNonDeletedStaffMembersByUnit(unitId: string) {
         const staffMembers = await this.staffRepo.fetchAllStaffMembersByUnit(unitId)
 
         return staffMembers;
     }
 
-    async getAllStaff() {
+    async getAllNonDeletedStaff() {
         const staff = await this.staffRepo.fetchAllStaffWithMedia()
 
         return staff;

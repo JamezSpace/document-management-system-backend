@@ -17,6 +17,10 @@ export const ApplicationErrorEnum = {
         codeName: "identity_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND
     },
+    INVITE_NOT_FOUND: {
+        codeName: "invite_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
     STAFF_NOT_FOUND: {
         codeName: "staff_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND

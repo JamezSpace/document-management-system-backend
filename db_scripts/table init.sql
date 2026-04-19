@@ -1,4 +1,3 @@
-
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
 CREATE SCHEMA IF NOT EXISTS document;
@@ -14,7 +13,13 @@ drop table if exists document.business_functions;
 
 -- IDENTITY SCHEMA TYPES
 CREATE TYPE identity.user_status AS ENUM (
-    'pending','active','suspended', 'retired', 'resigned', 'terminated'
+    'pending','active','suspended', 'deleted', 'retired', 'resigned', 'terminated'
+);
+CREATE TYPE identity.invite_status AS ENUM (
+    'pending','accepted','rejected', 'expired'
+);
+CREATE TYPE identity.onboarding_session_status AS ENUM (
+    'in_progress','completed','abandoned'
 );
 CREATE TYPE identity.employment_type AS ENUM (
     'permanent', 'probationary', 'contract', 'intern', 'ad_hoc', 'sabbatical'
@@ -85,7 +90,13 @@ CREATE TYPE notifications.state as ENUM (
     'pending', 'sent', 'failed', 'read'
 );
 
--- identity table
+-- MEDIA TYPES
+CREATE TYPE media.uploaded_by_type as ENUM (
+    'staff', 'onboarding_session', 'system'
+);
+
+-- IDENTITY SCHEMA
+-- users table
 create table identity.users (
 	id varchar(50) primary key not null,
 	auth_provider VARCHAR(50) NOT NULL,
@@ -98,6 +109,47 @@ create table identity.users (
 	status identity.user_status NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
 	updated_at TIMESTAMPTZ
+);
+
+-- invite table
+create table identity.invites (
+	id varchar(50) primary key not null,
+	email varchar(255) not null,
+	unit_id varchar(50) REFERENCES identity.organizational_units(id) not null,
+	office_id varchar(50) REFERENCES identity.offices(id) not null,
+	designation_id varchar(50) REFERENCES identity.designations(id) not null,
+    employment_type identity.employment_type NOT NULL,
+    invited_by varchar(50) REFERENCES identity.staff(id) NOT NULL,
+    token TEXT,
+    is_used BOOLEAN default false,
+    expires_at TIMESTAMPTZ,
+    accepted_at TIMESTAMPTZ,
+    rejected_at TIMESTAMPTZ,
+    status identity.invite_status NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+	updated_at TIMESTAMPTZ
+);
+
+-- onboarding session
+CREATE TABLE identity.onboarding_sessions (
+    id VARCHAR(50) PRIMARY KEY,
+    invite_id VARCHAR(50) REFERENCES identity.invites(id) NOT NULL,
+
+    email VARCHAR(255) NOT NULL,
+
+    -- step tracking
+    current_step INT NOT NULL DEFAULT 1,
+
+    -- partial data storage
+    primary_data JSONB,
+    profile_picture_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+    signature_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+
+    status identity.onboarding_session_status NOT NULL,
+
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_active_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ
 );
 
 -- organizational units table
@@ -252,7 +304,8 @@ CREATE TABLE media.media_assets (
     checksum VARCHAR(255) NOT NULL, -- SHA-256 recommended
 
     uploaded_at TIMESTAMPTZ NOT NULL,
-    uploaded_by VARCHAR(50) REFERENCES identity.staff(id) NOT NULL,
+    uploaded_by VARCHAR(50) NOT NULL,
+    uploaded_by_type media.uploaded_by_type NOT NULL
 );
 
 

@@ -6,10 +6,12 @@ import type FetchStaffDetailsForLoginUseCase from "../../../application/usecases
 import type FetchStaffRecordUsecase from "../../../application/usecases/staff/FetchStaffRecord.usecase.js";
 import type GetAllStaffUseCase from "../../../application/usecases/staff/GetAllStaff.usecase.js";
 import type RegisterNewStaffUseCase from "../../../application/usecases/staff/RegisterStaff.usecase.js";
+import type DeleteStaffUseCase from "../../../application/usecases/staff/DeleteStaff.usecase.js";
 import type Staff from "../../../domain/entities/staff/Staff.js";
 import type {
 	ActivateStaffType,
 	CreateStaffType,
+	InviteStaffType,
 	RegisterStaffType,
 } from "../../types/staff/staff.type.js";
 
@@ -20,6 +22,7 @@ class StaffController {
 		private readonly registerNewStaffUseCase: RegisterNewStaffUseCase,
 		private readonly activateStaffUseCase: ActivateStaffUseCase,
 		private readonly editExistingStaffUseCase: EditExistingStaffUseCase,
+		private readonly deleteStaffUseCase: DeleteStaffUseCase,
 		private readonly fetchStaffUseCase: FetchStaffRecordUsecase,
 		private readonly resolveStaffAuthority: ResolveStaffAuthority,
 	) {}
@@ -39,6 +42,13 @@ class StaffController {
 	async registerNewStaff(payload: RegisterStaffType) {
 		const userId =
 			await this.registerNewStaffUseCase.registerNewStaff(payload);
+
+		return userId;
+	}
+
+	async inviteNewStaff(payload: InviteStaffType) {
+		const userId =
+			await this.registerNewStaffUseCase.inviteStaff(payload);
 
 		return userId;
 	}
@@ -71,16 +81,20 @@ class StaffController {
 		return staff;
 	}
 
-	async fetchAllStaffMembersByUnit(unitId: string) {
+	async deleteExistingStaff(staffId: string) {
+		await this.deleteStaffUseCase.deleteStaff(staffId);
+	}
+
+	async fetchAllNonDeletedStaffMembersByUnit(unitId: string) {
 		const allStaffMembers =
-			this.getAllStaffUseCase.getAllStaffMembersByUnit(unitId);
+			this.getAllStaffUseCase.getAllNonDeletedStaffMembersByUnit(unitId);
 
 		return allStaffMembers;
 	}
 
-    async fetchAll() {
+    async fetchAllNonDeletedStaff() {
         const allStaffMembers =
-			this.getAllStaffUseCase.getAllStaff();
+			this.getAllStaffUseCase.getAllNonDeletedStaff();
 
 		return allStaffMembers;
     }

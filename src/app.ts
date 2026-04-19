@@ -3,9 +3,9 @@ import fastifyMultipart from "@fastify/multipart";
 import { fastifyPostgres } from "@fastify/postgres";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import fastify, {
-    type FastifyInstance,
-    type FastifyReply,
-    type FastifyRequest,
+	type FastifyInstance,
+	type FastifyReply,
+	type FastifyRequest,
 } from "fastify";
 import DocumentSubsystem from "./documents/index.js";
 import PostgresWorkflowDocumentAdapter from "./documents/infrastructure/persistence/PostgresWorkflowDocument.adapter.js";
@@ -28,10 +28,10 @@ const server: FastifyInstance = fastify({
 
 // load plugins (from the Fastify ecosystem) next
 server.register(fastifyCors, {
-    origin: process.env.FRONTEND_ORIGIN!,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-})
+	origin: process.env.FRONTEND_ORIGIN!,
+	methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+});
 server.register(fastifyPostgres, dbConfig);
 server.register(fastifyMultipart, {
 	attachFieldsToBody: "keyValues",
@@ -51,33 +51,37 @@ server.after(() => {
 	const documentPolicyAdapter = new PostgresDocumentRetentionPolicyAdapter(
 		server.pg,
 	);
-    const documentWorkflowAdapter = new PostgresWorkflowDocumentAdapter(server.pg);
-    const policyWorkflowAdapter = new PostgresWorkflowPolicyAdapter(server.pg);
-    const accessWorkflowAdapter = new PostgresWorkflowAccessRepositoryAdapter(server.pg);
+	const documentWorkflowAdapter = new PostgresWorkflowDocumentAdapter(
+		server.pg,
+	);
+	const policyWorkflowAdapter = new PostgresWorkflowPolicyAdapter(server.pg);
+	const accessWorkflowAdapter = new PostgresWorkflowAccessRepositoryAdapter(
+		server.pg,
+	);
 
-    // documents subsystem - services
+	// documents subsystem - services
 	const retentionService = new RetentionService(documentPolicyAdapter);
 
 	server.register(DocumentSubsystem, {
 		prefix: "api/document",
 		retentionService,
-        globalEventBus: eventBusAdapter
+		globalEventBus: eventBusAdapter,
 	});
 
 	server.register(PolicySubsystem, { prefix: "api/policy" });
 
-    server.register(WorkflowSubsystem, {
-        prefix: "workflow",
-        documentWorkflowAdapter,
-        policyWorkflowAdapter,
-        accessWorkflowAdapter,
-        globalEventBus: eventBusAdapter
-    })
+	server.register(WorkflowSubsystem, {
+		prefix: "workflow",
+		documentWorkflowAdapter,
+		policyWorkflowAdapter,
+		accessWorkflowAdapter,
+		globalEventBus: eventBusAdapter,
+	});
 
-    server.register(NotificationSubsystem, {
-        prefix: 'notifs',
-        globalEventBus: eventBusAdapter
-    })
+	server.register(NotificationSubsystem, {
+		prefix: "notifs",
+		globalEventBus: eventBusAdapter,
+	});
 });
 
 // load decorators next
@@ -86,10 +90,44 @@ server.after(() => {
 server.decorateRequest("user", null);
 
 // load hooks next
-server.addHook(
-	"preHandler",
-	middlewareAdapterInstance.validateUserIsAuthenticated,
-);
+server.addHook("preHandler", async (req: FastifyRequest, reply) => {
+	const publicRoutes = [
+		{
+			method: ["GET"],
+			pattern:
+				/^\/api\/identity\/entity\/[^/]+$/,
+		},
+		{
+			method: ["GET", "PATCH"],
+			pattern:
+				/^\/api\/identity\/staff\/onboarding\/session\/[^/]+$/,
+		},
+		{
+			method: ["PATCH"],
+			pattern:
+				/^\/api\/identity\/staff\/onboarding\/session\/[^/]+\/completed$/,
+		},
+		{
+			method: ["POST"],
+			pattern:
+				/^\/api\/identity\/staff\/onboarding\/session$/,
+		},
+		{
+			method: ["POST"],
+			pattern:
+				/^\/api\/identity\/staff\/onboarding\/[^/]+\/media$/,
+		},
+	];
+
+	const isPublic = publicRoutes.some(
+		(route) => route.method.includes(req.method) && route.pattern.test(req.url),
+	);
+
+	console.log("Is Route Public:", isPublic);
+	if (isPublic) return;
+
+	return middlewareAdapterInstance.validateUserIsAuthenticated(req, reply);
+});
 
 server.get("/", (request: FastifyRequest, reply: FastifyReply) => {
 	reply.code(200).send("hit base end point");

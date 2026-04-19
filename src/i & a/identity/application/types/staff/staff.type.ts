@@ -37,4 +37,24 @@ interface RegisterStaffPayload {
 	createdBy: string;
 }
 
-export type { RegisterStaffPayload, StaffTypeForCreation };
+interface InviteStaffPayload {
+    email: string;
+    unitId: string;
+    officeId: string;
+    designationId: string;
+    employmentType: EmploymentType;
+    createdBy: string;
+}
+
+interface CompleteOnboardingPayload {
+    token: string;
+
+    phoneNumber: string;
+    firstName: string;
+	lastName: string;
+	middleName: string;
+
+    staffNumber: number;
+}
+
+export type { InviteStaffPayload, CompleteOnboardingPayload, RegisterStaffPayload, StaffTypeForCreation };

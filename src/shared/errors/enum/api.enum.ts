@@ -9,6 +9,10 @@ export const ApiErrorEnum = {
         codeName: "invalid_credentials",
         httpStatusCode: StatusCodes.BAD_REQUEST
     },
+    NOT_ALLOWED: {
+        codeName: "not_allowed",
+        httpStatusCode: StatusCodes.UNAUTHORIZED
+    },
 } as const;
 
 export type ApiErrorType = typeof ApiErrorEnum[keyof typeof ApiErrorEnum];

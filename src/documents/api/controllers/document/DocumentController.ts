@@ -116,34 +116,41 @@ class DocumentController {
 		doc: DocumentSchemaType,
 		contentDelta: unknown,
 		actorId: string,
-	) {
-		const document = new Document({
-			...doc,
-            version: new DocumentVersion({
-                ...doc.currentVersion,
-                createdAt: new Date(doc.currentVersion.createdAt),
-                lifecycle: {
-                    ...doc.currentVersion.lifecycle,
-                    stateEnteredAt: new Date(doc.currentVersion.lifecycle.stateEnteredAt)
-                }
-            }),
-			classification: {
-				...doc.classification,
-				classifiedAt: new Date(doc.classification.classifiedAt),
-				lastReclassifiedAt: doc.classification.lastReclassifiedAt
-					? new Date(doc.classification.lastReclassifiedAt)
-					: null,
-			},
-			retention: {
-				...doc.retention,
-				retentionStartDate: new Date(doc.retention.retentionStartDate),
-				disposalEligibilityDate: new Date(
-					doc.retention.disposalEligibilityDate,
-				),
-			},
-			createdAt: new Date(doc.createdAt),
-			updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : null,
-		});
+	) {       
+        console.log(doc);
+         
+        let version = null;
+        if(doc.currentVersion)
+            version = new DocumentVersion({
+                    ...doc.currentVersion,
+                    createdAt: new Date(doc.createdAt),
+                    lifecycle: {
+                        ...doc.currentVersion.lifecycle,
+                        stateEnteredAt: new Date(doc.currentVersion.lifecycle.stateEnteredAt)
+                    }
+                })
+        
+        
+        const document = new Document({
+            ...doc,
+            version,
+            classification: {
+                ...doc.classification,
+                classifiedAt: new Date(doc.classification.classifiedAt),
+                lastReclassifiedAt: doc.classification.lastReclassifiedAt
+                    ? new Date(doc.classification.lastReclassifiedAt)
+                    : null,
+            },
+            retention: {
+                ...doc.retention,
+                retentionStartDate: new Date(doc.retention.retentionStartDate),
+                disposalEligibilityDate: new Date(
+                    doc.retention.disposalEligibilityDate,
+                ),
+            },
+            createdAt: new Date(doc.createdAt),
+            updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : null,
+        });
 
 		const savedDoc = await this.createDocumentUseCase.saveDocument(
 			document,

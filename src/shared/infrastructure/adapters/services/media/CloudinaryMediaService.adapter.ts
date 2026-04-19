@@ -1,6 +1,9 @@
 import { v2 as cloudinary } from "cloudinary";
 import type { UploadApiOptions, UploadApiResponse } from "cloudinary";
-import type { MediaServicePort } from "../../../../application/port/services/mediaService.port.js";
+import type {
+	MediaServicePort,
+	UploadedMediaMap,
+} from "../../../../application/port/services/mediaService.port.js";
 
 class CloudinaryMediaServiceAdapter implements MediaServicePort {
 	constructor() {
@@ -44,22 +47,76 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 
 	async uploadStaffMedia(
 		staffId: string,
-		mediaUploads: { signatureFile: Buffer; profilePic: Buffer },
+		mediaUploads: { signatureFile?: Buffer; profilePic?: Buffer },
 	): Promise<void> {
-		await Promise.all([
-			this.uploadBuffer(mediaUploads.profilePic, {
-				folder: `staff/${staffId}`,
+		const uploads: Promise<UploadApiResponse>[] = [];
+
+		if (mediaUploads.profilePic) {
+			uploads.push(
+				this.uploadBuffer(mediaUploads.profilePic, {
+					folder: `staff/${staffId}`,
+					resource_type: "image",
+					public_id: "profile_picture",
+					overwrite: true,
+				}),
+			);
+		}
+
+		if (mediaUploads.signatureFile) {
+			uploads.push(
+				this.uploadBuffer(mediaUploads.signatureFile, {
+					folder: `staff/${staffId}`,
+					resource_type: "image",
+					public_id: "signature",
+					overwrite: true,
+				}),
+			);
+		}
+
+		if (uploads.length === 0) return;
+
+		await Promise.all(uploads);
+	}
+
+	async uploadOnboardingMedia(
+		sessionId: string,
+		mediaUploads: { signatureFile?: Buffer; profilePic?: Buffer },
+	): Promise<UploadedMediaMap> {
+		const uploaded: UploadedMediaMap = {};
+
+		if (mediaUploads.profilePic) {
+			const result = await this.uploadBuffer(mediaUploads.profilePic, {
+				folder: `onboarding/${sessionId}`,
 				resource_type: "image",
 				public_id: "profile_picture",
 				overwrite: true,
-			}),
-			this.uploadBuffer(mediaUploads.signatureFile, {
-				folder: `staff/${staffId}`,
+			});
+
+			uploaded.profilePic = {
+				storageProvider: "CLOUDINARY",
+				bucketName: result.folder ?? null,
+				objectKey: result.public_id,
+				sizeBytes: result.bytes,
+			};
+		}
+
+		if (mediaUploads.signatureFile) {
+			const result = await this.uploadBuffer(mediaUploads.signatureFile, {
+				folder: `onboarding/${sessionId}`,
 				resource_type: "image",
 				public_id: "signature",
 				overwrite: true,
-			}),
-		]);
+			});
+
+			uploaded.signatureFile = {
+				storageProvider: "CLOUDINARY",
+				bucketName: result.folder ?? null,
+				objectKey: result.public_id,
+				sizeBytes: result.bytes,
+			};
+		}
+
+		return uploaded;
 	}
 }
 

@@ -1,6 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import NodemailerEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/NodemailerEmailService.adapter.js";
+import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/ResendEmailService.adapter.js";
+import CloudinaryMediaServiceAdapter from "../shared/infrastructure/adapters/services/media/CloudinaryMediaService.adapter.js";
 import MediaServiceAdapter from "../shared/infrastructure/adapters/services/media/MediaService.adapter.js";
+import PostgresMediaAssetRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresMediaAssetRepository.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
 import GetEffectivePermissionsUseCase from "./access/application/usecases/GetEffectivePermissions.usecase.js";
@@ -36,10 +39,12 @@ import EditExistingStaffUseCase from "./identity/application/usecases/staff/Edit
 import FetchStaffRecordUsecase from "./identity/application/usecases/staff/FetchStaffRecord.usecase.js";
 import GetAllStaffUseCase from "./identity/application/usecases/staff/GetAllStaff.usecase.js";
 import RegisterNewStaffUseCase from "./identity/application/usecases/staff/RegisterStaff.usecase.js";
+import DeleteStaffUseCase from "./identity/application/usecases/staff/DeleteStaff.usecase.js";
 import ActivatePendingUserUseCase from "./identity/application/usecases/user/ActivatePendingUser.usercase.js";
 import AddNewUserUseCase from "./identity/application/usecases/user/AddNewUser.usecase.js";
 import AuthenticateUserUseCase from "./identity/application/usecases/user/AuthenticateUser.usecase.js";
 import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
+import OnboardingEntityUseCase from "./identity/application/usecases/user/OnboardEntity.usecase.js";
 import OfficeDesignationEventsAdapter from "./identity/infrastructure/events/office/OfficeDesignationsEvents.adapter.js";
 import OfficeEventsAdapter from "./identity/infrastructure/events/office/OfficeEvents.adapter.js";
 import StaffClassEventsAdapter from "./identity/infrastructure/events/staff/StaffClassEventsAdapter.adapter.js";
@@ -49,12 +54,15 @@ import IdentityEventsAdapter from "./identity/infrastructure/events/user/Identit
 import PostgresOfficeDesignationRepositoryAdapter from "./identity/infrastructure/persistence/office/PostgresOfficeDesignationRepository.adapter.js";
 import PostgresOfficeRepositoryAdapter from "./identity/infrastructure/persistence/office/PostgresOfficeRepository.adapter.js";
 import PostgresStaffClassificationRepositoryAdapter from "./identity/infrastructure/persistence/staff/PostgresStaffClassificationRepositoryAdapter.adapter.js";
+import PostgresStaffMediaRepositoryAdapter from "./identity/infrastructure/persistence/staff/PostgresStaffMediaRepository.adapter.js";
 import PostgresStaffRepositoryAdapter from "./identity/infrastructure/persistence/staff/PostgresStaffRepositoryAdapter.adapter.js";
 import PostgresOrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/unit/PostgresOrgUnitRepository.adapter.js";
 import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresIdentityRepository.adapter.js";
+import PostgresqlInviteRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresqlInviteRepository.adapter.js";
 import FirebaseAuthAdapter from "./identity/infrastructure/services/auth/FirebaseAuth.adapter.js";
 import IdentityEmailServiceAdapter from "./identity/infrastructure/services/EmailService.adapter.js";
-import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/ResendEmailService.adapter.js";
+import OpaqueTokenServiceAdapter from "./identity/infrastructure/services/OpaqueTokenService.adapter.js";
+import PostgresqlOnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresOnboardingSessionRepository.adapter.js";
 
 
 export default async function IdentityAccessSubsystem(
@@ -69,9 +77,9 @@ export default async function IdentityAccessSubsystem(
 	const idGenerator = new UuidV7Generator();
 
 	// all module repos in identity subsystem
-	const identityRepository = new PostgresqlIdentityRepositoryAdapter(
-		postgres,
-	);
+	const identityRepository = new PostgresqlIdentityRepositoryAdapter(postgres);
+	const inviteRepository = new PostgresqlInviteRepositoryAdapter(postgres);
+    const onboardingSessionRepo = new PostgresqlOnboardingSessionRepositoryAdapter(postgres);
 	const orgUnitRepository = new PostgresOrgUnitRepositoryAdapter(postgres);
 	const roleRepository = new PostgresqlRoleRepositoryAdapter(postgres);
 	const accessRepository = new PostgresqlRoleAssignmentRepositoryAdapter(postgres);
@@ -79,8 +87,10 @@ export default async function IdentityAccessSubsystem(
 	const officeDesignationRepository =
 		new PostgresOfficeDesignationRepositoryAdapter(postgres);
 	const staffRepositoryAdapter = new PostgresStaffRepositoryAdapter(postgres);
+	const staffMediaRepository = new PostgresStaffMediaRepositoryAdapter(postgres);
 	const staffClassificationRepository =
 		new PostgresStaffClassificationRepositoryAdapter(postgres);
+	const mediaAssetRepository = new PostgresMediaAssetRepositoryAdapter(postgres);
 
 	//  all module event adapters in identity subsystem
 	const accessEventsAdapter = new AccessEventsAdapter(globalEventBus);
@@ -100,7 +110,10 @@ export default async function IdentityAccessSubsystem(
 		globalResendEmailService,
 	);
 
+    const tokenService = new OpaqueTokenServiceAdapter();
+
     const mediaService = new MediaServiceAdapter();
+	const cloudinaryMediaService = new CloudinaryMediaServiceAdapter();
 
 	// application Layer
 	const authenticateUserUseCase = new AuthenticateUserUseCase(
@@ -112,6 +125,16 @@ export default async function IdentityAccessSubsystem(
 		idGenerator,
 		identityEventsAdapter,
 		identityRepository,
+	);
+
+	const onboardEntityUseCase = new OnboardingEntityUseCase(
+        idGenerator,
+		tokenService,
+		cloudinaryMediaService,
+		mediaAssetRepository,
+		staffMediaRepository,
+        inviteRepository,
+        onboardingSessionRepo
 	);
 
 	const getEffectivePermissionsUseCase = new GetEffectivePermissionsUseCase(
@@ -162,6 +185,7 @@ export default async function IdentityAccessSubsystem(
 		staffEventsAdapter,
 		staffRepositoryAdapter,
 	);
+	const deleteStaffUseCase = new DeleteStaffUseCase(staffRepositoryAdapter);
 
 	const addNewStaffUseCase = new AddNewStaffUseCase(
 		idGenerator,
@@ -173,9 +197,11 @@ export default async function IdentityAccessSubsystem(
 		idGenerator,
 		identityEventsAdapter,
 		identityRepository,
+        inviteRepository,
 		addNewStaffUseCase,
 		new FirebaseAuthAdapter(),
 		identityEmailService,
+        tokenService
 	);
 
     const activateStaffUseCase = new ActivateStaffUseCase(staffEventsAdapter, staffRepositoryAdapter, mediaService);
@@ -205,6 +231,7 @@ export default async function IdentityAccessSubsystem(
 
 	// controller Layer
 	const authenticationController = new AuthenticationController(
+        onboardEntityUseCase,
 		authenticateUserUseCase,
 		addNewUserUseCase,
 		activatePendingUserUseCase,
@@ -236,6 +263,7 @@ export default async function IdentityAccessSubsystem(
         registerNewStaffUseCase,
         activateStaffUseCase,
 		editStaffUseCase,
+		deleteStaffUseCase,
 		fetchStaffUseCase,
         resolveStaffAuthority
 	);
@@ -247,7 +275,7 @@ export default async function IdentityAccessSubsystem(
 	);
 
 	await fastify.register(identityRoutes, {
-		controller: [authenticationController, authorityController],
+		controller: authenticationController,
 	});
 
 	await fastify.register(orgUnitRoutes, {
