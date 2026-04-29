@@ -15,6 +15,12 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 		});
 	}
 
+	getCloudinaryDetails() {
+		return {
+			cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+		};
+	}
+
 	private uploadBuffer(
 		buffer: Buffer,
 		options: UploadApiOptions,
@@ -35,7 +41,10 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 		});
 	}
 
-	async uploadDoc(file: Buffer, ownerId: string): Promise<{ mediaId: string }> {
+	async uploadDoc(
+		file: Buffer,
+		ownerId: string,
+	): Promise<{ mediaId: string }> {
 		const result = await this.uploadBuffer(file, {
 			folder: "documents",
 			resource_type: "auto",
@@ -117,6 +126,17 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 		}
 
 		return uploaded;
+	}
+
+	resolveMediaDetailsToPublicURL(mediaDetailsFromDB: {
+		objectKey: string | null;
+	}): string | null {
+		const { objectKey } = mediaDetailsFromDB;
+		const cloudinaryConfig = this.getCloudinaryDetails();
+
+		if (!objectKey) return null;
+
+		return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${objectKey}.png`;
 	}
 }
 

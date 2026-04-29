@@ -1,4 +1,4 @@
-import type { EmploymentType, Status } from "../../enum/staff.enum.js";
+import type { EmploymentType, Status } from "../enum/staff.enum.js";
 
 interface StaffDetailsBasePayload {
 	id: string;
@@ -26,4 +26,4 @@ interface StaffDetailsBasePayload {
     updatedAt: Date;
 }
 
-export type {StaffDetailsBasePayload};
+export type { StaffDetailsBasePayload };

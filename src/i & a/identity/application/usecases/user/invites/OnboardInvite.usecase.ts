@@ -1,22 +1,22 @@
-import type { IdGeneratorPort } from "../../../../../shared/application/port/services/IdGenerator.port.js";
 import { createHash } from "node:crypto";
-import type { MediaAssetRepositoryPort } from "../../../../../shared/application/port/repos/MediaAssetRepository.port.js";
-import type { MediaServicePort } from "../../../../../shared/application/port/services/mediaService.port.js";
-import ApplicationError from "../../../../../shared/errors/ApplicationError.error.js";
-import { ApplicationErrorEnum } from "../../../../../shared/errors/enum/application.enum.js";
-import OnboardingSession from "../../../domain/entities/user/OnboardingSession.js";
-import { OnboardingSessionStatus } from "../../../domain/enum/onboardingSessionStatus.enum.js";
-import type { StaffMediaRepositoryPort } from "../../ports/repos/media/MediaRepository.port.js";
-import type { InviteRepositoryPort } from "../../ports/repos/user/InviteRepository.port.js";
-import type { OnboardingSessionRepositoryPort } from "../../ports/repos/user/OnboardingSessionRepository.port.js";
-import type { TokenServicePort } from "../../ports/services/TokenService.port.js";
-import type { OnboardingSessionInit } from "../../types/user/onboardingSession.type.js";
-import type Invite from "../../../domain/entities/user/Invite.js";
-import { timeStamp } from "node:console";
+import type { MediaAssetRepositoryPort } from "../../../../../../shared/application/port/repos/MediaAssetRepository.port.js";
+import type { IdGeneratorPort } from "../../../../../../shared/application/port/services/IdGenerator.port.js";
+import type { MediaServicePort } from "../../../../../../shared/application/port/services/mediaService.port.js";
+import ApplicationError from "../../../../../../shared/errors/ApplicationError.error.js";
+import { ApplicationErrorEnum } from "../../../../../../shared/errors/enum/application.enum.js";
+import type Invite from "../../../../domain/entities/user/Invite.js";
+import OnboardingSession from "../../../../domain/entities/user/OnboardingSession.js";
+import { OnboardingSessionStatus } from "../../../../domain/enum/onboardingSessionStatus.enum.js";
+import { InviteStatus } from "../../../../domain/enum/staff.enum.js";
+import type { StaffMediaRepositoryPort } from "../../../ports/repos/media/MediaRepository.port.js";
+import type { InviteRepositoryPort } from "../../../ports/repos/user/InviteRepository.port.js";
+import type { OnboardingSessionRepositoryPort } from "../../../ports/repos/user/OnboardingSessionRepository.port.js";
+import type { TokenServicePort } from "../../../ports/services/TokenService.port.js";
+import type { OnboardingSessionInit } from "../../../types/user/onboardingSession.type.js";
 
 type UpdatableInviteField = Exclude<keyof Invite, "id" | "createdAt">;
 
-class OnboardingEntityUseCase {
+class OnboardingInviteUseCase {
 	constructor(
 		private readonly idGenerator: IdGeneratorPort,
 		private readonly tokenService: TokenServicePort,
@@ -66,6 +66,31 @@ class OnboardingEntityUseCase {
 		return session;
 	}
 
+	async getAllOnboardingSessions() {
+		const sessions = await this.onboardingSessionRepo.fetchAll();
+
+		return sessions.map((session) => {
+			const {
+				profilePictureBucketName,
+				profilePictureObjectKey,
+				signatureBucketName,
+				signatureObjectKey,
+				...restOfSessionData
+			} = session;
+
+			return {
+				profilePictureUrl:
+					this.mediaService.resolveMediaDetailsToPublicURL({
+						objectKey: session.profilePictureObjectKey,
+					}),
+				signatureUrl: this.mediaService.resolveMediaDetailsToPublicURL(
+					{ objectKey: session.signatureObjectKey },
+				),
+				...restOfSessionData,
+			};
+		});
+	}
+
 	async updateInviteField(
 		inviteId: string,
 		fieldToUpdate: UpdatableInviteField,
@@ -104,15 +129,28 @@ class OnboardingEntityUseCase {
 		return updatedSession;
 	}
 
-	async completeOnboardingSession(sessionId: string, currentStep: number) {
+	async completeOnboardingSession(
+		inviteId: string,
+		sessionId: string,
+		currentStep: number,
+	) {
+		const timeCompleted = new Date();
+
 		const completedSession = await this.onboardingSessionRepo.update(
 			sessionId,
 			{
-                completed_at: new Date(),
-                current_step: currentStep,
+				completed_at: timeCompleted,
+				current_step: currentStep,
 				status: OnboardingSessionStatus.COMPLETED,
 			},
 		);
+
+		// update invite status
+		await this.inviteRepo.update(inviteId, {
+			status: InviteStatus.ACCEPTED,
+			acceptedAt: timeCompleted,
+			isUsed: true,
+		});
 
 		return completedSession;
 	}
@@ -218,4 +256,4 @@ class OnboardingEntityUseCase {
 	}
 }
 
-export default OnboardingEntityUseCase;
+export default OnboardingInviteUseCase;

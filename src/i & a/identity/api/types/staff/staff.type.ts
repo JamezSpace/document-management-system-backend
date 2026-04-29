@@ -14,17 +14,6 @@ const createStaffSchema = Type.Object({
 	activatedAt: Type.String({ format: "date-time" }),
 });
 
-const inviteStaffSchema = Type.Object({
-	email: Type.String(),
-
-    employmentType: Type.Enum(EmploymentType),
-	unitId: Type.String(),
-	officeId: Type.String(),
-	designationId: Type.String(),
-
-    createdBy: Type.String()
-});
-
 const registerStaffSchema = Type.Object({
 	firstName: Type.String(),
 	lastName: Type.String(),
@@ -74,7 +63,6 @@ const unitIdSchema = Type.Object({
 const editStaffSchema = Type.Partial(registerStaffSchema);
 
 type CreateStaffType = Static<typeof createStaffSchema>;
-type InviteStaffType = Static<typeof inviteStaffSchema>;
 type RegisterStaffType = Static<typeof registerStaffSchema>;
 type ActivateStaffType = Static<typeof activateStaffSchema>;
 type EditStaffType = Static<typeof editStaffSchema>;
@@ -86,7 +74,6 @@ type StaffMediaNeededByType = Static<typeof staffMediaNeededBySchema>;
 
 export {
 	createStaffSchema,
-    inviteStaffSchema,
 	editStaffSchema,
 	registerStaffSchema,
     activateStaffSchema,
@@ -98,7 +85,6 @@ export {
     userIdSchema,
     type UserIdType,
 	type CreateStaffType,
-    type InviteStaffType,
 	type EditStaffType,
 	type RegisterStaffType,
     type ActivateStaffType,

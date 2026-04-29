@@ -1,5 +1,5 @@
-function generateTemplate(link: string) {
-    return `Dear Staff First Name,
+function generateNewInviteTemplate(link: string) {
+    return `Good day,
 
 You have been registered on the Nexus-Fons Registry, the University of Ibadan’s unified digital infrastructure for secure departmental governance.
 
@@ -25,4 +25,4 @@ The Digital Office: Authority in Every Action.
 `
 }
 
-export {generateTemplate};
+export { generateNewInviteTemplate };

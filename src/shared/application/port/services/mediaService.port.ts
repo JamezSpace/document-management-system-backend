@@ -29,6 +29,10 @@ interface MediaServicePort {
 			profilePic?: Buffer;
 		},
 	): Promise<UploadedMediaMap>;
+
+	resolveMediaDetailsToPublicURL(mediaDetailsFromDB: {
+		objectKey: string | null;
+	}): string | null;
 }
 
 export type { MediaServicePort, UploadedMediaMap, UploadedMediaStorageDetails };

@@ -9,28 +9,37 @@ class ResendEmailServiceAdapter implements GlobalEmailServicePort {
 	}
 
 	async sendTo(
-  payload: { recipientEmail: string; message: string },
-  type: "onboarding" | "notif",
-): Promise<void> {
-  let subject =
-    type === "notif"
-      ? "Notification"
-      : "Activation of Your Nexus-Fons Digital Office Account";
+		payload: { recipientEmail: string; message: string },
+		type: "onboarding" | "notif",
+	): Promise<boolean> {
+        let numOfRetries = 0;
+		let subject =
+			type === "notif"
+				? "Notification"
+				: "Activation of Your Nexus-Fons Digital Office Account";
 
-  const { data, error } = await this.resend.emails.send({
-    from: "onboarding@resend.dev",
-    to: payload.recipientEmail,
-    subject,
-    html: payload.message,
-  });
+        const messageType = type;
+        const { recipientEmail, message } = payload;
+		const { data, error } = await this.resend.emails.send({
+			from: "onboarding@resend.dev",
+			to: recipientEmail,
+			subject,
+			html: message,
+		});
 
-  if (error) {
-    console.error("Resend error:", error);
-    throw new Error("Email sending failed"); // <-- don't swallow
-  }
+		if (error) {
+			console.error("Resend error:", error);
 
-  console.log("Resend success:", data);
-}
+            if(numOfRetries > 3)
+			    throw new Error("Email sending failed");
+            
+            await this.sendTo({ recipientEmail, message }, messageType);
+            numOfRetries++;
+		}
+
+		console.log("Resend success:", data);
+        return true;
+	}
 }
 
 export default ResendEmailServiceAdapter;

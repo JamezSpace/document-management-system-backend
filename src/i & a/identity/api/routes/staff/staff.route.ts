@@ -5,7 +5,6 @@ import {
 	authProviderIdSchema,
 	createStaffSchema,
 	editStaffSchema,
-	inviteStaffSchema,
 	registerStaffSchema,
 	staffIdSchema,
 	unitIdSchema,
@@ -13,7 +12,6 @@ import {
 	type AuthProviderIdType,
 	type CreateStaffType,
 	type EditStaffType,
-	type InviteStaffType,
 	type RegisterStaffType,
 	type StaffIdType,
 	type UnitIdType,
@@ -45,19 +43,6 @@ async function staffRoutes(
 			});
 		},
 	);
-
-    // invite new staff
-    fastify.post("/staff/invite", {schema: {body: inviteStaffSchema}}, async (request: FastifyRequest<{Body: InviteStaffType}>, reply: FastifyReply) => {
-        // extract information from request body
-        const payload = request.body;
-
-        const inviteResult = await staffController.inviteNewStaff(payload);
-
-        return reply.code(201).send({
-				success: true,
-				data: inviteResult.inviteId,
-			});
-    })
 
 	// register a new staff
 	fastify.post(

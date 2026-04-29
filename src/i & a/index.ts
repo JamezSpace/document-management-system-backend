@@ -3,9 +3,9 @@ import NodemailerEmailServiceAdapter from "../shared/infrastructure/adapters/ser
 import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/ResendEmailService.adapter.js";
 import CloudinaryMediaServiceAdapter from "../shared/infrastructure/adapters/services/media/CloudinaryMediaService.adapter.js";
 import MediaServiceAdapter from "../shared/infrastructure/adapters/services/media/MediaService.adapter.js";
-import PostgresMediaAssetRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresMediaAssetRepository.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
+import PostgresMediaAssetRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresMediaAssetRepository.adapter.js";
 import GetEffectivePermissionsUseCase from "./access/application/usecases/GetEffectivePermissions.usecase.js";
 import ResolveStaffAuthority from "./access/application/usecases/ResolveStaffAuthority.usecase.js";
 import PostgresqlRoleAssignmentRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleAssignmentRepository.adapter.js";
@@ -18,12 +18,14 @@ import StaffController from "./identity/api/controllers/staff/Staff.controller.j
 import StaffClassificationController from "./identity/api/controllers/staff/StaffClassification.controller.js";
 import AuthenticationController from "./identity/api/controllers/user/Authentication.controller.js";
 import AuthorityController from "./identity/api/controllers/user/Authority.controller.js";
+import InvitesController from "./identity/api/controllers/user/Invites.controller.js";
 import officeDesignationRoutes from "./identity/api/routes/office/designation.route.js";
 import officeRoutes from "./identity/api/routes/office/office.route.js";
 import staffRoutes from "./identity/api/routes/staff/staff.route.js";
 import staffClassificationRoutes from "./identity/api/routes/staff/staffClass.route.js";
 import orgUnitRoutes from "./identity/api/routes/unit/orgUnits.route.js";
 import identityRoutes from "./identity/api/routes/user/identity.route.js";
+import inviteRoutes from "./identity/api/routes/user/invites.route.js";
 import AddNewOfficeDesignationUseCase from "./identity/application/usecases/office/AddNewDesignation.usecase.js";
 import AddNewOfficeUseCase from "./identity/application/usecases/office/AddNewOffice.usecase.js";
 import GetAllOfficeDesignationUseCase from "./identity/application/usecases/office/GetAllOfficeDesignations.usecase.js";
@@ -35,16 +37,17 @@ import AddNewStaffUseCase from "./identity/application/usecases/staff/AddNewStaf
 import CloseStaffClassificationUseCase from "./identity/application/usecases/staff/classification/CloseStaffClassification.usecase.js";
 import CreateStaffClassificationUseCase from "./identity/application/usecases/staff/classification/CreateStaffClassification.usecase.js";
 import EditStaffClassificationMetadataUseCase from "./identity/application/usecases/staff/classification/EditClassificationMetadata.usecase.js";
+import DeleteStaffUseCase from "./identity/application/usecases/staff/DeleteStaff.usecase.js";
 import EditExistingStaffUseCase from "./identity/application/usecases/staff/EditExistingStaff.usecase.js";
 import FetchStaffRecordUsecase from "./identity/application/usecases/staff/FetchStaffRecord.usecase.js";
 import GetAllStaffUseCase from "./identity/application/usecases/staff/GetAllStaff.usecase.js";
 import RegisterNewStaffUseCase from "./identity/application/usecases/staff/RegisterStaff.usecase.js";
-import DeleteStaffUseCase from "./identity/application/usecases/staff/DeleteStaff.usecase.js";
 import ActivatePendingUserUseCase from "./identity/application/usecases/user/ActivatePendingUser.usercase.js";
 import AddNewUserUseCase from "./identity/application/usecases/user/AddNewUser.usecase.js";
 import AuthenticateUserUseCase from "./identity/application/usecases/user/AuthenticateUser.usecase.js";
+import GetAllInvitesUecase from "./identity/application/usecases/user/invites/GetAllInvites.usecase.js";
+import NudgeInviteUsecase from "./identity/application/usecases/user/invites/NudgeInvite.usecase.js";
 import LoginStaffUseCase from "./identity/application/usecases/user/LoginStaff.usecase.js";
-import OnboardingEntityUseCase from "./identity/application/usecases/user/OnboardEntity.usecase.js";
 import OfficeDesignationEventsAdapter from "./identity/infrastructure/events/office/OfficeDesignationsEvents.adapter.js";
 import OfficeEventsAdapter from "./identity/infrastructure/events/office/OfficeEvents.adapter.js";
 import StaffClassEventsAdapter from "./identity/infrastructure/events/staff/StaffClassEventsAdapter.adapter.js";
@@ -58,11 +61,13 @@ import PostgresStaffMediaRepositoryAdapter from "./identity/infrastructure/persi
 import PostgresStaffRepositoryAdapter from "./identity/infrastructure/persistence/staff/PostgresStaffRepositoryAdapter.adapter.js";
 import PostgresOrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/unit/PostgresOrgUnitRepository.adapter.js";
 import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresIdentityRepository.adapter.js";
+import PostgresqlOnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresOnboardingSessionRepository.adapter.js";
 import PostgresqlInviteRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresqlInviteRepository.adapter.js";
 import FirebaseAuthAdapter from "./identity/infrastructure/services/auth/FirebaseAuth.adapter.js";
 import IdentityEmailServiceAdapter from "./identity/infrastructure/services/EmailService.adapter.js";
 import OpaqueTokenServiceAdapter from "./identity/infrastructure/services/OpaqueTokenService.adapter.js";
-import PostgresqlOnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/user/PostgresOnboardingSessionRepository.adapter.js";
+import OnboardingInviteUseCase from "./identity/application/usecases/user/invites/OnboardInvite.usecase.js";
+import CreateInviteUseCase from "./identity/application/usecases/user/invites/CreateInvite.usecase.js";
 
 
 export default async function IdentityAccessSubsystem(
@@ -127,7 +132,11 @@ export default async function IdentityAccessSubsystem(
 		identityRepository,
 	);
 
-	const onboardEntityUseCase = new OnboardingEntityUseCase(
+    const createInviteUsecase = new CreateInviteUseCase(idGenerator, tokenService, identityEmailService, inviteRepository);
+    const getAllInvitesUsecase = new GetAllInvitesUecase(inviteRepository);
+    const nudgeInviteUsecase = new NudgeInviteUsecase(identityEmailService, inviteRepository, onboardingSessionRepo);
+
+	const onboardInviteUseCase = new OnboardingInviteUseCase(
         idGenerator,
 		tokenService,
 		cloudinaryMediaService,
@@ -204,7 +213,7 @@ export default async function IdentityAccessSubsystem(
         tokenService
 	);
 
-    const activateStaffUseCase = new ActivateStaffUseCase(staffEventsAdapter, staffRepositoryAdapter, mediaService);
+    const activateStaffUseCase = new ActivateStaffUseCase(staffEventsAdapter, staffRepositoryAdapter, cloudinaryMediaService);
 
 	const fetchStaffUseCase = new FetchStaffRecordUsecase(staffRepositoryAdapter);
 
@@ -231,12 +240,14 @@ export default async function IdentityAccessSubsystem(
 
 	// controller Layer
 	const authenticationController = new AuthenticationController(
-        onboardEntityUseCase,
+        onboardInviteUseCase,
 		authenticateUserUseCase,
 		addNewUserUseCase,
 		activatePendingUserUseCase,
         loginStaffUseCase
 	);
+
+    const invitesController = new InvitesController(createInviteUsecase, getAllInvitesUsecase, nudgeInviteUsecase);
 
 	const authorityController = new AuthorityController(
 		getEffectivePermissionsUseCase,
@@ -276,6 +287,10 @@ export default async function IdentityAccessSubsystem(
 
 	await fastify.register(identityRoutes, {
 		controller: authenticationController,
+	});
+
+	await fastify.register(inviteRoutes, {
+		controller: invitesController,
 	});
 
 	await fastify.register(orgUnitRoutes, {

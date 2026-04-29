@@ -56,3 +56,4 @@ class OnboardingSession {
 }
 
 export default OnboardingSession;
+export type {PrimaryData};

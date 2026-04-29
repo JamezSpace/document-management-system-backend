@@ -1,5 +1,5 @@
+import type { StaffDetailsBasePayload } from "../../type/staffDetailsBasePayload.type.js";
 import type { StaffMediaMetadata } from "../metadata/StaffMedia.meta.js";
-import type { StaffDetailsBasePayload } from "../type/staffDetailsBasePayload.type.js";
 import AbstractStaffDetails from "./AbstractStaffDetails.js";
 
 interface StaffDetailsWithMediaPayload extends StaffDetailsBasePayload {

@@ -10,8 +10,8 @@ import type { UserRepositoryPort } from "../../ports/repos/user/UserRepository.p
 import type { AuthServicePort } from "../../ports/services/AuthService.port.js";
 import type { IdentityEmailServicePort } from "../../ports/services/EmailService.port.js";
 import type { TokenServicePort } from "../../ports/services/TokenService.port.js";
-import { generateTemplate } from "../../templates/OnboardingTemplate.template.js";
-import type { CompleteOnboardingPayload, InviteStaffPayload, RegisterStaffPayload } from "../../types/staff/staff.type.js";
+import { generateNewInviteTemplate } from "../../templates/NewInvite.template.js";
+import type { CompleteOnboardingPayload, RegisterStaffPayload } from "../../types/staff/staff.type.js";
 import type AddNewStaffUseCase from "./AddNewStaff.usecase.js";
 
 class RegisterNewStaffUseCase {
@@ -25,38 +25,6 @@ class RegisterNewStaffUseCase {
 		private readonly emailService: IdentityEmailServicePort,
 		private readonly tokenService: TokenServicePort,
 	) {}
-
-	async inviteStaff(payload: InviteStaffPayload) {
-        const inviteId = "INVITE-" + this.idGenerator.generate();
-
-		// generate invite token
-		const token = this.tokenService.generate(inviteId, 'staff');
-
-		const invite = await this.inviteRepo.save({
-            id: inviteId,
-			email: payload.email,
-            unitId: payload.unitId,
-			officeId: payload.officeId,
-			designationId: payload.designationId,
-			employmentType: payload.employmentType,
-			invitedBy: payload.createdBy,
-			token,
-            isUsed: false,
-			expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24hrs
-			status: InviteStatus.PENDING,
-            createdAt: new Date()
-        });
-
-        const onboardingLink = `${process.env.FRONTEND_ORIGIN}/staff/onboarding?token=${token}`;
-
-        // TODO: send or store this in a message queue to enable failed retries 
-        await this.emailService.sendOnboardingLink(
-            payload.email,
-            generateTemplate(onboardingLink),
-        );
-
-        return { inviteId: invite.id };
-	}
 
 	async completeOnboarding(payload: CompleteOnboardingPayload) {
 		// validate invite
@@ -179,10 +147,10 @@ class RegisterNewStaffUseCase {
 			staffId,
 		);
 
-		// 3️⃣ Send onboarding email
+		// Send onboarding email
 		await this.emailService.sendOnboardingLink(
 			newUserIdentity.getEmail(),
-			generateTemplate(setupLink),
+			generateNewInviteTemplate(setupLink),
 		);
 
 		return { staffId };

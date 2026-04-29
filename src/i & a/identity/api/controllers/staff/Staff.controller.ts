@@ -11,7 +11,6 @@ import type Staff from "../../../domain/entities/staff/Staff.js";
 import type {
 	ActivateStaffType,
 	CreateStaffType,
-	InviteStaffType,
 	RegisterStaffType,
 } from "../../types/staff/staff.type.js";
 
@@ -42,13 +41,6 @@ class StaffController {
 	async registerNewStaff(payload: RegisterStaffType) {
 		const userId =
 			await this.registerNewStaffUseCase.registerNewStaff(payload);
-
-		return userId;
-	}
-
-	async inviteNewStaff(payload: InviteStaffType) {
-		const userId =
-			await this.registerNewStaffUseCase.inviteStaff(payload);
 
 		return userId;
 	}

@@ -9,7 +9,7 @@ class LoginStaffUseCase {
 		private readonly staffEvents: StaffEventsPort,
 	) {}
 
-	async loginStaff(identityId: string) {
+	async execute(identityId: string) {
 		const staffDetail =
 			await this.staffRepository.findStaffWithMediaByIdentityId(
 				identityId,

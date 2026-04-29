@@ -4,6 +4,7 @@ import OnboardingSession from "../../../domain/entities/user/OnboardingSession.j
 import { Category, GlobalInfrastructureErrors } from "../../../../../shared/errors/enum/infrastructure.enum.js";
 import InfrastructureError from "../../../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import OnboardingSessionView from "../../../domain/views/invites/OnboardingSessionView.js";
 
 class PostgresqlOnboardingSessionRepositoryAdapter implements OnboardingSessionRepositoryPort {
     constructor(private readonly dbPool: PostgresDb) {}
@@ -21,6 +22,25 @@ class PostgresqlOnboardingSessionRepositoryAdapter implements OnboardingSessionR
 			started_at: row.started_at,
 			last_active_at: row.last_active_at,
 			completed_at: row.completed_at,
+		});
+	}
+
+	private toSessionView(row: any): OnboardingSessionView {
+		return new OnboardingSessionView({
+			id: row.id,
+			inviteId: row.invite_id,
+			email: row.email,
+			currentStep: row.current_step,
+			primaryData: row.primary_data,
+			storageProvider: row.storage_provider,
+			profilePictureBucketName: row.profile_picture_bucket_name,
+			profilePictureObjectKey: row.profile_picture_object_key,
+			signatureBucketName: row.signature_bucket_name,
+			signatureObjectKey: row.signature_object_key,
+			status: row.status,
+			startedAt: row.started_at,
+			lastActiveAt: row.last_active_at,
+			completedAt: row.completed_at
 		});
 	}
 
@@ -203,6 +223,31 @@ class PostgresqlOnboardingSessionRepositoryAdapter implements OnboardingSessionR
 			});
 		}
 	}
+
+    async fetchAll(): Promise<OnboardingSessionView[]> {
+        try {
+			const query =
+				"SELECT * FROM identity.all_onboarding_sessions";
+
+			const result = await this.dbPool.query(query);
+
+			if (!result.rows || result.rows.length === 0) return [];
+
+			return result.rows.map(session => {
+                return this.toSessionView(session);
+            })
+		} catch (error: any) {
+			console.log("error fetching onboarding session by invite id", error);
+
+			const err = mapPostgresError(error);
+
+			throw new InfrastructureError(err.summary, {
+				category: Category.PERSISTENCE,
+				message: err.details?.message ?? error.message,
+				table: err.details?.table,
+			});
+		}
+    }
 }
 
 export default PostgresqlOnboardingSessionRepositoryAdapter;

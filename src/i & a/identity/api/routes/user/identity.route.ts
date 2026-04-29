@@ -119,15 +119,6 @@ async function identityRoutes(
 		},
 	);
 
-	// this is called to retrieve user's identity from our system
-	fastify.get(
-		"/user/:id",
-		async (
-			request: FastifyRequest<{ Params: { id: string } }>,
-			reply: FastifyReply,
-		) => {},
-	);
-
 	// when user logs in
 	fastify.post(
 		"/login",
@@ -196,7 +187,7 @@ async function identityRoutes(
 
 	// get an onboarding session
 	fastify.get(
-		"/staff/onboarding/session/:inviteId",
+		"/invite/:inviteId/onboarding/session",
 		{ schema: { params: inviteIdSchema } },
 		async (
 			request: FastifyRequest<{ Params: InviteIdType }>,
@@ -214,9 +205,34 @@ async function identityRoutes(
 		},
 	);
 
+    // get all onboarding sessions
+    fastify.get(
+		"/invites/onboarding/sessions",
+		async (
+			request: FastifyRequest,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.user!;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+			const onboardingSessions =
+				await authenticationController.getAllOnboardingSessions();
+
+			return reply.code(200).send({
+				success: true,
+				data: onboardingSessions,
+			});
+		},
+	);
+
 	// init an onboarding session
 	fastify.post(
-		"/staff/onboarding/session",
+		"/invite/onboarding/session",
 		{ schema: { body: initOnboardingSessionSchema } },
 		async (
 			request: FastifyRequest<{ Body: InitOnboardingSessionType }>,
@@ -236,7 +252,7 @@ async function identityRoutes(
 
 	// update session details
 	fastify.patch(
-		"/staff/onboarding/session/:sessionId",
+		"/invite/onboarding/session/:sessionId",
 		{
 			schema: {
 				params: sessionIdSchema,
@@ -271,7 +287,7 @@ async function identityRoutes(
 
 	// upload onboarding media (profile picture or signature)
 	fastify.post(
-		"/staff/onboarding/:sessionId/media",
+		"/invite/onboarding/session/:sessionId/media",
 		{
 			schema: {
 				params: sessionIdSchema,
@@ -329,7 +345,7 @@ async function identityRoutes(
 
 	// complete onboarding session
 	fastify.patch(
-		"/staff/onboarding/session/:sessionId/completed",
+		"/invite/onboarding/session/:sessionId/completed",
 		{
 			schema: {
 				params: sessionIdSchema,
@@ -344,9 +360,9 @@ async function identityRoutes(
 			reply: FastifyReply,
 		) => {
 			const { sessionId } = request.params;
-			const { currentStep } = request.body;
+			const { inviteId, currentStep } = request.body;
 
-            const completedOnboardingSession = await authenticationController.completeOnboardingSession(sessionId, currentStep);
+            const completedOnboardingSession = await authenticationController.completeOnboardingSession(inviteId, sessionId, currentStep);
 
 			return reply.code(200).send({
 				success: true,

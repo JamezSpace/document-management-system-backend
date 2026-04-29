@@ -6,6 +6,8 @@ import type { InviteRepositoryPort } from "../../../application/ports/repos/user
 import { Category, GlobalInfrastructureErrors } from "../../../../../shared/errors/enum/infrastructure.enum.js";
 import InfrastructureError from "../../../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import { transformToCamelCase } from "../../../../../shared/infrastructure/persistence/primary/helpers/transformToCamelCase.helper.js";
+import type { InvitesView } from "../../../domain/views/invites/InvitesView.js";
 
 class PostgresqlInviteRepositoryAdapter implements InviteRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -120,6 +122,19 @@ class PostgresqlInviteRepositoryAdapter implements InviteRepositoryPort {
 			return null;
 		}
     }
+
+   async fetchAll(): Promise<InvitesView[]> {
+    const query = `
+        SELECT *
+        FROM identity.all_invites;
+    `;
+
+    const result = await this.dbPool.query(query);
+
+    return result.rows.map(row =>
+        transformToCamelCase(row)
+    ) as InvitesView[];
+}
 
 	async update(inviteId: string, payload: Partial<Invite>): Promise<Invite> {
 		try {

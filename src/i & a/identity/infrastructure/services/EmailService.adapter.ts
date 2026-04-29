@@ -13,8 +13,26 @@ class IdentityEmailServiceAdapter implements IdentityEmailServicePort {
 				{ recipientEmail, message },
 				"onboarding",
 			);
-		} catch (err) {
+		} catch (err: any) {
 			console.error("Email failed to send, but user was created:", err);
+		}
+	}
+
+	async nudgeInvite(recipientEmail: string, message: string): Promise<boolean> {
+		try {
+			const sent = await this.emailService.sendTo(
+				{
+					recipientEmail,
+					message,
+				},
+				"onboarding",
+			);
+
+            return sent;
+		} catch (error: any) {
+			console.error("Email failed to send, but user was created:", error);
+
+            return false
 		}
 	}
 }

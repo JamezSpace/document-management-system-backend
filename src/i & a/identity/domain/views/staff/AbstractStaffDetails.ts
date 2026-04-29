@@ -1,5 +1,5 @@
 import type { EmploymentType, Status } from "../../enum/staff.enum.js";
-import type { StaffDetailsBasePayload } from "../type/staffDetailsBasePayload.type.js";
+import type { StaffDetailsBasePayload } from "../../type/staffDetailsBasePayload.type.js";
 
 
 abstract class AbstractStaffDetails {
