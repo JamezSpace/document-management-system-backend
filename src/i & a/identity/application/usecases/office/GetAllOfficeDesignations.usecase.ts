@@ -1,4 +1,4 @@
-import type { OfficeDesignationRepositoryPort } from "../../ports/repos/office/OfficeDesignationRepository.port.js";
+import type { OfficeDesignationRepositoryPort } from "../../ports/repos/entities/office/OfficeDesignationRepository.port.js";
 
 
 class GetAllOfficeDesignationUseCase {

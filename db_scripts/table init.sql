@@ -30,6 +30,15 @@ CREATE TYPE identity.org_unit_sector AS ENUM(
 CREATE TYPE identity.capability_class_category AS ENUM(
 	'leadership', 'professional officers', 'clerical & records', 'operational support'
 );
+CREATE TYPE identity.role_assignments_source AS ENUM(
+	'derived', 'manual'
+);
+CREATE TYPE identity.activation_status AS ENUM (
+    'pending',
+    'processing',
+    'failed',
+    'completed'
+);
 
 -- DOCUMENT SCHEMA TYPES
 CREATE TYPE document.sensitivity_level AS ENUM(
@@ -133,7 +142,7 @@ create table identity.invites (
 -- onboarding session
 CREATE TABLE identity.onboarding_sessions (
     id VARCHAR(50) PRIMARY KEY,
-    invite_id VARCHAR(50) REFERENCES identity.invites(id) NOT NULL,
+    invite_id VARCHAR(50) REFERENCES identity.invites(id) UNIQUE NOT NULL,
 
     email VARCHAR(255) NOT NULL,
 
@@ -218,21 +227,6 @@ CREATE TABLE identity.staff_reporting_lines (
     created_at TIMESTAMPTZ NOT NULL
 );
 
--- staff media
-CREATE TABLE identity.staff_media_assets (
-    staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE CASCADE NOT NULL,
-    media_id VARCHAR(50) REFERENCES media.media_assets(id) ON DELETE CASCADE NOT NULL,
-
-    asset_role VARCHAR(50) NOT NULL, 
-    -- e.g. PROFILE_PICTURE, SIGNATURE,
-    is_active BOOLEAN DEFAULT FALSE,
-
-    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    PRIMARY KEY (staff_id, media_id),
-    CONSTRAINT unique_staff_media UNIQUE (staff_id, media_id)
-);
-
 -- capability class
 CREATE TABLE identity.capability_classes(
     id varchar(50) PRIMARY KEY,
@@ -240,6 +234,14 @@ CREATE TABLE identity.capability_classes(
     category identity.capability_class_category NOT NULL,     
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE identity.designation_capability_defaults (
+    designation_id VARCHAR(50) 
+        REFERENCES identity.designations(id),
+    capability_class_id VARCHAR(50) 
+        REFERENCES identity.capability_classes(id),
+    PRIMARY KEY (designation_id)
 );
 
 -- staff classification
@@ -275,6 +277,14 @@ CREATE TABLE identity.role_permissions(
     PRIMARY KEY (role_id, permission_id)
 )
 
+CREATE TABLE identity.capability_role_mappings (
+    capability_class_id VARCHAR(50) 
+        REFERENCES identity.capability_classes(id),
+    role_id VARCHAR(50) 
+        REFERENCES identity.roles(id),
+    PRIMARY KEY (capability_class_id, role_id)
+);
+
 -- role assignments
 CREATE TABLE identity.role_assignments(
 	id varchar(50) PRIMARY KEY,
@@ -282,11 +292,42 @@ CREATE TABLE identity.role_assignments(
 	role_id varchar(50) REFERENCES identity.roles(id),
 	scope JSONB, -- e.g { unitId: '...', officeId: '...' }
 	delegated_by varchar(50) REFERENCES identity.staff(id),
+    source identity.role_assignments_source not null,
 	valid_from TIMESTAMPTZ NOT NULL,
 	valid_to TIMESTAMPTZ,
 	created_at TIMESTAMPTZ NOT NULL
-)
+);
 
+-- staff media
+CREATE TABLE identity.staff_media_assets (
+    staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE CASCADE NOT NULL,
+    media_id VARCHAR(50) REFERENCES media.media_assets(id) ON DELETE CASCADE NOT NULL,
+
+    asset_role VARCHAR(50) NOT NULL, 
+    -- e.g. PROFILE_PICTURE, SIGNATURE,
+    is_active BOOLEAN DEFAULT FALSE,
+
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (staff_id, media_id),
+    CONSTRAINT unique_staff_media UNIQUE (staff_id, media_id)
+);
+
+CREATE TABLE identity.staff_activation_failures (
+    id VARCHAR(70) PRIMARY KEY,
+    staff_id VARCHAR(50)
+        REFERENCES identity.staff(id) NOT NULL,
+    invite_id VARCHAR(50)
+        REFERENCES identity.invites(id) NOT NULL,
+    failure_stage VARCHAR(100) NOT NULL,
+    failure_reason TEXT NOT NULL,
+    resolved BOOLEAN NOT NULL DEFAULT FALSE,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+
+    first_failed_at TIMESTAMPTZ NOT NULL,
+    last_failed_at TIMESTAMPTZ NOT NULL,
+    resolved_at TIMESTAMPTZ
+);
 
 -- MEDIA SCHEMA
 -- media-assets
@@ -298,6 +339,7 @@ CREATE TABLE media.media_assets (
 
     bucket_name VARCHAR(100),
     object_key VARCHAR(255) NOT NULL,
+    format VARCHAR(5) NOT NULL,
 
     mime_type VARCHAR(100) NOT NULL,
     size_bytes BIGINT NOT NULL,

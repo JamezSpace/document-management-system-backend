@@ -2,7 +2,7 @@ import ApplicationError from "../../../../../shared/errors/ApplicationError.erro
 import { ApplicationErrorEnum } from "../../../../../shared/errors/enum/application.enum.js";
 import { IdentityStatus } from "../../../domain/entities/user/IdentityStatus.js";
 import type { UserEventsPort } from "../../ports/events/user/UserEvents.port.js";
-import type { UserRepositoryPort } from "../../ports/repos/user/UserRepository.port.js";
+import type { UserRepositoryPort } from "../../ports/repos/entities/user/UserRepository.port.js";
 
 class ActivatePendingUserUseCase {
 	constructor(

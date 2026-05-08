@@ -1,12 +1,13 @@
 import type { PostgresDb } from "@fastify/postgres";
 import type { RoleAssignmentRepositoryPort } from "../../application/ports/RoleAssignmentsRepository.port.js";
-import RoleAssignment from "../../domain/RoleAssignment.js";
+import RoleAssignment, { RoleAssignmentSource } from "../../domain/RoleAssignment.js";
 import Role from "../../domain/role/Role.js";
 import Permission from "../../domain/permission/Permission.js";
 import InfrastructureError from "../../../../shared/errors/InfrastructureError.error.js";
 import { Category, GlobalInfrastructureErrors } from "../../../../shared/errors/enum/infrastructure.enum.js";
 import UuidV7Generator from "../../../../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import { mapPostgresError } from "../../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import type { TransactionContext } from "../../../../shared/infrastructure/persistence/primary/postgres.js";
 
 
 class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentRepositoryPort {
@@ -20,6 +21,7 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
 				roleId: string;
 				roleName: string;
 				permissions: Map<string, Permission>;
+                source: RoleAssignmentSource;
 				validFrom: Date;
 				validTo?: Date | null;
 				delegatedBy?: string | null;
@@ -33,6 +35,7 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
 					roleId: row.role_id,
 					roleName: row.role_name,
 					permissions: new Map(),
+                    source: row.source,
 					validFrom: row.valid_from,
 					validTo: row.valid_to,
 					delegatedBy: row.delegated_by,
@@ -61,6 +64,7 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
 			return new RoleAssignment({
 				identityId: entry.staffId,
 				role,
+                source: entry.source,
 				validFrom: entry.validFrom,
 				delegatedBy: entry.delegatedBy,
 				validTo: entry.validTo ?? null,
@@ -69,12 +73,13 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
                return new RoleAssignment({
 				identityId: entry.staffId,
 				role,
+                source: entry.source,
 				validFrom: entry.validFrom
 			}); 
 		});
 	}
 
-    async save(roleAssignment: RoleAssignment): Promise<RoleAssignment> {
+    async save(roleAssignment: RoleAssignment, tx?: TransactionContext): Promise<RoleAssignment> {
         try {
 			const idGenerator = new UuidV7Generator();
 			const assignmentId = "ROLE-ASSIGN-" + idGenerator.generate();
@@ -86,7 +91,9 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
 				RETURNING id;
 			`;
 
-			await this.dbPool.query(query, [
+            const executor = tx?.client ?? this.dbPool;
+
+			await executor.query(query, [
 				assignmentId,
 				roleAssignment.staffId,
 				roleAssignment.role.getId(),
@@ -108,7 +115,7 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
 		}
     }
     
-    async findRoleAssignmentsByStaffId(staffId: string): Promise<RoleAssignment[]> {
+    async findRoleAssignmentsByStaffId(staffId: string, tx?: TransactionContext): Promise<RoleAssignment[]> {
         try {
 			const query = `
 				SELECT
@@ -128,7 +135,9 @@ class PostgresqlRoleAssignmentRepositoryAdapter implements RoleAssignmentReposit
 				ORDER BY ra.valid_from DESC;
 			`;
 
-			const result = await this.dbPool.query(query, [staffId]);
+            const executor = tx?.client ?? this.dbPool;
+
+			const result = await executor.query(query, [staffId]);
 
 			if (!result.rows || result.rows.length === 0) return [];
 

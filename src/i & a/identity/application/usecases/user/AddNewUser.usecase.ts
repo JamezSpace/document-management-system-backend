@@ -2,7 +2,7 @@ import type { IdGeneratorPort } from "../../../../../shared/application/port/ser
 import Identity from "../../../domain/entities/user/Identity.js";
 import { IdentityStatus } from "../../../domain/entities/user/IdentityStatus.js";
 import type { UserEventsPort } from "../../ports/events/user/UserEvents.port.js";
-import type { UserRepositoryPort } from "../../ports/repos/user/UserRepository.port.js";
+import type { UserRepositoryPort } from "../../ports/repos/entities/user/UserRepository.port.js";
 import type { User } from "../../types/userDetails.type.js";
 
 class AddNewUserUseCase {

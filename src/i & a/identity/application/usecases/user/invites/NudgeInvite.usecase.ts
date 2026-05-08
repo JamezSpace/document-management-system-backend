@@ -1,11 +1,11 @@
 import ApplicationError from "../../../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../../../shared/errors/enum/application.enum.js";
-import type { InviteRepositoryPort } from "../../../ports/repos/user/InviteRepository.port.js";
-import type { OnboardingSessionRepositoryPort } from "../../../ports/repos/user/OnboardingSessionRepository.port.js";
+import type { InviteRepositoryPort } from "../../../ports/repos/entities/user/InviteRepository.port.js";
+import type { OnboardingSessionRepositoryPort } from "../../../ports/repos/entities/user/OnboardingSessionRepository.port.js";
 import type { IdentityEmailServicePort } from "../../../ports/services/EmailService.port.js";
 import {
-	generateIncompleteOnboardingNudgeTemplate,
-	generateUnstartedNudgeTemplate,
+    generateIncompleteOnboardingNudgeTemplate,
+    generateUnstartedNudgeTemplate,
 } from "../../../templates/NudgeInvite.template.js";
 
 class NudgeInviteUsecase {

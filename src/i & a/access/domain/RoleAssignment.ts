@@ -2,11 +2,17 @@ import { AccessDomainErrors } from "../../../shared/errors/enum/domain.enum.js";
 import AccessDomainError from "./errors/AccessDomainError.js";
 import type Role from "./role/Role.js";
 
+enum RoleAssignmentSource {
+    MANUAL = "manual",
+    DERIVED = "derived"
+}
+
 interface RoleAssignmentDTO {
 	identityId: string;
 	role: Role;
 	validFrom: Date;
 	delegatedBy?: string;
+    source: RoleAssignmentSource;
 	validTo?: Date;
 }
 
@@ -24,12 +30,14 @@ class RoleAssignment {
 	readonly role: Role;
 	readonly validFrom: Date;
 	readonly delegatedBy: string | null;
+    readonly source: RoleAssignmentSource;
 	private validTo: Date | null;
 
 	constructor(dto: RoleAssignmentDTO) {
 		this.staffId = dto.identityId;
 		this.role = dto.role;
 		this.validFrom = dto.validFrom;
+        this.source = dto.source;
 
 		if (dto.delegatedBy && !dto.validTo) {
 			throw new AccessDomainError(
@@ -70,3 +78,4 @@ class RoleAssignment {
 }
 
 export default RoleAssignment;
+export {RoleAssignmentSource};

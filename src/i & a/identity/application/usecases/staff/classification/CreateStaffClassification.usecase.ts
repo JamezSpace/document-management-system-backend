@@ -1,7 +1,7 @@
 import type { IdGeneratorPort } from "../../../../../../shared/application/port/services/IdGenerator.port.js";
 import StaffClassification from "../../../../domain/entities/staff/StaffClassification.js";
 import type { StaffClassificationEventsPort } from "../../../ports/events/staff/StaffclassificationEvents.port.js";
-import type { StaffClassificationRepositoryPort } from "../../../ports/repos/staff/StaffClassificationRepository.port.js";
+import type { StaffClassificationRepositoryPort } from "../../../ports/repos/entities/staff/StaffClassificationRepository.port.js";
 import type { StaffClassTypeForCreation } from "../../../types/staff/staffClass.type.js";
 
 class CreateStaffClassificationUseCase {

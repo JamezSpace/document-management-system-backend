@@ -1,4 +1,4 @@
-import type { OfficeRepositoryPort } from "../../ports/repos/office/OfficeRepository.port.js";
+import type { OfficeRepositoryPort } from "../../ports/repos/entities/office/OfficeRepository.port.js";
 
 class GetAllOfficesUseCase {
     constructor(private readonly officeRepo: OfficeRepositoryPort) {}

@@ -1,4 +1,4 @@
-import type { StaffRepositoryPort } from "../../ports/repos/staff/StaffRepository.port.js";
+import type { StaffRepositoryPort } from "../../ports/repos/entities/staff/StaffRepository.port.js";
 
 class FetchStaffRecordUsecase {
 	constructor(private readonly staffRepo: StaffRepositoryPort) {}
@@ -9,7 +9,7 @@ class FetchStaffRecordUsecase {
 		return staff;
 	}
 
-    async fetchStaffDetails(uid: string) {
+    async fetchStaffWithMedia(uid: string) {
         const staffDetails = await this.staffRepo.findStaffWithMediaByIdentityId(uid)
 
         return staffDetails;

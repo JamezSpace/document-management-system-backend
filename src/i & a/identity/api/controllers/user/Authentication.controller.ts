@@ -1,8 +1,8 @@
 import type ActivatePendingUserUseCase from "../../../application/usecases/user/ActivatePendingUser.usercase.js";
 import type AddNewUserUseCase from "../../../application/usecases/user/AddNewUser.usecase.js";
 import type AuthenticateUserUseCase from "../../../application/usecases/user/AuthenticateUser.usecase.js";
+import type GetAllUsersUseCase from "../../../application/usecases/user/GetAllUsers.usecase.js";
 import type OnboardingInviteUseCase from "../../../application/usecases/user/invites/OnboardInvite.usecase.js";
-import type LoginStaffUseCase from "../../../application/usecases/user/LoginStaff.usecase.js";
 import type {
     EditOnboardingSessionType,
     InitOnboardingSessionType,
@@ -11,11 +11,11 @@ import type {
 
 class AuthenticationController {
 	constructor(
-        private readonly onboardInviteUseCase: OnboardingInviteUseCase,
+		private readonly onboardInviteUseCase: OnboardingInviteUseCase,
 		private readonly authenticateUserUseCase: AuthenticateUserUseCase,
 		private readonly addNewUserUseCase: AddNewUserUseCase,
 		private readonly activatePendingUserUseCase: ActivatePendingUserUseCase,
-		private readonly loginStaffUseCase: LoginStaffUseCase
+		private readonly getAllUsersUseCase: GetAllUsersUseCase,
 	) {}
 
 	async authenticate(uid: string) {
@@ -41,12 +41,11 @@ class AuthenticationController {
 		return userIdentity;
 	}
 
-    async execute(identityId: string) {
-        const staff = await this.loginStaffUseCase.execute(identityId);
+	async getAllUsers() {
+		const users = await this.getAllUsersUseCase.getAllUsers();
 
-
-        return staff;
-    }
+		return users;
+	}
 
     async getInvite(token: string) {
         const invite = await this.onboardInviteUseCase.getInvite(token)
@@ -114,8 +113,8 @@ class AuthenticationController {
 		return updatedSession;
 	}
 
-    async completeOnboardingSession(inviteId: string, sessionId: string, currentStep: number) {
-        const completedSession = await this.onboardInviteUseCase.completeOnboardingSession(inviteId, sessionId, currentStep);
+    async completeOnboardingSession(inviteId: string, sessionId: string) {
+        const completedSession = await this.onboardInviteUseCase.completeOnboardingSession(inviteId, sessionId);
 
 		return completedSession;
     }

@@ -35,6 +35,17 @@ class IdentityEmailServiceAdapter implements IdentityEmailServicePort {
             return false
 		}
 	}
+
+    async notifyInviteOfSuccessfulAccountActivation(recipientEmail: string, message: string): Promise<void> {
+        try {
+			await this.emailService.sendTo(
+				{ recipientEmail, message },
+				"onboarding",
+			);
+		} catch (err: any) {
+			console.error("Email failed to send, but user was created:", err);
+		}
+    }
 }
 
 export default IdentityEmailServiceAdapter;

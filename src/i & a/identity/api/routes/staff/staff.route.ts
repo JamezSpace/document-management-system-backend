@@ -1,21 +1,18 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type StaffController from "../../controllers/staff/Staff.controller.js";
 import {
-	activateStaffSchema,
-	authProviderIdSchema,
-	createStaffSchema,
-	editStaffSchema,
-	registerStaffSchema,
-	staffIdSchema,
-	unitIdSchema,
-	type ActivateStaffType,
-	type AuthProviderIdType,
-	type CreateStaffType,
-	type EditStaffType,
-	type RegisterStaffType,
-	type StaffIdType,
-	type UnitIdType,
+    authProviderIdSchema,
+    createStaffSchema,
+    editStaffSchema,
+    staffIdSchema,
+    unitIdSchema,
+    type AuthProviderIdType,
+    type CreateStaffType,
+    type EditStaffType,
+    type StaffIdType,
+    type UnitIdType
 } from "../../types/staff/staff.type.js";
+import { inviteIdSchema, type InviteIdType } from "../../types/user.type.js";
 
 async function staffRoutes(
 	fastify: FastifyInstance,
@@ -44,51 +41,55 @@ async function staffRoutes(
 		},
 	);
 
-	// register a new staff
+	// activate an accepted invite and create the corresponding staff record
 	fastify.post(
-		"/staff/register",
-		{ schema: { body: registerStaffSchema } },
+		"/staff/invite",
+		{ schema: { body: inviteIdSchema } },
 		async (
-			request: FastifyRequest<{ Body: RegisterStaffType }>,
+			request: FastifyRequest<{ Body: InviteIdType }>,
 			reply: FastifyReply,
 		) => {
-			// extract information from request body
-			const payload = request.body;
+			const { uid } = request.user!;
+			const { inviteId } = request.body;
 
-			// save data in database
-			const newStaff = await staffController.registerNewStaff(payload);
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
 
-			return reply.code(201).send({
-				success: true,
-				data: newStaff.staffId,
-			});
-		},
-	);
-
-	// activate staff
-	fastify.post(
-		"/staff/:staffId/activate",
-		{ schema: { params: staffIdSchema, body: activateStaffSchema } },
-		async (
-			request: FastifyRequest<{
-				Params: StaffIdType;
-				Body: ActivateStaffType;
-			}>,
-			reply: FastifyReply,
-		) => {
-			// extract information from request
-			const { staffId } = request.params;
-			const filesToUpload = request.body;
-
-			// save data in database
-			const status = await staffController.activateStaff(
-				staffId,
-				filesToUpload,
+			const activatedStaff = await staffController.createStaffViaInvite(
+				inviteId,
+				uid,
 			);
 
 			return reply.code(201).send({
 				success: true,
-				data: "Staff activated successfully",
+				data: activatedStaff,
+			});
+		},
+	);
+
+	// activate the pending staff record after password reset / account setup
+	fastify.patch(
+		"/staff/:staffId/activate",
+		{ schema: { params: staffIdSchema, body: inviteIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: StaffIdType, Body: InviteIdType }>,
+			reply: FastifyReply,
+		) => {
+			const { staffId: sId } = request.params;
+			const { inviteId: iId } = request.body;
+
+            // adding the precenig tag removed prior
+            const staffId = `STAFF-${sId}`
+            const inviteId = `INVITE-${iId}`
+
+			const activatedStaff = await staffController.activateStaff(staffId, inviteId);
+
+			return reply.code(200).send({
+				success: true,
+				data: activatedStaff,
 			});
 		},
 	);

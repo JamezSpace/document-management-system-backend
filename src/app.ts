@@ -105,6 +105,11 @@ server.addHook("preHandler", async (req: FastifyRequest, reply) => {
 		{
 			method: ["PATCH"],
 			pattern:
+				/^\/api\/identity\/invite\/onboarding\/session\/[^/]+$/,
+		},
+		{
+			method: ["PATCH"],
+			pattern:
 				/^\/api\/identity\/invite\/onboarding\/session\/[^/]+\/completed$/,
 		},
 		{
@@ -116,6 +121,11 @@ server.addHook("preHandler", async (req: FastifyRequest, reply) => {
 			method: ["POST"],
 			pattern:
 				/^\/api\/identity\/invite\/onboarding\/session\/[^/]+\/media$/,
+		},
+        {
+			method: ["PATCH"],
+			pattern:
+				/^\/api\/identity\/staff\/[^/]+\/activate$/,
 		},
 	];
 

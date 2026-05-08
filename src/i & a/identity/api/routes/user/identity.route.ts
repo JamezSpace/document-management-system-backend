@@ -3,7 +3,6 @@ import ApiError from "../../../../../shared/errors/ApiError.error.js";
 import { ApiErrorEnum } from "../../../../../shared/errors/enum/api.enum.js";
 import AuthenticationController from "../../controllers/user/Authentication.controller.js";
 import {
-	completeOnboardingSessionSchema,
 	editOnboardingSessionSchema,
 	initOnboardingSessionSchema,
 	inviteIdSchema,
@@ -12,7 +11,6 @@ import {
 	uploadOnboardingMediaSchema,
 	userSchemaForLogin,
 	userSchemaForSignup,
-	type CompleteOnboardingSessionType,
 	type EditOnboardingSessionType,
 	type InitOnboardingSessionType,
 	type InviteIdType,
@@ -139,6 +137,27 @@ async function identityRoutes(
 					id: userId,
 					userIdentity,
 				},
+			});
+		},
+	);
+
+	// fetch all users in the system
+	fastify.get(
+		"/users",
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { uid } = request.user!;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+			const users = await authenticationController.getAllUsers();
+
+			return reply.code(200).send({
+				success: true,
+				data: users,
 			});
 		},
 	);
@@ -349,20 +368,20 @@ async function identityRoutes(
 		{
 			schema: {
 				params: sessionIdSchema,
-				body: completeOnboardingSessionSchema,
+				body: inviteIdSchema,
 			},
 		},
 		async (
 			request: FastifyRequest<{
 				Params: SessionIdType;
-				Body: CompleteOnboardingSessionType;
+				Body: InviteIdType;
 			}>,
 			reply: FastifyReply,
 		) => {
 			const { sessionId } = request.params;
-			const { inviteId, currentStep } = request.body;
+			const { inviteId } = request.body;
 
-            const completedOnboardingSession = await authenticationController.completeOnboardingSession(inviteId, sessionId, currentStep);
+            const completedOnboardingSession = await authenticationController.completeOnboardingSession(inviteId, sessionId);
 
 			return reply.code(200).send({
 				success: true,

@@ -11,8 +11,10 @@ interface OnboardingSessionViewPayload {
 	storageProvider: string;
 	profilePictureBucketName: string | null;
 	profilePictureObjectKey: string | null;
+	profilePictureFormat: string | null;
 	signatureBucketName: string | null;
 	signatureObjectKey: string | null;
+	signatureFormat: string | null;
 
 	status: OnboardingSessionStatus;
 	startedAt: Date;
@@ -31,8 +33,10 @@ class OnboardingSessionView {
 		this.storageProvider = payload.storageProvider;
 		this.profilePictureBucketName = payload.profilePictureBucketName;
 		this.profilePictureObjectKey = payload.profilePictureObjectKey;
+        this.profilePictureFormat = payload.profilePictureFormat;
 		this.signatureBucketName = payload.signatureBucketName;
 		this.signatureObjectKey = payload.signatureObjectKey;
+        this.signatureFormat = payload.signatureFormat;
 
 		this.status = payload.status;
 		this.startedAt = new Date(payload.startedAt);
@@ -49,8 +53,10 @@ class OnboardingSessionView {
 	readonly storageProvider: string;
 	readonly profilePictureBucketName: string | null;
 	readonly profilePictureObjectKey: string | null;
+	readonly profilePictureFormat: string | null;
 	readonly signatureBucketName: string | null;
 	readonly signatureObjectKey: string | null;
+	readonly signatureFormat: string | null;
 
 	readonly status: OnboardingSessionStatus;
 	readonly startedAt: Date;

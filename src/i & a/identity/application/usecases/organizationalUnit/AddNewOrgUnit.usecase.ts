@@ -2,7 +2,7 @@ import type { IdGeneratorPort } from "../../../../../shared/application/port/ser
 import OrganizationalUnit from "../../../domain/entities/unit/OrganizationalUnit.js";
 
 import type { OrgUnitEventsPort } from "../../ports/events/unit/OrgUnitEvents.port.js";
-import type { OrgUnitRepositoryPort } from "../../ports/repos/unit/OrgUnitRepository.port.js";
+import type { OrgUnitRepositoryPort } from "../../ports/repos/entities/unit/OrgUnitRepository.port.js";
 import type { OrganizationalUnitTypeForCreation } from "../../types/unit/orgUnit.type.js";
 
 

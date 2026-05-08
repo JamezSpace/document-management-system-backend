@@ -5,6 +5,7 @@ interface CreateMediaAssetPayload {
 	storageProvider: string;
 	bucketName?: string | null;
 	objectKey: string;
+	format: string;
 	mimeType: string;
 	sizeBytes: number;
 	checksum: string;
@@ -18,6 +19,7 @@ interface MediaAssetRecord {
 	storageProvider: string;
 	bucketName: string | null;
 	objectKey: string;
+	format: string;
 	mimeType: string;
 	sizeBytes: number;
 	checksum: string;

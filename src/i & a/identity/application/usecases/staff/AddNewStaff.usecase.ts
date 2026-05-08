@@ -1,7 +1,8 @@
 import type { IdGeneratorPort } from "../../../../../shared/application/port/services/IdGenerator.port.js";
+import type { TransactionContext } from "../../../../../shared/infrastructure/persistence/primary/postgres.js";
 import Staff from "../../../domain/entities/staff/Staff.js";
 import type { StaffEventsPort } from "../../ports/events/staff/StaffEvent.port.js";
-import type { StaffRepositoryPort } from "../../ports/repos/staff/StaffRepository.port.js";
+import type { StaffRepositoryPort } from "../../ports/repos/entities/staff/StaffRepository.port.js";
 import type { StaffTypeForCreation } from "../../types/staff/staff.type.js";
 
 class AddNewStaffUseCase {
@@ -11,7 +12,7 @@ class AddNewStaffUseCase {
 		private readonly staffRepo: StaffRepositoryPort,
 	) {}
 
-	async addNewStaff(payload: StaffTypeForCreation) {
+	async execute(payload: StaffTypeForCreation, transactionInstance?: TransactionContext) {
 		const uuid = this.idGenerator.generate();
 		const staffId = "STAFF-" + uuid;
 
@@ -21,7 +22,7 @@ class AddNewStaffUseCase {
             ...payload
         });
 
-		const newStaff = await this.staffRepo.save(staff);
+		const newStaff = await this.staffRepo.save(staff, transactionInstance);
 
 		if (newStaff)
 			await this.staffEvents.staffAdded({

@@ -58,13 +58,9 @@ const editOnboardingSessionSchema = Type.Object({
 		lastName: Type.String(),
 		middleName: Type.String(),
 		email: Type.String(),
-		staffId: Type.String(),
+        phoneNumber: Type.String({minLength: 11, maxLength: 14}),
+		staffId: Type.Number({minimum: 100000}),
 	}),
-	currentStep: Type.Number({ maximum: 5 }),
-});
-
-const completeOnboardingSessionSchema = Type.Object({
-    inviteId: Type.String({minLength: 2}),
 	currentStep: Type.Number({ maximum: 5 }),
 });
 
@@ -86,14 +82,13 @@ type InviteIdType = Static<typeof inviteIdSchema>;
 type InitInviteType = Static<typeof initInviteSchema>;
 type InitOnboardingSessionType = Static<typeof initOnboardingSessionSchema>;
 type EditOnboardingSessionType = Static<typeof editOnboardingSessionSchema>;
-type CompleteOnboardingSessionType = Static<typeof completeOnboardingSessionSchema>;
 type UploadOnboardingMediaType = Static<typeof uploadOnboardingMediaSchema>;
 type SessionIdType = Static<typeof sessionIdSchema>;
 
 export {
-    editOnboardingSessionSchema, completeOnboardingSessionSchema, initOnboardingSessionSchema, sessionIdSchema, tokenIdSchema, inviteIdSchema, initInviteSchema, uploadOnboardingMediaSchema, userSchema,
+    editOnboardingSessionSchema,initOnboardingSessionSchema, sessionIdSchema, tokenIdSchema, inviteIdSchema, initInviteSchema, uploadOnboardingMediaSchema, userSchema,
     userSchemaForLogin,
-    userSchemaForSignup, type EditOnboardingSessionType, type CompleteOnboardingSessionType, type InitOnboardingSessionType, type SessionIdType, type InviteIdType, type InitInviteType, type TokenIdType, type UploadOnboardingMediaType, type User,
+    userSchemaForSignup, type EditOnboardingSessionType, type InitOnboardingSessionType, type SessionIdType, type InviteIdType, type InitInviteType, type TokenIdType, type UploadOnboardingMediaType, type User,
     type UserLoginType,
     type UserSignUpType
 };

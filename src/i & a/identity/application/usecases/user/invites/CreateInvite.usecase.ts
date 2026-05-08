@@ -1,6 +1,6 @@
 import type { IdGeneratorPort } from "../../../../../../shared/application/port/services/IdGenerator.port.js";
 import { InviteStatus } from "../../../../domain/enum/staff.enum.js";
-import type { InviteRepositoryPort } from "../../../ports/repos/user/InviteRepository.port.js";
+import type { InviteRepositoryPort } from "../../../ports/repos/entities/user/InviteRepository.port.js";
 import type { IdentityEmailServicePort } from "../../../ports/services/EmailService.port.js";
 import type { TokenServicePort } from "../../../ports/services/TokenService.port.js";
 import { generateNewInviteTemplate } from "../../../templates/NewInvite.template.js";

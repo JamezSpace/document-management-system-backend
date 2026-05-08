@@ -1,4 +1,4 @@
-import type { StaffRepositoryPort } from "../../ports/repos/staff/StaffRepository.port.js";
+import type { StaffRepositoryPort } from "../../ports/repos/entities/staff/StaffRepository.port.js";
 
 class DeleteStaffUseCase {
 	constructor(private readonly staffRepo: StaffRepositoryPort) {}

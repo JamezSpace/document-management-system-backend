@@ -102,10 +102,11 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 			});
 
 			uploaded.profilePic = {
-				storageProvider: "CLOUDINARY",
+				storageProvider: "cloudinary",
 				bucketName: result.folder ?? null,
 				objectKey: result.public_id,
 				sizeBytes: result.bytes,
+                format: result.format
 			};
 		}
 
@@ -117,27 +118,32 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 				overwrite: true,
 			});
 
+            console.log("signature upload:", result);
+
 			uploaded.signatureFile = {
-				storageProvider: "CLOUDINARY",
+				storageProvider: "cloudinary",
 				bucketName: result.folder ?? null,
 				objectKey: result.public_id,
 				sizeBytes: result.bytes,
+                format: result.format
 			};
 		}
 
 		return uploaded;
 	}
 
-	resolveMediaDetailsToPublicURL(mediaDetailsFromDB: {
+	resolveMediaToPublicURL(mediaDetailsFromDB: {
 		objectKey: string | null;
+        format: string | null
 	}): string | null {
-		const { objectKey } = mediaDetailsFromDB;
+		const { objectKey, format } = mediaDetailsFromDB;
 		const cloudinaryConfig = this.getCloudinaryDetails();
 
-		if (!objectKey) return null;
+		if (!objectKey || !format) return null;
 
-		return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${objectKey}.png`;
+		return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${objectKey}.${format}`;
 	}
+
 }
 
 export default CloudinaryMediaServiceAdapter;

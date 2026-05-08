@@ -21,6 +21,7 @@ class PostgresMediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 			storageProvider: row.storage_provider,
 			bucketName: row.bucket_name,
 			objectKey: row.object_key,
+            format: row.format,
 			mimeType: row.mime_type,
 			sizeBytes: Number(row.size_bytes),
 			checksum: row.checksum,
@@ -38,6 +39,7 @@ class PostgresMediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 					storage_provider,
 					bucket_name,
 					object_key,
+                    format,
 					mime_type,
 					size_bytes,
 					checksum,
@@ -45,8 +47,8 @@ class PostgresMediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 					uploaded_by,
 					uploaded_by_type
 				)
-				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-				RETURNING id, storage_provider, bucket_name, object_key, mime_type, size_bytes, checksum, uploaded_at, uploaded_by, uploaded_by_type
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+				RETURNING id, storage_provider, bucket_name, object_key, format, mime_type, size_bytes, checksum, uploaded_at, uploaded_by, uploaded_by_type
 			`;
 
 			const result = await this.dbPool.query(query, [
@@ -54,6 +56,7 @@ class PostgresMediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 				payload.storageProvider,
 				payload.bucketName ?? null,
 				payload.objectKey,
+				payload.format,
 				payload.mimeType,
 				payload.sizeBytes,
 				payload.checksum,
@@ -78,7 +81,7 @@ class PostgresMediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 	async findById(mediaId: string): Promise<MediaAssetRecord | null> {
 		try {
 			const query = `
-				SELECT id, storage_provider, bucket_name, object_key, mime_type, size_bytes, checksum, uploaded_at, uploaded_by, uploaded_by_type
+				SELECT id, storage_provider, bucket_name, object_key, format, mime_type, size_bytes, checksum, uploaded_at, uploaded_by, uploaded_by_type
 				FROM media.media_assets
 				WHERE id = $1
 				LIMIT 1

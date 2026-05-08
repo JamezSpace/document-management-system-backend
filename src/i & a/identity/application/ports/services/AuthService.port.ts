@@ -3,7 +3,7 @@ interface AuthServicePort {
 
 	createUser(email: string): Promise<{ authProviderId: string }>;
     
-	generatePasswordSetupLink(email: string, staffId: string): Promise<string>;
+	generatePasswordSetupLink(email: string, details: {staffId: string, inviteId: string}): Promise<string>;
 }
 
 export type { AuthServicePort };

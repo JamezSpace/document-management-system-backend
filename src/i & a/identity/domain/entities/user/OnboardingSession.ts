@@ -5,53 +5,54 @@ interface PrimaryData {
 	lastName: string;
 	middleName: string;
 	email: string;
-	staffId: string;
+    phoneNumber: string;
+	staffId: number;
 }
 
 interface OnboardingSessionPayload {
 	id: string;
-	invite_id: string;
+	inviteId: string;
 	email: string;
 
-	current_step: number;
-	primary_data?: PrimaryData;
-	profile_picture_media_id?: string;
-	signature_media_id?: string;
+	currentStep: number;
+	primaryData?: PrimaryData;
+	profilePictureMediaId?: string;
+	signatureMediaId?: string;
 
 	status: OnboardingSessionStatus;
-	started_at: Date;
-	last_active_at?: Date;
-	completed_at?: Date;
+	startedAt: Date;
+	lastActiveAt?: Date;
+	completedAt?: Date;
 }
 
 class OnboardingSession {
 	id: string;
-	invite_id: string;
+	inviteId: string;
 	email: string;
 
-	current_step: number;
-	primary_data: PrimaryData | null;
-	profile_picture_media_id: string | null;
-	signature_media_id: string | null;
+	currentStep: number;
+	primaryData: PrimaryData | null;
+	profilePictureMediaId: string | null;
+	signatureMediaId: string | null;
 
 	status: OnboardingSessionStatus;
-	started_at: Date;
-	last_active_at: Date | null;
-	completed_at: Date | null;
+	startedAt: Date;
+	lastActiveAt: Date | null;
+	completedAt: Date | null;
 
 	constructor(payload: OnboardingSessionPayload) {
 		this.id = payload.id;
-		this.invite_id = payload.invite_id;
+		this.inviteId = payload.inviteId;
 		this.email = payload.email;
-		this.current_step = payload.current_step;
-		this.primary_data = payload.primary_data ?? null;
-		this.profile_picture_media_id =
-			payload.profile_picture_media_id ?? null;
-		this.signature_media_id = payload.signature_media_id ?? null;
+		this.currentStep = payload.currentStep;
+		this.primaryData = payload.primaryData ?? null;
+		this.profilePictureMediaId =
+			payload.profilePictureMediaId ?? null;
+		this.signatureMediaId = payload.signatureMediaId ?? null;
 		this.status = payload.status;
-		this.started_at = payload.started_at;
-		this.last_active_at = payload.last_active_at ?? null;
-		this.completed_at = payload.completed_at ?? null;
+		this.startedAt = payload.startedAt;
+		this.lastActiveAt = payload.lastActiveAt ?? null;
+		this.completedAt = payload.completedAt ?? null;
 	}
 }
 

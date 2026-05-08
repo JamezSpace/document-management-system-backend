@@ -1,6 +1,6 @@
 import type { RoleAssignmentRepositoryPort } from "../ports/RoleAssignmentsRepository.port.js";
 
-class ResolveStaffAuthority {
+class ResolveStaffAuthorityUseCase {
   constructor(
     private readonly roleAssignmentRepo: RoleAssignmentRepositoryPort
   ) {}
@@ -29,4 +29,4 @@ class ResolveStaffAuthority {
   }
 }
 
-export default ResolveStaffAuthority;
+export default ResolveStaffAuthorityUseCase;

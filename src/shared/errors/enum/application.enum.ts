@@ -21,8 +21,20 @@ export const ApplicationErrorEnum = {
         codeName: "invite_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND
     },
+    SESSION_NOT_FOUND: {
+        codeName: "session_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
     STAFF_NOT_FOUND: {
         codeName: "staff_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    DESIGNATION_NOT_FOUND: {
+        codeName: "designation_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
+    CAPABILITY_CLASS_NOT_FOUND: {
+        codeName: "capability_class_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND
     },
     APPROVER_NOT_FOUND: {

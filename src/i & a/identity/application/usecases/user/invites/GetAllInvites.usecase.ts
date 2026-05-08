@@ -1,4 +1,4 @@
-import type { InviteRepositoryPort } from "../../../ports/repos/user/InviteRepository.port.js";
+import type { InviteRepositoryPort } from "../../../ports/repos/entities/user/InviteRepository.port.js";
 
 class GetAllInvitesUecase {
     constructor(

@@ -4,6 +4,7 @@ interface UploadedMediaStorageDetails {
 	bucketName?: string | null;
 	objectKey: string;
 	sizeBytes?: number;
+    format: string;
 }
 
 interface UploadedMediaMap {
@@ -30,9 +31,11 @@ interface MediaServicePort {
 		},
 	): Promise<UploadedMediaMap>;
 
-	resolveMediaDetailsToPublicURL(mediaDetailsFromDB: {
+	resolveMediaToPublicURL(mediaDetailsFromDB: {
 		objectKey: string | null;
+        format: string | null;
 	}): string | null;
+
 }
 
 export type { MediaServicePort, UploadedMediaMap, UploadedMediaStorageDetails };

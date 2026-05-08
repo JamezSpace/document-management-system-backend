@@ -67,7 +67,7 @@ class FirebaseAuthAdapter implements AuthServicePort {
 		}
 	}
 
-	async generatePasswordSetupLink(email: string, staffId: string) {
+	async generatePasswordSetupLink(email: string, details: {staffId: string, inviteId: string}) {
 		const link = await this.authInstance.generatePasswordResetLink(email);
 
 		const url = new URL(link);
@@ -77,7 +77,7 @@ class FirebaseAuthAdapter implements AuthServicePort {
 			throw new Error("Failed to extract oobCode from reset link");
 		}
 
-		const customLink = `${process.env.FRONTEND_ORIGIN}/staff/passwordReset?oobCode=${oobCode}&id=${staffId}`;
+		const customLink = `${process.env.FRONTEND_ORIGIN}/staff/passwordReset?oobCode=${oobCode}&sid=${details.staffId}&iid=${details.inviteId}`;
 
 		return customLink;
 	}

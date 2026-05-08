@@ -1,5 +1,5 @@
 interface StaffMediaMetadata {
-    readonly bucketName?: string | null;
+    readonly format?: string | null;
     readonly objectKey?: string | null;
     readonly storageProvider?: string | null;
     readonly assetRole?: string | null;

@@ -1,16 +1,15 @@
 import { createHash } from "node:crypto";
 import type { MediaAssetRepositoryPort } from "../../../../../../shared/application/port/repos/MediaAssetRepository.port.js";
 import type { IdGeneratorPort } from "../../../../../../shared/application/port/services/IdGenerator.port.js";
-import type { MediaServicePort } from "../../../../../../shared/application/port/services/mediaService.port.js";
+import type { MediaServicePort, UploadedMediaMap } from "../../../../../../shared/application/port/services/mediaService.port.js";
 import ApplicationError from "../../../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../../../shared/errors/enum/application.enum.js";
 import type Invite from "../../../../domain/entities/user/Invite.js";
 import OnboardingSession from "../../../../domain/entities/user/OnboardingSession.js";
 import { OnboardingSessionStatus } from "../../../../domain/enum/onboardingSessionStatus.enum.js";
 import { InviteStatus } from "../../../../domain/enum/staff.enum.js";
-import type { StaffMediaRepositoryPort } from "../../../ports/repos/media/MediaRepository.port.js";
-import type { InviteRepositoryPort } from "../../../ports/repos/user/InviteRepository.port.js";
-import type { OnboardingSessionRepositoryPort } from "../../../ports/repos/user/OnboardingSessionRepository.port.js";
+import type { InviteRepositoryPort } from "../../../ports/repos/entities/user/InviteRepository.port.js";
+import type { OnboardingSessionRepositoryPort } from "../../../ports/repos/entities/user/OnboardingSessionRepository.port.js";
 import type { TokenServicePort } from "../../../ports/services/TokenService.port.js";
 import type { OnboardingSessionInit } from "../../../types/user/onboardingSession.type.js";
 
@@ -22,10 +21,66 @@ class OnboardingInviteUseCase {
 		private readonly tokenService: TokenServicePort,
 		private readonly mediaService: MediaServicePort,
 		private readonly mediaAssetRepo: MediaAssetRepositoryPort,
-		private readonly mediaRepo: StaffMediaRepositoryPort,
 		private readonly inviteRepo: InviteRepositoryPort,
 		private readonly onboardingSessionRepo: OnboardingSessionRepositoryPort,
 	) {}
+
+	async resolveMediaAssetsToURL(session: OnboardingSession) {
+		let profilePicPublicURL: string | null = null;
+		let signaturePublicURL: string | null = null;
+
+		if (session.profilePictureMediaId) {
+			const profilePicMediaDetails = await this.mediaAssetRepo.findById(
+				session.profilePictureMediaId,
+			);
+
+			if (!profilePicMediaDetails) {
+				profilePicPublicURL = null;
+			} else {
+				profilePicPublicURL = this.mediaService.resolveMediaToPublicURL(
+					{
+						objectKey: profilePicMediaDetails.objectKey,
+						format: profilePicMediaDetails.format,
+					},
+				);
+			}
+		}
+
+		if (session.signatureMediaId) {
+			const signatureMediaDetails = await this.mediaAssetRepo.findById(
+				session.signatureMediaId,
+			);
+
+			if (!signatureMediaDetails) {
+				signaturePublicURL = null;
+			} else {
+				signaturePublicURL = this.mediaService.resolveMediaToPublicURL({
+					objectKey: signatureMediaDetails.objectKey,
+					format: signatureMediaDetails.format,
+				});
+			}
+		}
+
+		return { profilePicPublicURL, signaturePublicURL };
+	}
+
+	async resolveUploadedMediaToURL(uploadedMedia: UploadedMediaMap) {
+		const profilePicPublicURL = uploadedMedia.profilePic
+			? this.mediaService.resolveMediaToPublicURL({
+					objectKey: uploadedMedia.profilePic.objectKey,
+					format: uploadedMedia.profilePic.format,
+				})
+			: null;
+
+		const signaturePublicURL = uploadedMedia.signatureFile
+			? this.mediaService.resolveMediaToPublicURL({
+					objectKey: uploadedMedia.signatureFile.objectKey,
+					format: uploadedMedia.signatureFile.format,
+				})
+			: null;
+
+		return { profilePicPublicURL, signaturePublicURL };
+	}
 
 	async getInvite(token: string) {
 		const isTokenValid = this.tokenService.validateToken(token);
@@ -45,12 +100,16 @@ class OnboardingInviteUseCase {
 	}
 
 	async initOnboardingSession(payload: OnboardingSessionInit) {
-		const newSession = new OnboardingSession({
+        const existing = await this.onboardingSessionRepo.findSessionByInviteId(payload.inviteId);
+
+        if (existing) return existing;
+
+        const newSession = new OnboardingSession({
 			id: "ONBRD-SESS-" + this.idGenerator.generate(),
-			invite_id: payload.inviteId,
-			current_step: 1,
+			inviteId: payload.inviteId,
+			currentStep: 1,
 			email: payload.email,
-			started_at: new Date(),
+			startedAt: new Date(),
 			status: OnboardingSessionStatus.IN_PROGRESS,
 		});
 
@@ -63,7 +122,22 @@ class OnboardingInviteUseCase {
 		const session =
 			await this.onboardingSessionRepo.findSessionByInviteId(inviteId);
 
-		return session;
+		if (!session) return null;
+
+		const { profilePicPublicURL, signaturePublicURL } =
+			await this.resolveMediaAssetsToURL(session);
+
+		const {
+			profilePictureMediaId,
+			signatureMediaId,
+			...restOfSessionData
+		} = session;
+
+		return {
+			profilePicPublicURL,
+			signaturePublicURL,
+			...restOfSessionData,
+		};
 	}
 
 	async getAllOnboardingSessions() {
@@ -73,19 +147,22 @@ class OnboardingInviteUseCase {
 			const {
 				profilePictureBucketName,
 				profilePictureObjectKey,
+				profilePictureFormat,
 				signatureBucketName,
 				signatureObjectKey,
+				signatureFormat,
 				...restOfSessionData
 			} = session;
 
 			return {
-				profilePictureUrl:
-					this.mediaService.resolveMediaDetailsToPublicURL({
-						objectKey: session.profilePictureObjectKey,
-					}),
-				signatureUrl: this.mediaService.resolveMediaDetailsToPublicURL(
-					{ objectKey: session.signatureObjectKey },
-				),
+				profilePicPublicURL: this.mediaService.resolveMediaToPublicURL({
+					objectKey: profilePictureObjectKey,
+					format: profilePictureFormat,
+				}),
+				signaturePublicURL: this.mediaService.resolveMediaToPublicURL({
+					objectKey: signatureObjectKey,
+					format: signatureFormat,
+				}),
 				...restOfSessionData,
 			};
 		});
@@ -112,7 +189,8 @@ class OnboardingInviteUseCase {
 				lastName: string;
 				middleName: string;
 				email: string;
-				staffId: string;
+				phoneNumber: string;
+				staffId: number;
 			};
 			currentStep: number;
 		},
@@ -120,27 +198,35 @@ class OnboardingInviteUseCase {
 		const updatedSession = await this.onboardingSessionRepo.update(
 			sessionId,
 			{
-				primary_data: payload.primaryData,
-				current_step: payload.currentStep,
-				last_active_at: new Date(),
+				primaryData: payload.primaryData,
+				currentStep: payload.currentStep,
+				lastActiveAt: new Date(),
 			},
 		);
 
-		return updatedSession;
+		const { profilePicPublicURL, signaturePublicURL } =
+			await this.resolveMediaAssetsToURL(updatedSession);
+
+		const {
+			profilePictureMediaId,
+			signatureMediaId,
+			...restOfSessionData
+		} = updatedSession;
+
+		return {
+			profilePicPublicURL,
+			signaturePublicURL,
+			...restOfSessionData,
+		};
 	}
 
-	async completeOnboardingSession(
-		inviteId: string,
-		sessionId: string,
-		currentStep: number,
-	) {
+	async completeOnboardingSession(inviteId: string, sessionId: string) {
 		const timeCompleted = new Date();
 
 		const completedSession = await this.onboardingSessionRepo.update(
 			sessionId,
 			{
-				completed_at: timeCompleted,
-				current_step: currentStep,
+				completedAt: timeCompleted,
 				status: OnboardingSessionStatus.COMPLETED,
 			},
 		);
@@ -152,7 +238,20 @@ class OnboardingInviteUseCase {
 			isUsed: true,
 		});
 
-		return completedSession;
+		const { profilePicPublicURL, signaturePublicURL } =
+			await this.resolveMediaAssetsToURL(completedSession);
+
+		const {
+			profilePictureMediaId,
+			signatureMediaId,
+			...restOfSessionData
+		} = completedSession;
+
+		return {
+			profilePicPublicURL,
+			signaturePublicURL,
+			...restOfSessionData,
+		};
 	}
 
 	async uploadOnboardingMedia(
@@ -192,16 +291,18 @@ class OnboardingInviteUseCase {
 			},
 		);
 
-		let profilePictureMediaId: string | undefined;
-		let signatureMediaId: string | undefined;
+		let ppMediaId: string | undefined;
+		let sMediaId: string | undefined;
 
 		if (uploadedMedia.profilePic && payload.profilePic) {
-			profilePictureMediaId = "MEDIA-" + this.idGenerator.generate();
+			ppMediaId = "MEDIA-" + this.idGenerator.generate();
+
 			await this.mediaAssetRepo.save({
-				id: profilePictureMediaId,
+				id: ppMediaId,
 				storageProvider: uploadedMedia.profilePic.storageProvider,
 				bucketName: uploadedMedia.profilePic.bucketName ?? null,
 				objectKey: uploadedMedia.profilePic.objectKey,
+				format: uploadedMedia.profilePic.format,
 				mimeType:
 					payload.profilePic.mimeType ?? "application/octet-stream",
 				sizeBytes:
@@ -217,13 +318,14 @@ class OnboardingInviteUseCase {
 		}
 
 		if (uploadedMedia.signatureFile && payload.signatureFile) {
-			signatureMediaId = "MEDIA-" + this.idGenerator.generate();
+			sMediaId = "MEDIA-" + this.idGenerator.generate();
 
 			await this.mediaAssetRepo.save({
-				id: signatureMediaId,
+				id: sMediaId,
 				storageProvider: uploadedMedia.signatureFile.storageProvider,
 				bucketName: uploadedMedia.signatureFile.bucketName ?? null,
 				objectKey: uploadedMedia.signatureFile.objectKey,
+				format: uploadedMedia.signatureFile.format,
 				mimeType:
 					payload.signatureFile.mimeType ??
 					"application/octet-stream",
@@ -239,20 +341,33 @@ class OnboardingInviteUseCase {
 			});
 		}
 
-		await this.mediaRepo.assignOnboardingSessionMedia(sessionId, {
-			...(profilePictureMediaId ? { profilePictureMediaId } : {}),
-			...(signatureMediaId ? { signatureMediaId } : {}),
+		await this.onboardingSessionRepo.assignOnboardingSessionMedia(sessionId, {
+			...(ppMediaId ? { profilePictureMediaId: ppMediaId } : {}),
+			...(sMediaId ? { signatureMediaId: sMediaId } : {}),
 		});
 
 		const updatedSession = await this.onboardingSessionRepo.update(
 			sessionId,
 			{
-				current_step: payload.currentStep,
-				last_active_at: new Date(),
+				currentStep: payload.currentStep,
+				lastActiveAt: new Date(),
 			},
 		);
 
-		return updatedSession;
+		const { profilePicPublicURL, signaturePublicURL } =
+			await this.resolveMediaAssetsToURL(updatedSession);
+
+		const {
+			profilePictureMediaId,
+			signatureMediaId,
+			...restOfSessionData
+		} = updatedSession;
+
+		return {
+			profilePicPublicURL,
+			signaturePublicURL,
+			...restOfSessionData,
+		};
 	}
 }
 
