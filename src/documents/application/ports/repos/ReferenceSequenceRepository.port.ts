@@ -4,7 +4,7 @@ interface ReferenceSequenceRepositoryPort {
     nextSequence(payload: RefNumPayload): Promise<{
         nextCount: number;
         originUnit: string;
-        recipientCode: string;
+        recipientUnit: string | null;
     }>;
 }
 

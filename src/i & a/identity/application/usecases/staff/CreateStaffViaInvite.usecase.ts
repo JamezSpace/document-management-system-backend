@@ -1,5 +1,7 @@
+import type { RecoveryTaskRepositoryPort } from "../../../../../shared/application/port/repos/RecoveryTask.port.js";
 import type { IdGeneratorPort } from "../../../../../shared/application/port/services/IdGenerator.port.js";
 import type { TransactionManager } from "../../../../../shared/application/port/TransactionManager.port.js";
+import { RecoveryTaskType } from "../../../../../shared/domain/RecoveryTask.js";
 import ApplicationError from "../../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../../shared/errors/enum/application.enum.js";
 import Identity from "../../../domain/entities/user/Identity.js";
@@ -24,6 +26,7 @@ class CreateStaffViaInviteUseCase {
 		private readonly identityRepo: UserRepositoryPort,
 		private readonly inviteRepo: InviteRepositoryPort,
 		private readonly onboardingSessionRepo: OnboardingSessionRepositoryPort,
+        private readonly recoveryTaskRepo: RecoveryTaskRepositoryPort,
 		private readonly addNewStaffUsecase: AddNewStaffUseCase,
 		private readonly authService: AuthServicePort,
 		private readonly emailService: IdentityEmailServicePort,
@@ -60,7 +63,7 @@ class CreateStaffViaInviteUseCase {
 		const { authProviderId } =
 			await this.authService.createUser(staffEmail);
 
-        // using transaction to ensure atomicity
+		// using transaction to ensure atomicity
 		const result = await this.transactionManager.execute(
 			async (transactionInstance) => {
 				// create Identity
@@ -77,10 +80,13 @@ class CreateStaffViaInviteUseCase {
 					middleName: staffDetails.middleName,
 				});
 
-				const newUserIdentity = await this.identityRepo.save({
-					authProvider: "firebase",
-					identity,
-				}, transactionInstance);
+				const newUserIdentity = await this.identityRepo.save(
+					{
+						authProvider: "firebase",
+						identity,
+					},
+					transactionInstance,
+				);
 
 				const identityId = newUserIdentity.getUserId();
 
@@ -92,19 +98,22 @@ class CreateStaffViaInviteUseCase {
 				const dateNow = new Date();
 
 				// create Staff
-				const newStaff = await this.addNewStaffUsecase.execute({
-					identityId,
-					staffNumber: staffDetails.staffId,
-					employmentType: invite.employmentType,
-					unitId: invite.unitId,
-					officeId: invite.officeId,
-					designationId: invite.designationId,
-					status: Status.PENDING,
-					createdBy: invite.invitedBy,
-					activatedBy: activatorId,
-					activatedAt: dateNow,
-					createdAt: dateNow,
-				}, transactionInstance);
+				const newStaff = await this.addNewStaffUsecase.execute(
+					{
+						identityId,
+						staffNumber: staffDetails.staffId,
+						employmentType: invite.employmentType,
+						unitId: invite.unitId,
+						officeId: invite.officeId,
+						designationId: invite.designationId,
+						status: Status.PENDING,
+						createdBy: invite.invitedBy,
+						activatedBy: activatorId,
+						activatedAt: dateNow,
+						createdAt: dateNow,
+					},
+					transactionInstance,
+				);
 
 				const newStaffId = newStaff.getStaffId();
 				return { newStaffId };
@@ -127,10 +136,30 @@ class CreateStaffViaInviteUseCase {
 			);
 
 		// notify user
-		await this.emailService.notifyInviteOfSuccessfulAccountActivation(
-			staffDetails.email,
-			generateActivationSuccessTemplate(passwordResetLink),
-		);
+		try {
+			await this.emailService.notifyInviteOfSuccessfulAccountActivation(
+				staffDetails.email,
+				generateActivationSuccessTemplate(passwordResetLink),
+			);
+		} catch (error: any) {
+			await this.recoveryTaskRepo.save({
+				id: `RCV-${this.idGenerator.generate()}`,
+				taskType: RecoveryTaskType.EMAIL_DELIVERY,
+				entityId: newStaffId,
+				payload: {
+					inviteId,
+					staffId: newStaffId,
+					email: staffDetails.email,
+					type: "activation_email",
+				},
+				errorMessage: error.message,
+				createdAt: new Date(),
+			});
+
+			console.error(
+				`Email failed but staff was created successfully: ${newStaffId}`,
+			);
+		}
 
 		// audit log
 		await this.staffEvents.staffAdded({

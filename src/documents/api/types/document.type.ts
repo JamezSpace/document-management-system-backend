@@ -1,5 +1,4 @@
 import { Type, type Static } from "@fastify/type-provider-typebox";
-import { CorrespondenceAddressee } from "../../domain/enum/correspondenceAddresee.enum.js";
 import { CorrespondenceDirection } from "../../domain/enum/correspondenceDirection.enum.js";
 import { LifecycleActions } from "../../domain/enum/lifecycleActions.enum.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
@@ -33,8 +32,8 @@ const documentSchemaForCreation = Type.Object({
 
 	// correspondence
 	originatingUnitId: Type.String(),
-	recipientUnitId: Type.String(),
-	addressedTo: Type.Enum(CorrespondenceAddressee),
+	recipientUnitId: Type.Union([Type.String(), Type.Null()]),
+	addressedToStaffId: Type.Union([Type.String(), Type.Null()]),
 	subjectCodeId: Type.String(),
 	subjectCode: Type.String(),
 	direction: Type.Enum(CorrespondenceDirection),
@@ -82,7 +81,8 @@ const documentSchema = Type.Object({
 	}),
 	correspondence: Type.Object({
 		originatingUnitId: Type.String(),
-		recipientCode: Type.String(),
+		recipientUnitId: Type.Union([Type.String(), Type.Null()]),
+		addressedToStaffId: Type.Union([Type.String(), Type.Null()]),
 		subjectCodeId: Type.String(),
 		direction: Type.Enum(CorrespondenceDirection),
 	}),

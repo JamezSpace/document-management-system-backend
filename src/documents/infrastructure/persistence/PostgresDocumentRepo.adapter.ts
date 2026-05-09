@@ -35,7 +35,8 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 			referenceNumber: row.reference_number,
 			correspondence: {
 				originatingUnitId: row.originating_unit_id,
-				recipientCode: row.recipient_code,
+                recipientUnitId: row.recipient_unit_id,
+                addressedToStaffId: row.addressed_to_staff_id,
 				subjectCodeId: row.subject_code_id,
                 direction: row.direction
 			},
@@ -65,7 +66,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 			const query = `
 				INSERT INTO document.documents (
 					id, title, owner_id, reference_number, current_version_id,
-					originating_unit_id, recipient_code, subject_code_id, direction,
+					originating_unit_id, recipient_unit_id, addressed_to_staff_id, subject_code_id, direction,
 					sensitivity, business_function_id, document_type_id,
 					classified_by, classified_at, last_reclassified_at, last_reclassified_by,
 					policy_version, retention_schedule_id, retention_start_date, disposal_eligibility_date, archival_required,
@@ -76,7 +77,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 					$6, $7, $8,
 					$9, $10, $11,
 					$12, $13, $14, $15,
-					$16, $17, $18, $19, $20, $21,
+					$16, $17, $18, $19, $20, $21, $22,
 					now(), null
 				)
 				RETURNING *;
@@ -91,7 +92,8 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				document.referenceNumber,
 				document.getCurrentVersion()?.id ?? null,
 				document.correspondence.originatingUnitId,
-				document.correspondence.recipientCode,
+				document.correspondence.recipientUnitId,
+				document.correspondence.addressedToStaffId,
 				document.correspondence.subjectCodeId,
 				document.correspondence.direction,
 				document.classification.sensitivity,
@@ -109,7 +111,6 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 			]);
 
             const dbResponse = result.rows[0];
-            console.log("Database Response", dbResponse);
             
 			return this.toDomain(dbResponse);
 		} catch (error: any) {
@@ -157,20 +158,21 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 					reference_number = $4,
 					current_version_id = $5,
 					originating_unit_id = $6,
-					recipient_code = $7,
-					subject_code_id = $8,
-					sensitivity = $9,
-					business_function_id = $10,
-					document_type_id = $11,
-					classified_by = $12,
-					classified_at = $13,
-					last_reclassified_at = $14,
-					last_reclassified_by = $15,
-					policy_version = $16,
-					retention_schedule_id = $17,
-					retention_start_date = $18,
-					disposal_eligibility_date = $19,
-					archival_required = $20,
+					recipient_unit_id = $7,
+					addressed_to_staff_id = $8,
+					subject_code_id = $9,
+					sensitivity = $10,
+					business_function_id = $11,
+					document_type_id = $12,
+					classified_by = $13,
+					classified_at = $14,
+					last_reclassified_at = $15,
+					last_reclassified_by = $16,
+					policy_version = $17,
+					retention_schedule_id = $18,
+					retention_start_date = $19,
+					disposal_eligibility_date = $20,
+					archival_required = $21,
 					updated_at = now()
 				WHERE id = $1
 				RETURNING *;
@@ -183,7 +185,8 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				document.referenceNumber,
 				document.getCurrentVersion()?.id ?? null,
 				document.correspondence.originatingUnitId,
-				document.correspondence.recipientCode,
+				document.correspondence.recipientUnitId,
+				document.correspondence.addressedToStaffId,
 				document.correspondence.subjectCodeId,
 				document.classification.sensitivity,
 				document.classification.functionCodeId,

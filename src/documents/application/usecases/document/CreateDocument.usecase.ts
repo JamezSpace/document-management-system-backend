@@ -56,7 +56,7 @@ class DocumentCreation {
 				subjectCode: payload.correspondence.subjectCode,
 				functionCode: payload.classification.functionCode,
 				originUnitId: payload.correspondence.originatingUnitId,
-				recipientCode: payload.correspondence.recipientCode,
+				recipientUnitId: payload.correspondence.recipientUnitId,
 			});
 		}
 

@@ -51,13 +51,13 @@ class ApproveTaskUseCase {
 			});
 		}
 
-		// 5. Get all tasks for current step
+		// get all tasks for current step
 		const stepTasks = await this.workflowRepository.getTasksByStep(
 			instance.id,
 			task.stepOrder
 		);
 
-		// 6. Check if step is complete
+		// check if step is complete
 		const isStepComplete = this.workflowEngine.isStepComplete(stepTasks);
 
 		if (!isStepComplete) {
@@ -67,7 +67,7 @@ class ApproveTaskUseCase {
 			return { message: "Task approved. Waiting for other approvers." };
 		}
 
-		// 7. Move to next step
+		// move to next step
 		const workflowSteps =
 			await this.workflowPolicyPort.getApprovalSteps(instance.documentId);
 
@@ -94,12 +94,12 @@ class ApproveTaskUseCase {
 
 		// 8B. Otherwise → create next step tasks
 
-		// Fetch document context
+		// fetch document context
 		const doc = await this.workflowDocumentPort.getDocumentById(
 			instance.documentId
 		);
 
-		// Resolve approvers
+		// resolve approvers
 		const userIds = await this.approverResolver.resolve(
 			doc,
 			nextStep.role,
@@ -112,7 +112,7 @@ class ApproveTaskUseCase {
 			});
 		}
 
-		// Create tasks
+		// create tasks
 		const newTasks = this.workflowEngine.createTasks(
 			instance.id,
 			nextStep,

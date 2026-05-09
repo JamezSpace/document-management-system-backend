@@ -341,7 +341,7 @@ INSERT INTO policy.approval_workflow_steps (
     'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
     2,
     'role.reviewing_officer',
-    'role_in_unit',
+    'role_in_office',
     'Reviewing officer within originating unit approves'
 ),
 
@@ -352,7 +352,7 @@ INSERT INTO policy.approval_workflow_steps (
     'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
     3,
     'role.workflow_coordinator',
-    'role_in_office',
+    'role_in_unit',
     'Workflow coordinator validates routing and compliance'
 ),
 
@@ -363,6 +363,6 @@ INSERT INTO policy.approval_workflow_steps (
     'DOC-TYPE-019cf626-fa21-7fe2-9d63-8b710be0a768',
     4,
     'role.directive_authority',
-    'role_in_office',
+    'role_in_unit',
     'Final approval by directive authority'
 );

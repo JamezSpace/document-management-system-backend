@@ -118,8 +118,6 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 				overwrite: true,
 			});
 
-            console.log("signature upload:", result);
-
 			uploaded.signatureFile = {
 				storageProvider: "cloudinary",
 				bucketName: result.folder ?? null,

@@ -9,7 +9,7 @@ class PostgresReferenceSequenceRepositoryAdapter implements ReferenceSequenceRep
 	async nextSequence(payload: RefNumPayload): Promise<{
 		nextCount: number;
 		originUnit: string;
-		recipientCode: string;
+		recipientUnit: string | null;
 	}> {
 		const query = `
             SELECT * FROM document.next_reference_sequence($1,$2,$3,$4,$5);
@@ -18,7 +18,7 @@ class PostgresReferenceSequenceRepositoryAdapter implements ReferenceSequenceRep
 		const result = await this.dbPool.query(query, [
 			payload.year,
 			payload.originUnitId,
-			payload.recipientCode,
+			payload.recipientUnitId,
 			payload.subjectCode,
 			payload.functionCode,
 		]);
@@ -26,7 +26,7 @@ class PostgresReferenceSequenceRepositoryAdapter implements ReferenceSequenceRep
 		return transformToCamelCase(result.rows[0]) as {
 			nextCount: number;
 			originUnit: string;
-			recipientCode: string;
+			recipientUnit: string | null;
 		};
 	}
 }

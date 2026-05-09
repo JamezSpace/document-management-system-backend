@@ -39,6 +39,16 @@ CREATE TYPE identity.activation_status AS ENUM (
     'failed',
     'completed'
 );
+CREATE TYPE identity.recovery_task_status AS ENUM (
+    'pending',
+    'resolved',
+    'failed'
+);
+CREATE TYPE identity.recovery_task_type AS ENUM (
+    'staff_creation',
+    'staff_activation',
+    'email_delivery'
+);
 
 -- DOCUMENT SCHEMA TYPES
 CREATE TYPE document.sensitivity_level AS ENUM(
@@ -313,6 +323,7 @@ CREATE TABLE identity.staff_media_assets (
     CONSTRAINT unique_staff_media UNIQUE (staff_id, media_id)
 );
 
+-- failure records
 CREATE TABLE identity.staff_activation_failures (
     id VARCHAR(70) PRIMARY KEY,
     staff_id VARCHAR(50)
@@ -327,6 +338,20 @@ CREATE TABLE identity.staff_activation_failures (
     first_failed_at TIMESTAMPTZ NOT NULL,
     last_failed_at TIMESTAMPTZ NOT NULL,
     resolved_at TIMESTAMPTZ
+);
+CREATE TABLE identity.recovery_tasks (
+    id VARCHAR(50) PRIMARY KEY,
+    task_type identity.recovery_task_type NOT NULL,
+    -- staff id / invite id / user id
+    entity_id VARCHAR(50) NOT NULL,
+
+    payload JSONB NOT NULL,
+    error_message TEXT NOT NULL,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+
+    status identity.recovery_task_status NOT NULL DEFAULT 'pending',
+    resolved_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL
 );
 
 -- MEDIA SCHEMA
@@ -385,7 +410,7 @@ CREATE TABLE document.business_functions (
 CREATE TABLE document.reference_sequences (
     year INT NOT NULL,
     origin_unit_id varchar(50) REFERENCES identity.organizational_units NOT NULL,
-    recipient_code VARCHAR(50) NOT NULL,
+    recipient_unit_id varchar(50) REFERENCES identity.organizational_units,
     subject_code varchar(50) REFERENCES document.correspondence_subjects(code) NOT NULL,
     function_code varchar(50) REFERENCES document.business_functions(code) NOT NULL,
     current_value INT NOT NULL,
@@ -405,7 +430,8 @@ CREATE TABLE document.documents (
 
     -- correspondence metadata
     originating_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
-    recipient_code VARCHAR(50) NOT NULL,
+    recipient_unit_id varchar(50) REFERENCES identity.organizational_units(id),
+    addressed_to_staff_id varchar(50) REFERENCES identity.staff(id),
     subject_code_id varchar(50) REFERENCES document.correspondence_subjects(id) NOT NULL,
     direction document.correspondence_direction NOT NULL,
 
@@ -431,10 +457,6 @@ CREATE TABLE document.documents (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ
 );
-
--- drop view document.full_document_details;
--- alter table document.documents
--- alter column recipient_code type varchar(50);
 
 -- documents versions
 CREATE TABLE document.document_versions (

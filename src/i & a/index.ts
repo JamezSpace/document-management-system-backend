@@ -2,10 +2,10 @@ import type { FastifyInstance } from "fastify";
 import NodemailerEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/NodemailerEmailService.adapter.js";
 import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/ResendEmailService.adapter.js";
 import CloudinaryMediaServiceAdapter from "../shared/infrastructure/adapters/services/media/CloudinaryMediaService.adapter.js";
-import MediaServiceAdapter from "../shared/infrastructure/adapters/services/media/MediaService.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
 import PostgresMediaAssetRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresMediaAssetRepository.adapter.js";
+import PostgresRecoveryTaskRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresRecoveryTaskRepository.adapter.js";
 import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
 import AssignOfficialRoleUseCase from "./access/application/usecases/AssignOfficialRole.js";
 import GetEffectivePermissionsUseCase from "./access/application/usecases/GetEffectivePermissions.usecase.js";
@@ -116,6 +116,7 @@ export default async function IdentityAccessSubsystem(
 	const mediaAssetRepository = new PostgresMediaAssetRepositoryAdapter(postgres);
 	const staffMediaAssetRepository = new PostgresStaffMediaRepositoryAdapter(postgres);
     const activationFailureRepository = new PostgresStaffActivationFailureRepositoryAdapter(postgres);
+	const recoveryTaskRepository = new PostgresRecoveryTaskRepositoryAdapter(postgres);
 
 	//  all module event adapters in identity subsystem
 	const accessEventsAdapter = new AccessEventsAdapter(globalEventBus);
@@ -254,6 +255,7 @@ export default async function IdentityAccessSubsystem(
 		identityRepository,
 		inviteRepository,
 		onboardingSessionRepo,
+		recoveryTaskRepository,
 		addNewStaffUseCase,
 		new FirebaseAuthAdapter(),
 		identityEmailService,

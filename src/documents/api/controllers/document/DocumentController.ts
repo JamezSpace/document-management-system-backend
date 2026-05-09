@@ -7,7 +7,7 @@ import type GetDocumentByIdUsecase from "../../../application/usecases/document/
 import type DocumentSubmission from "../../../application/usecases/document/SubmitDocument.usecase.js";
 import Document from "../../../domain/entities/document/Document.js";
 import DocumentVersion from "../../../domain/entities/document/DocumentVersion.js";
-import { CorrespondenceAddressee } from "../../../domain/enum/correspondenceAddresee.enum.js";
+import { CorrespondenceDirection } from "../../../domain/enum/correspondenceDirection.enum.js";
 import type {
 	DocumentSchemaType,
 	DocumentSchemaTypeForCreation,
@@ -31,7 +31,7 @@ class DocumentController {
 			correspondence: {
 				originatingUnitId: payload.originatingUnitId,
 				recipientUnitId: payload.recipientUnitId,
-				addressedTo: payload.addressedTo,
+				addressedToStaffId: payload.addressedToStaffId,
 				subjectCodeId: payload.subjectCodeId,
 				subjectCode: payload.subjectCode,
 				direction: payload.direction,
@@ -48,37 +48,45 @@ class DocumentController {
 	async createDocument(payload: DocumentSchemaTypeForCreation) {
 		const incomingDocument = this.structureIncomingPayload(payload);
 
-		let recipientCode!: string;
-
 		// correspondence matters
 		if (
-			incomingDocument.correspondence.addressedTo ===
-				CorrespondenceAddressee.UNIT &&
-			!incomingDocument.correspondence.recipientUnitId
+			incomingDocument.correspondence.direction ===
+			CorrespondenceDirection.EXTERNAL
+		) {
+			if (!incomingDocument.correspondence.recipientUnitId) {
+				throw new ApplicationError(
+					ApplicationErrorEnum.INCOMPLETE_REQUEST,
+					{
+						message: "Recipient unit required",
+						details:
+							"External correspondence requires a recipient organizational unit",
+					},
+				);
+			}
+		}
+
+		if (
+			incomingDocument.correspondence.direction ===
+				CorrespondenceDirection.INTERNAL &&
+			!incomingDocument.correspondence.addressedToStaffId
 		) {
 			throw new ApplicationError(
 				ApplicationErrorEnum.INCOMPLETE_REQUEST,
 				{
-					message: "Recipient Unit ID not present",
+					message: "Addressee required",
 					details:
-						"document is addressed to a unit, yet unit addressed to is not present in the request",
+						"Internal correspondence requires a responsible addressee",
 				},
 			);
 		}
-
-		recipientCode =
-			incomingDocument.correspondence.addressedTo ===
-			CorrespondenceAddressee.EXTERNAL
-				? "EXT"
-				: incomingDocument.correspondence.recipientUnitId;
 
 		const newDoc = await this.createDocumentUseCase.createDocument({
 			ownerId: incomingDocument.createdBy,
 			title: incomingDocument.title,
 			correspondence: {
-				originatingUnitId:
-					incomingDocument.correspondence.originatingUnitId,
-				recipientCode,
+				originatingUnitId: incomingDocument.correspondence.originatingUnitId,
+				recipientUnitId: incomingDocument.correspondence.recipientUnitId,
+				addressedToStaffId:	incomingDocument.correspondence.addressedToStaffId,
 				subjectCodeId: incomingDocument.correspondence.subjectCodeId,
 				subjectCode: incomingDocument.correspondence.subjectCode,
 				direction: incomingDocument.correspondence.direction,
@@ -116,41 +124,42 @@ class DocumentController {
 		doc: DocumentSchemaType,
 		contentDelta: unknown,
 		actorId: string,
-	) {       
-        console.log(doc);
-         
-        let version = null;
-        if(doc.currentVersion)
-            version = new DocumentVersion({
-                    ...doc.currentVersion,
-                    createdAt: new Date(doc.createdAt),
-                    lifecycle: {
-                        ...doc.currentVersion.lifecycle,
-                        stateEnteredAt: new Date(doc.currentVersion.lifecycle.stateEnteredAt)
-                    }
-                })
-        
-        
-        const document = new Document({
-            ...doc,
-            version,
-            classification: {
-                ...doc.classification,
-                classifiedAt: new Date(doc.classification.classifiedAt),
-                lastReclassifiedAt: doc.classification.lastReclassifiedAt
-                    ? new Date(doc.classification.lastReclassifiedAt)
-                    : null,
-            },
-            retention: {
-                ...doc.retention,
-                retentionStartDate: new Date(doc.retention.retentionStartDate),
-                disposalEligibilityDate: new Date(
-                    doc.retention.disposalEligibilityDate,
-                ),
-            },
-            createdAt: new Date(doc.createdAt),
-            updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : null,
-        });
+	) {
+		console.log(doc);
+
+		let version = null;
+		if (doc.currentVersion)
+			version = new DocumentVersion({
+				...doc.currentVersion,
+				createdAt: new Date(doc.createdAt),
+				lifecycle: {
+					...doc.currentVersion.lifecycle,
+					stateEnteredAt: new Date(
+						doc.currentVersion.lifecycle.stateEnteredAt,
+					),
+				},
+			});
+
+		const document = new Document({
+			...doc,
+			version,
+			classification: {
+				...doc.classification,
+				classifiedAt: new Date(doc.classification.classifiedAt),
+				lastReclassifiedAt: doc.classification.lastReclassifiedAt
+					? new Date(doc.classification.lastReclassifiedAt)
+					: null,
+			},
+			retention: {
+				...doc.retention,
+				retentionStartDate: new Date(doc.retention.retentionStartDate),
+				disposalEligibilityDate: new Date(
+					doc.retention.disposalEligibilityDate,
+				),
+			},
+			createdAt: new Date(doc.createdAt),
+			updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : null,
+		});
 
 		const savedDoc = await this.createDocumentUseCase.saveDocument(
 			document,

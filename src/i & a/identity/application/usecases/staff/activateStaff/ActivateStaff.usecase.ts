@@ -97,11 +97,11 @@ class ActivateStaffUseCase {
 				}
                 const capClassId = capabilityClass.getStaffCapabilityClassId();
 				const baseRole = await this.roleService.getRoleByName(
-					"role.staff_member",
+					"staff_member",
 				);
 
 				if (!baseRole) {
-					throw new Error("Base role role.staff_member not found");
+					throw new Error("Base role for 'staff_member' not found");
 				}
 
                 // classify staff

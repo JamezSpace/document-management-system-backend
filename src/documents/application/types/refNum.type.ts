@@ -1,7 +1,7 @@
 interface RefNumPayload {
 	year: number;
 	originUnitId: string;
-	recipientCode: string;
+	recipientUnitId: string | null;
 	subjectCode: string;
 	functionCode: string;
 }
