@@ -2,8 +2,6 @@ import type { CorrespondenceDirection } from "../enum/correspondenceDirection.en
 
 interface CorrespondenceMetadata {
 	originatingUnitId: string;
-	recipientUnitId: string | null;
-    addressedToStaffId: string | null;
 	subjectCodeId: string;
     direction: CorrespondenceDirection;
 }

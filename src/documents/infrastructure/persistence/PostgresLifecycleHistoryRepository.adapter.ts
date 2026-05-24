@@ -4,6 +4,7 @@ import { Category } from "../../../shared/errors/enum/infrastructure.enum.js";
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import LifecycleHistory from "../../domain/valueobjects/LifecycleHistory.js";
+import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
 
 class PostgresLifecycleHistoryRepositoryAdapter implements LifecycleHistoryRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -21,11 +22,12 @@ class PostgresLifecycleHistoryRepositoryAdapter implements LifecycleHistoryRepos
 		});
 	}
 
-	async save(payload: LifecycleHistory): Promise<void> {
+	async save(payload: LifecycleHistory, tx?: TransactionContext): Promise<void> {
 		try {
 			const query = `INSERT INTO document.document_lifecycle_history VALUES($1, $2, $3, $4, $5, $6, $7, $8, NOW())`;
 
-			const result = await this.dbPool.query(query, [
+            const executor = tx?.client ?? this.dbPool;
+			const result = await executor.query(query, [
 				payload.id,
 				payload.documentId,
 				payload.documentVersionId,
@@ -35,9 +37,6 @@ class PostgresLifecycleHistoryRepositoryAdapter implements LifecycleHistoryRepos
 				payload.actorId,
 				payload.metadata,
 			]);
-
-            // silence here is dangerous, the use cases using this method must be atomic. That is, if any part fails, nothing must be saved...
-            
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
 			throw new InfrastructureError(postgresError.summary, {

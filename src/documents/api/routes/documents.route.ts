@@ -1,19 +1,19 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import type DocumentController from "../controllers/document/DocumentController.js";
-import {
-	docStaffIdSchema,
-	documentIdSchema,
-	documentSchema,
-	documentSchemaForCreation,
-	documentSchemaForSave,
-	type DocStaffIdSchemaType,
-	type DocumentIdSchemaType,
-	type DocumentSchemaForSaveType,
-	type DocumentSchemaType,
-	type DocumentSchemaTypeForCreation,
-} from "../types/document.type.js";
 import ApiError from "../../../shared/errors/ApiError.error.js";
 import { ApiErrorEnum } from "../../../shared/errors/enum/api.enum.js";
+import type DocumentController from "../controllers/document/DocumentController.js";
+import {
+    docStaffIdSchema,
+    documentIdSchema,
+    documentSchema,
+    documentSchemaForCreation,
+    documentSchemaForSave,
+    type DocStaffIdSchemaType,
+    type DocumentIdSchemaType,
+    type DocumentSchemaForSaveType,
+    type DocumentSchemaType,
+    type DocumentSchemaTypeForCreation,
+} from "../types/document.type.js";
 
 async function documentRoutes(
 	fastify: FastifyInstance,
@@ -24,7 +24,7 @@ async function documentRoutes(
 	const documentController = options.controller;
 
     // create a new document
-	fastify.post(
+	    fastify.post(
 		"/",
 		{ schema: { body: documentSchemaForCreation } },
 		async (
@@ -161,7 +161,7 @@ async function documentRoutes(
 		) => {
 			const { uid } = request.user!;
 			const { staffId } = request.params;
-            const documentToSubmit = request.body
+            const documentToSubmit = request.body;
 
 			if (!uid)
 				return reply.code(401).send({

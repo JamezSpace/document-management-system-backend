@@ -1,6 +1,6 @@
 import ApplicationError from "../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application.enum.js";
-import type DocumentCreation from "../../../application/usecases/document/CreateDocument.usecase.js";
+import type DocumentCreationUseCase from "../../../application/usecases/document/CreateDocument.usecase.js";
 import type DeleteDocumentUseCase from "../../../application/usecases/document/DeleteDocument.usecase.js";
 import type GetAllDocumentsByStaffUseCase from "../../../application/usecases/document/GetAllDocumentsByStaff.usecase.js";
 import type GetDocumentByIdUsecase from "../../../application/usecases/document/GetDocById.usecase.js";
@@ -15,7 +15,7 @@ import type {
 
 class DocumentController {
 	constructor(
-		private readonly createDocumentUseCase: DocumentCreation,
+		private readonly createDocumentUseCase: DocumentCreationUseCase,
 		private readonly getAllDocumentsByStaffUsecase: GetAllDocumentsByStaffUseCase,
 		private readonly getDocumentByIdUsecase: GetDocumentByIdUsecase,
 		private readonly submitDocUsecase: DocumentSubmission,
@@ -31,7 +31,7 @@ class DocumentController {
 			correspondence: {
 				originatingUnitId: payload.originatingUnitId,
 				recipientUnitId: payload.recipientUnitId,
-				addressedToStaffId: payload.addressedToStaffId,
+				addressedToDesignationId: payload.addressedToDesignationId,
 				subjectCodeId: payload.subjectCodeId,
 				subjectCode: payload.subjectCode,
 				direction: payload.direction,
@@ -42,11 +42,15 @@ class DocumentController {
 				sensitivity: payload.sensitivity,
 				documentTypeId: payload.documentTypeId,
 			},
+			addressee: {
+				recipientUnitId: payload.recipientUnitId,
+				addressedToDesignationId: payload.addressedToDesignationId,
+			},
 		};
 	}
 
 	async createDocument(payload: DocumentSchemaTypeForCreation) {
-		const incomingDocument = this.structureIncomingPayload(payload);
+		const incomingDocument = this.structureIncomingPayload(payload);        
 
 		// correspondence matters
 		if (
@@ -68,7 +72,7 @@ class DocumentController {
 		if (
 			incomingDocument.correspondence.direction ===
 				CorrespondenceDirection.INTERNAL &&
-			!incomingDocument.correspondence.addressedToStaffId
+			!incomingDocument.correspondence.addressedToDesignationId
 		) {
 			throw new ApplicationError(
 				ApplicationErrorEnum.INCOMPLETE_REQUEST,
@@ -80,18 +84,11 @@ class DocumentController {
 			);
 		}
 
-		const newDoc = await this.createDocumentUseCase.createDocument({
-			ownerId: incomingDocument.createdBy,
+		const newDoc = await this.createDocumentUseCase.execute({
 			title: incomingDocument.title,
-			correspondence: {
-				originatingUnitId: incomingDocument.correspondence.originatingUnitId,
-				recipientUnitId: incomingDocument.correspondence.recipientUnitId,
-				addressedToStaffId:	incomingDocument.correspondence.addressedToStaffId,
-				subjectCodeId: incomingDocument.correspondence.subjectCodeId,
-				subjectCode: incomingDocument.correspondence.subjectCode,
-				direction: incomingDocument.correspondence.direction,
-			},
+			ownerId: incomingDocument.createdBy,
 			action: incomingDocument.action,
+
 			classification: {
 				functionCodeId: incomingDocument.classification.functionCodeId,
 				functionCode: incomingDocument.classification.functionCode,
@@ -100,6 +97,20 @@ class DocumentController {
 				classifiedBy: incomingDocument.createdBy,
 				classifiedAt: new Date(),
 			},
+
+			correspondence: {
+				originatingUnitId:
+					incomingDocument.correspondence.originatingUnitId,
+				subjectCodeId: incomingDocument.correspondence.subjectCodeId,
+				subjectCode: incomingDocument.correspondence.subjectCode,
+				direction: incomingDocument.correspondence.direction,
+			},
+
+			addressee: {
+				recipientUnitId: incomingDocument.addressee.recipientUnitId,
+				addressedToDesignationId:
+					incomingDocument.addressee.addressedToDesignationId
+			},
 		});
 
 		return newDoc;
@@ -107,7 +118,7 @@ class DocumentController {
 
 	async fetchAllDocsByStaff(staffId: string) {
 		const docsByStaff =
-			await this.getAllDocumentsByStaffUsecase.getAllDocumentsAuthoredByStaff(
+			await this.getAllDocumentsByStaffUsecase.getDocumentsAuthoredOrAddressedToStaff(
 				staffId,
 			);
 
@@ -115,7 +126,7 @@ class DocumentController {
 	}
 
 	async fetchDocById(docId: string) {
-		const doc = await this.getDocumentByIdUsecase.getDocById(docId);
+		const doc = await this.getDocumentByIdUsecase.execute(docId);
 
 		return doc;
 	}
@@ -125,8 +136,6 @@ class DocumentController {
 		contentDelta: unknown,
 		actorId: string,
 	) {
-		console.log(doc);
-
 		let version = null;
 		if (doc.currentVersion)
 			version = new DocumentVersion({
@@ -193,6 +202,11 @@ class DocumentController {
 
 		const document = {
 			...doc,
+			addressee: {
+				recipientUnitId: doc.addressee.recipientUnitId,
+				addressedToDesignationId:
+					doc.addressee.addressedToDesignationId,
+			},
 			classification: {
 				...doc.classification,
 				classifiedAt: new Date(doc.classification.classifiedAt),

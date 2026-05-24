@@ -16,10 +16,8 @@ interface DocumentEventsPort {
 
 	documentSubmitted(payload: {
 		documentId: string;
-		documentVersionId: string;
+		lifecycleState: string;
 		submittedBy: string;
-		fromState: string;
-		toState: string;
 	}): Promise<void>;
 
 	documentApproved(payload: {

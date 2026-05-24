@@ -1,4 +1,5 @@
 import DocumentTransitions from "../../DocumentTransition.js";
+import { CorrespondenceDirection } from "../../enum/correspondenceDirection.enum.js";
 import { LifecycleState } from "../../enum/lifecycleState.enum.js";
 import type { LifecycleMetadata } from "../../metadata/Lifecycle.metadata.js";
 
@@ -46,8 +47,12 @@ class DocumentVersion {
 		this.lifecycle.stateEnteredBy = actorId;
 	}
 
-	submit(actorId: string) {
-        this.transitionTo(LifecycleState.IN_REVIEW, actorId);
+	submit(actorId: string, documentDirection: string) {
+        // internal documents doesn't to be in_reveiw since its addressed to another staff
+        if(documentDirection === CorrespondenceDirection.INTERNAL)
+            this.transitionTo(LifecycleState.ACTIVE, actorId);
+        else
+            this.transitionTo(LifecycleState.IN_REVIEW, actorId);
 	}
 
 	approve(actorId: string) {

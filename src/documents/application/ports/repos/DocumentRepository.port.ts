@@ -1,13 +1,14 @@
+import type { TransactionContext } from "../../../../shared/infrastructure/persistence/primary/postgres.js";
 import type Document from "../../../domain/entities/document/Document.js";
 
 interface DocumentRepositoryPort {
-    save(document: Document): Promise<Document>;
+    save(document: Document, tx?: TransactionContext): Promise<Document>;
 
-    fetchAllDocumentsAuthoredByStaff(staffId: string): Promise<Document[]>
+    fetchDocumentsAuthoredByStaff(staffId: string): Promise<Document[]>;
 
     findDocumentById(id: string): Promise<Document | null>;
 
-    editDocument(document: Document): Promise<Document | null>;
+    editDocument(document: Document, tx?: TransactionContext): Promise<Document | null>;
 
     softDeleteDocument(id: string): Promise<void>;
 

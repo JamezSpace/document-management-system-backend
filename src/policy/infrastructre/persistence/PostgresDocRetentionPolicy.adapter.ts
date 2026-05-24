@@ -1,10 +1,10 @@
 import type { PostgresDb } from "@fastify/postgres";
-import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/documentRetentionPolicy.port.js";
-import type { DocumentRetentionPolicyRepositoryPort } from "../../application/port/repo/DocRetPolicyRepo.port.js";
-import DocumentRetentionPolicy from "../../domain/DocumentRetentionPolicy.js";
-import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import type { DocumentRetentionPolicyPort } from "../../../shared/application/port/intersubsystem/DocumentPolicy.port.js";
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { Category } from "../../../shared/errors/enum/infrastructure.enum.js";
+import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import type { DocumentRetentionPolicyRepositoryPort } from "../../application/port/repo/DocRetPolicyRepo.port.js";
+import DocumentRetentionPolicy from "../../domain/DocumentRetentionPolicy.js";
 
 class PostgresDocumentRetentionPolicyAdapter
 	implements

@@ -3,7 +3,7 @@ import _ from "lodash";
 export const generateMessageTemplate = (payload: {
 	eventType: string;
 	subjectType: string;
-	subjectName: string;
+	inAppSubjectName: string;
 	actorFirstName?: string | null;
 	actorLastName?: string | null;
 }): string => {
@@ -21,20 +21,20 @@ export const generateMessageTemplate = (payload: {
 			: null;
 
 	switch (payload.eventType) {
-		case "BUSINESS_FUNCTION_CREATED":
-			return `A new ${formattedSubjectType}, "${payload.subjectName}" was created${
+		case "business_function_created":
+			return `A new ${formattedSubjectType}, "${payload.inAppSubjectName}" was created${
 				actorFullName ? ` by ${actorFullName}` : ""
 			}.`;
 
-		case "WORKFLOW_TASKS_ASSIGNED":
-			return `You have a pending ${formattedSubjectType} task: "${payload.subjectName}".`;
+		case "workflow_tasks_assigned":
+			return `You have a pending ${formattedSubjectType} task: "${payload.inAppSubjectName}".`;
 
-		case "DOCUMENT_SUBMITTED":
-			return `A document "${payload.subjectName}" has been submitted for review${
+		case "document_submitted":
+			return `A document "${payload.inAppSubjectName}" has been submitted for review${
 				actorFullName ? ` by ${actorFullName}` : ""
 			}.`;
 
 		default:
-			return `${_.startCase(payload.eventType)} occurred on "${payload.subjectName}".`;
+			return `${_.startCase(payload.eventType)} occurred on "${payload.inAppSubjectName}".`;
 	}
 };

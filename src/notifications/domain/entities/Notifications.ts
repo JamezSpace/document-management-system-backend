@@ -15,6 +15,8 @@ interface NotificationDTO {
 	eventType: EventType; // DocumentApproved, TaskAssigned
 	subjectType: string; // DOCUMENT, APPROVAL_TASK
 	subjectId: string;
+	inAppSubjectName?: string;
+	emailSubjectHeader?: string;
 
 	messageTemplate: string; 
 	payload: Record<string, any>;
@@ -33,6 +35,8 @@ class Notification {
 	readonly eventType: EventType;
 	readonly subjectType: string;
 	readonly subjectId: string;
+	readonly inAppSubjectName: string | null;
+	readonly emailSubjectHeader: string | null;
 	readonly messageTemplate: string;
 	readonly payload: Record<string, any>;
 	readonly channel: NotificationPreference;
@@ -48,11 +52,13 @@ class Notification {
 		this.eventType = notification.eventType;
 		this.subjectType = notification.subjectType;
 		this.subjectId = notification.subjectId;
+		this.inAppSubjectName = notification?.inAppSubjectName ?? null;
+		this.emailSubjectHeader = notification?.emailSubjectHeader ?? null;
 		this.messageTemplate = notification.messageTemplate;
 		this.payload = notification.payload;
 		this.channel = notification.channel;
 		this.priority = notification.priority;
-		this.state = notification.state ?? NotificationState.PENDING;
+		this.state = notification?.state ?? NotificationState.PENDING;
 		this.createdAt = notification.createdAt ?? new Date();
 	}
 

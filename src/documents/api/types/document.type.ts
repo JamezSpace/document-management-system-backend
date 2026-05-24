@@ -30,10 +30,12 @@ const documentSchemaForCreation = Type.Object({
 	createdBy: Type.String(),
 	action: Type.Enum(LifecycleActions),
 
+	// addressee
+	recipientUnitId: Type.String(),
+	addressedToDesignationId: Type.String(),
+
 	// correspondence
 	originatingUnitId: Type.String(),
-	recipientUnitId: Type.Union([Type.String(), Type.Null()]),
-	addressedToStaffId: Type.Union([Type.String(), Type.Null()]),
 	subjectCodeId: Type.String(),
 	subjectCode: Type.String(),
 	direction: Type.Enum(CorrespondenceDirection),
@@ -46,9 +48,11 @@ const documentSchemaForCreation = Type.Object({
 });
 
 const documentSchema = Type.Object({
-	id: Type.String({ minLength: 1 }),
+	id: Type.String({ minLength: 3 }),
 	ownerId: Type.String(),
 	title: Type.String(),
+	referenceNumber: Type.String(),
+
 	currentVersion: Type.Object({
 		id: Type.String({ minLength: 1 }),
 		documentId: Type.String({ minLength: 1 }),
@@ -63,7 +67,12 @@ const documentSchema = Type.Object({
 		createdAt: Type.String({ format: "date-time" }),
 		createdBy: Type.String(),
 	}),
-	referenceNumber: Type.String(),
+
+	addressee: Type.Object({
+		recipientUnitId: Type.String(),
+		addressedToDesignationId: Type.String(),
+	}),
+
 	classification: Type.Object({
 		sensitivity: Type.Enum(SensitivityLevel),
 		functionCodeId: Type.String(),
@@ -79,13 +88,13 @@ const documentSchema = Type.Object({
 			Type.Null(),
 		]),
 	}),
+
 	correspondence: Type.Object({
 		originatingUnitId: Type.String(),
-		recipientUnitId: Type.Union([Type.String(), Type.Null()]),
-		addressedToStaffId: Type.Union([Type.String(), Type.Null()]),
 		subjectCodeId: Type.String(),
 		direction: Type.Enum(CorrespondenceDirection),
 	}),
+
 	retention: Type.Object({
 		policyVersion: Type.Number(),
 		retentionScheduleId: Type.String(),
@@ -93,6 +102,7 @@ const documentSchema = Type.Object({
 		disposalEligibilityDate: Type.String({ format: "date-time" }),
 		archivalRequired: Type.Boolean(),
 	}),
+
 	createdAt: Type.String({ format: "date-time" }),
 	updatedAt: Type.Union([Type.String({ format: "date-time" }), Type.Null()]),
 });
@@ -111,16 +121,16 @@ type DocumentVersionSchemaType = Static<typeof documentVersionSchema>;
 type DocumentSchemaTypeForCreation = Static<typeof documentSchemaForCreation>;
 
 export {
-	documentSchema,
-	documentIdSchema,
 	docStaffIdSchema,
+	documentIdSchema,
+	documentSchema,
 	documentSchemaForCreation,
 	documentSchemaForSave,
 	documentVersionSchema,
 	type DocStaffIdSchemaType,
-	type DocumentSchemaType,
 	type DocumentIdSchemaType,
 	type DocumentSchemaForSaveType,
-	type DocumentVersionSchemaType,
+	type DocumentSchemaType,
 	type DocumentSchemaTypeForCreation,
+	type DocumentVersionSchemaType,
 };

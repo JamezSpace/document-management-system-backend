@@ -21,6 +21,7 @@ import type { NexusAppError } from "./shared/errors/api/nexusAppError.type.js";
 import InMemoryEventBusAdapter from "./shared/infrastructure/InMemoryEventBus.js";
 import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.config.js";
 import WorkflowSubsystem from "./workflow/index.js";
+import DispatchSubsystem from "./dispatch/index.js";
 
 const server: FastifyInstance = fastify({
 	logger: true,
@@ -48,16 +49,10 @@ server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
 
 server.after(() => {
 	// documents subsystem - cross system repo adapters
-	const documentPolicyAdapter = new PostgresDocumentRetentionPolicyAdapter(
-		server.pg,
-	);
-	const documentWorkflowAdapter = new PostgresWorkflowDocumentAdapter(
-		server.pg,
-	);
+	const documentPolicyAdapter = new PostgresDocumentRetentionPolicyAdapter(server.pg);
+	const documentWorkflowAdapter = new PostgresWorkflowDocumentAdapter(server.pg);
 	const policyWorkflowAdapter = new PostgresWorkflowPolicyAdapter(server.pg);
-	const accessWorkflowAdapter = new PostgresWorkflowAccessRepositoryAdapter(
-		server.pg,
-	);
+	const accessWorkflowAdapter = new PostgresWorkflowAccessRepositoryAdapter(server.pg);
 
 	// documents subsystem - services
 	const retentionService = new RetentionService(documentPolicyAdapter);
@@ -71,15 +66,19 @@ server.after(() => {
 	server.register(PolicySubsystem, { prefix: "api/policy" });
 
 	server.register(WorkflowSubsystem, {
-		prefix: "workflow",
+		prefix: "api/workflow",
 		documentWorkflowAdapter,
 		policyWorkflowAdapter,
 		accessWorkflowAdapter,
 		globalEventBus: eventBusAdapter,
 	});
 
+    server.register(DispatchSubsystem, {
+        globalEventBus: eventBusAdapter,
+    })
+
 	server.register(NotificationSubsystem, {
-		prefix: "notifs",
+		prefix: "api/notifications",
 		globalEventBus: eventBusAdapter,
 	});
 });

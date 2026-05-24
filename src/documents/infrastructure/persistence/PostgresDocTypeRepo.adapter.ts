@@ -1,10 +1,14 @@
 import type { PostgresDb } from "@fastify/postgres";
-import { Category, GlobalInfrastructureErrors } from "../../../shared/errors/enum/infrastructure.enum.js";
+import {
+	Category,
+	GlobalInfrastructureErrors,
+} from "../../../shared/errors/enum/infrastructure.enum.js";
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
 import type { DocumentTypeRepositoryPort } from "../../application/ports/repos/DocumentTypeRepo.port.js";
 import type DocumentType from "../../domain/entities/documentType/DocumentType.js";
 import DocumentTypeEntity from "../../domain/entities/documentType/DocumentType.js";
+import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
 
 class PostgresDocTypeRepoAdapter implements DocumentTypeRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -39,15 +43,12 @@ class PostgresDocTypeRepoAdapter implements DocumentTypeRepositoryPort {
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
 
-			throw new InfrastructureError(
-				postgresError.summary,
-				{
-					category: Category.PERSISTENCE,
-					message: postgresError.details?.message ?? error.message,
-					table: postgresError.details?.table,
-					column: postgresError.details?.column,
-				},
-			);
+			throw new InfrastructureError(postgresError.summary, {
+				category: Category.PERSISTENCE,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+				column: postgresError.details?.column,
+			});
 		}
 	}
 
@@ -70,11 +71,17 @@ class PostgresDocTypeRepoAdapter implements DocumentTypeRepositoryPort {
 		}
 	}
 
-	async findDocumentTypeById(typeId: string): Promise<DocumentType | null> {
+	async findDocumentTypeById(
+		typeId: string,
+		tx?: TransactionContext,
+	): Promise<DocumentType | null> {
 		try {
 			const query =
 				"SELECT * FROM document.document_type WHERE id = $1 LIMIT 1;";
-			const result = await this.dbPool.query(query, [typeId]);
+
+			const executor = tx?.client ?? this.dbPool;
+
+			const result = await executor.query(query, [typeId]);
 
 			if (!result.rows || result.rows.length === 0) return null;
 

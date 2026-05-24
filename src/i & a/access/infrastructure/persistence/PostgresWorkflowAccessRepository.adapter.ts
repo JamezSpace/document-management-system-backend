@@ -1,6 +1,6 @@
 import type { PostgresDb } from "@fastify/postgres";
 
-import type { WorkflowAccessPort } from "../../../../shared/application/port/WorkflowAccessPort.js";
+import type { WorkflowAccessPort } from "../../../../shared/application/port/intersubsystem/WorkflowAccess.port.js";
 import { Category } from "../../../../shared/errors/enum/infrastructure.enum.js";
 import InfrastructureError from "../../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";

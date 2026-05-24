@@ -2,6 +2,7 @@ CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
 CREATE SCHEMA IF NOT EXISTS document;
 CREATE SCHEMA IF NOT EXISTS directive;
+CREATE SCHEMA IF NOT EXISTS dispatch;
 CREATE SCHEMA IF NOT EXISTS policy;
 CREATE SCHEMA IF NOT EXISTS workflow;
 CREATE SCHEMA IF NOT EXISTS notifications;
@@ -64,6 +65,17 @@ CREATE TYPE document.lifecycle_actions AS ENUM(
 	'save', 'create', 'submit', 'approve', 'reject',  'cancel', 'activate', 'declare_record', 'archive', 'delete',   'dispose'
 );
 
+-- DISPATCH SCHEMA TYPES
+CREATE TYPE dispatch.dispatch_type AS ENUM(
+    'direct', 'cc', 'broadcast', 'forward', 'escalation'
+);
+CREATE TYPE dispatch.status AS ENUM(
+    'pending', 'delivered', 'read', 'acknowledged', 'forwarded'
+);
+CREATE TYPE dispatch.inbox_entry_status AS ENUM(
+    'unread', 'read', 'acknowledged'
+);
+
 -- WORKFLOW SCHEMA TYPES
 CREATE TYPE workflow.instance_status as ENUM(
     'in_progress','completed', 'rejected'
@@ -113,6 +125,8 @@ CREATE TYPE notifications.state as ENUM (
 CREATE TYPE media.uploaded_by_type as ENUM (
     'staff', 'onboarding_session', 'system'
 );
+
+
 
 -- IDENTITY SCHEMA
 -- users table
@@ -430,8 +444,6 @@ CREATE TABLE document.documents (
 
     -- correspondence metadata
     originating_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
-    recipient_unit_id varchar(50) REFERENCES identity.organizational_units(id),
-    addressed_to_staff_id varchar(50) REFERENCES identity.staff(id),
     subject_code_id varchar(50) REFERENCES document.correspondence_subjects(id) NOT NULL,
     direction document.correspondence_direction NOT NULL,
 
@@ -483,7 +495,7 @@ FOREIGN KEY (current_version_id)
 REFERENCES document.document_versions(id)
 ON DELETE SET NULL;
 
--- documents history
+-- documents lifecycle history
 CREATE TABLE document.document_lifecycle_history (
     id VARCHAR(50) PRIMARY KEY,
 
@@ -502,6 +514,15 @@ CREATE TABLE document.document_lifecycle_history (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- documents addressee
+CREATE TABLE document.document_addressee (
+    document_id varchar(50) REFERENCES document.documents(id) NOT NULL,
+    recipient_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
+    addressed_to_designation_id varchar(50) REFERENCES identity.designations(id) NOT NULL,
+
+    PRIMARY KEY (document_id, recipient_unit_id, addressed_to_designation_id)
+);
+
 -- documents media
 CREATE TABLE document.document_media_assets (
     document_id VARCHAR(50) REFERENCES document.documents(id) ON DELETE CASCADE NOT NULL,
@@ -514,6 +535,64 @@ CREATE TABLE document.document_media_assets (
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (document_id, media_id)
+);
+
+-- DISPATCH SCHEMA
+CREATE TABLE dispatch.dispatch_records (
+    id VARCHAR(50) PRIMARY KEY,
+
+    document_id VARCHAR(50)
+        REFERENCES document.documents(id)
+        ON DELETE CASCADE NOT NULL,
+
+    -- sender (for accountability sake)
+    sender_staff_id VARCHAR(50)
+        REFERENCES identity.staff(id) NOT NULL,
+    sender_designation_id VARCHAR(50) REFERENCES identity.designations(id),
+    sender_unit_id VARCHAR(50)
+        REFERENCES identity.organizational_units(id) NOT NULL,
+
+    -- recipient (policy-based routing)
+    recipient_designation_id VARCHAR(50) REFERENCES identity.designations(id),
+    recipient_unit_id VARCHAR(50) REFERENCES identity.organizational_units(id) NOT NULL,
+
+    -- dispatch metadata
+    dispatch_type dispatch.dispatch_type NOT NULL,
+    status dispatch.status NOT NULL,
+
+    dispatched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    parent_dispatch_id VARCHAR(50)
+        REFERENCES dispatch.dispatch_records(id)
+);
+
+CREATE TABLE dispatch.inbox_entries (
+    id VARCHAR(50) PRIMARY KEY,
+
+    dispatch_id VARCHAR(50)
+        REFERENCES dispatch.dispatch_records(id)
+        ON DELETE CASCADE NOT NULL,
+
+    document_id VARCHAR(50)
+        REFERENCES document.documents(id)
+        ON DELETE CASCADE NOT NULL,
+
+    -- actual recipient (resolved from designation)
+    staff_id VARCHAR(50)
+        REFERENCES identity.staff(id) NOT NULL,
+
+    -- context snapshot
+    designation_id VARCHAR(50) REFERENCES identity.designations(id) NOT NULL,
+    unit_id VARCHAR(50) REFERENCES identity.organizational_units(id) NOT NULL,
+
+    -- state
+    status dispatch.inbox_entry_status NOT NULL DEFAULT 'unread', 
+
+    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    read_at TIMESTAMPTZ,
+    acknowledged_at TIMESTAMPTZ,
+
+    UNIQUE (dispatch_id, staff_id)
 );
 
 
@@ -553,6 +632,7 @@ CREATE TABLE policy.approval_workflow_steps (
     UNIQUE (document_type_id, policy_version, step_order)
 );
 
+
 -- WORKFLOW SCHEMA
 CREATE TABLE workflow.workflow_instances (
     id VARCHAR(50) PRIMARY KEY,
@@ -584,6 +664,7 @@ CREATE TABLE workflow.workflow_tasks (
     acted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 
 -- DIRECTIVES SCHEMA
 CREATE TABLE directive.directives (
@@ -683,9 +764,12 @@ CREATE TABLE notifications.notifications (
     recipient_id varchar(50) NOT NULL,
     recipient_type notifications.recipient_type NOT NULL,
 
-    event_type varchar(50) NOT NULL,
+    event_type varchar(100) NOT NULL,
     subject_type varchar(50) NOT NULL,
     subject_id varchar(50) NOT NULL,
+    
+    in_app_subject_name varchar(255) DEFAULT NULL,
+    email_subject_header varchar(255) DEFAULT NULL,
 
     message_template TEXT NOT NULL,
 

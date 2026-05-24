@@ -1,4 +1,5 @@
 import type { LifecycleActions } from "../../domain/enum/lifecycleActions.enum.js";
+import type { AddresseeMetadata } from "../../domain/metadata/Addressee.metadata.js";
 import type { ClassificationMetadata } from "../../domain/metadata/Classification.metadata.js";
 import type { CorrespondenceMetadata } from "../../domain/metadata/Correspondence.metadata.js";
 
@@ -11,12 +12,16 @@ interface CorrespondenceMetadataWithSubjectCode extends CorrespondenceMetadata{
 }
 
 interface DocumentTypeForCreation {
-    ownerId: string;
     title: string;
-    
+    ownerId: string;
     action: LifecycleActions;
+    
     classification: ClassificationMetadataWithFunctionCode;
-    correspondence: CorrespondenceMetadataWithSubjectCode
+    correspondence: CorrespondenceMetadataWithSubjectCode;
+    
+    // addressee
+    addressee: AddresseeMetadata
 }
 
 export type { DocumentTypeForCreation };
+

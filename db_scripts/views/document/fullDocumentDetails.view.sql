@@ -8,7 +8,11 @@ SELECT doc.*,
     docVersion.created_at as version_created_at,
     docVersion.created_by as version_created_by,
     docVersion.state_entered_at as version_state_entered_at,
-    docVersion.state_entered_by as version_state_entered_by
+    docVersion.state_entered_by as version_state_entered_by,
+    docAddr.recipient_unit_id as recipient_unit_id,
+    docAddr.addressed_to_designation_id as addressed_to_designation_id
 FROM document.documents doc
 LEFT JOIN document.document_versions docVersion 
-ON docVersion.id = doc.current_version_id;
+ON docVersion.id = doc.current_version_id
+INNER JOIN document.document_addressee docAddr
+ON docAddr.document_id = doc.id;

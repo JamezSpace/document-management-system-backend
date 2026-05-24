@@ -1,20 +1,23 @@
+import type { TransactionContext } from "../../../../shared/infrastructure/persistence/primary/postgres.js";
 import type WorkflowInstance from "../../../domain/entities/WorkflowInstance.js";
 import type WorkflowTask from "../../../domain/entities/WorkflowTask.js";
 
 interface WorkflowRepositoryPort {
-	saveInstance(instance: WorkflowInstance): Promise<void>;
+	saveInstance(
+		instance: WorkflowInstance,
+		tx?: TransactionContext,
+	): Promise<void>;
 
-	getInstanceById(
-		instanceId: string,
-	): Promise<WorkflowInstance | null>;
+	getInstanceById(instanceId: string): Promise<WorkflowInstance | null>;
 
 	getInstanceByDocumentId(
 		documentId: string,
+		tx?: TransactionContext,
 	): Promise<WorkflowInstance | null>;
 
 	updateInstance(instance: WorkflowInstance): Promise<void>;
 
-	saveTasks(tasks: WorkflowTask[]): Promise<void>;
+	saveTasks(tasks: WorkflowTask[], tx?: TransactionContext): Promise<void>;
 
 	getTasksByInstanceId(instanceId: string): Promise<WorkflowTask[]>;
 

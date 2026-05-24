@@ -1,15 +1,16 @@
 import type { PostgresDb } from "@fastify/postgres";
-import type { WorkflowPolicyPort } from "../../../shared/application/port/WorkflowPolicy.port.js";
-import type WorkflowStep from "../../../workflow/domain/entities/WorkflowStep.js";
-import WorkflowStepEntity from "../../../workflow/domain/entities/WorkflowStep.js";
-import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import type { WorkflowPolicyPort } from "../../../shared/application/port/intersubsystem/WorkflowPolicy.port.js";
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { Category } from "../../../shared/errors/enum/infrastructure.enum.js";
+import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
+import type WorkflowStep from "../../../workflow/domain/entities/WorkflowStep.js";
+import WorkflowStepEntity from "../../../workflow/domain/entities/WorkflowStep.js";
 
 class PostgresWorkflowPolicyAdapter implements WorkflowPolicyPort{
     constructor(private readonly dbPool: PostgresDb) {}
 
-    async getApprovalSteps(documentId: string): Promise<WorkflowStep[]> {
+    async getApprovalSteps(documentId: string, tx?: TransactionContext): Promise<WorkflowStep[]> {
 		try {
 			const query = `
 				SELECT
@@ -26,7 +27,10 @@ class PostgresWorkflowPolicyAdapter implements WorkflowPolicyPort{
 				ORDER BY steps.step_order ASC;
 			`;
 
-			const result = await this.dbPool.query(query, [documentId]);
+            
+            const executor = tx?.client ?? this.dbPool;
+
+			const result = await executor.query(query, [documentId]);
 
 			if (!result.rows || result.rows.length === 0) return [];
 

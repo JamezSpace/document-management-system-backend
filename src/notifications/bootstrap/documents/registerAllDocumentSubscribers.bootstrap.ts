@@ -3,8 +3,9 @@ import { GlobalEventTypes } from "../../../shared/application/enum/event.enum.js
 import type { EventBusPort } from "../../../shared/application/port/services/eventbus.port.js";
 import UuidV7Generator from "../../../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import BusinessFunctionCreatedHandler from "../../application/handlers/documents/BussFunctionCreated.handler.js";
-import CreateNotificationUseCase from "../../application/usecase/CreateNotification.usecase.js";
+import CreateNotificationUseCase from "../../application/usecases/CreateNotification.usecase.js";
 import PostgresNotificationRepoAdapter from "../../infrastructre/repos/PostgresNotificationRepo.adapter.js";
+
 
 export default function registerAllDocumentSubscribers(dbPool: PostgresDb, eventBus: EventBusPort) {
     const notificationRepoAdapter = new PostgresNotificationRepoAdapter(dbPool);
@@ -14,9 +15,9 @@ export default function registerAllDocumentSubscribers(dbPool: PostgresDb, event
 
     const businessFunctionHandler = new BusinessFunctionCreatedHandler(createNotificationUseCase)
 
-
     eventBus.subscribe(
         GlobalEventTypes.document.business_function.BUSS_FUNCTION_CREATED,
         async event => businessFunctionHandler.handle(event)
     )
+
 }

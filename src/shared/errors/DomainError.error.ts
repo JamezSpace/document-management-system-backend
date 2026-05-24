@@ -3,7 +3,7 @@ import type { NexusAppError } from "./api/nexusAppError.type.js";
 import type { DomainErrorType } from "./enum/domain.enum.js";
 
 interface ErrorContext {
-	currentState?: string;
+	currentState?: string | null;
 	targetState?: string;
 	details?: Record<string, any>;
 }

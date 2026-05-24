@@ -5,6 +5,7 @@ import { mapPostgresError } from "../../../shared/infrastructure/persistence/pri
 import type { DocumentVersionRepositoryPort } from "../../application/ports/repos/DocumentVersionRepository.port.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
 import DocumentVersion from "../../domain/entities/document/DocumentVersion.js";
+import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
 
 class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -26,7 +27,7 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 		});
 	}
 
-	async save(document: DocumentVersion): Promise<DocumentVersion> {
+	async save(document: DocumentVersion, tx?: TransactionContext): Promise<DocumentVersion> {
 		try {
 			const query = `
 				INSERT INTO document.document_versions (
@@ -36,7 +37,9 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 				RETURNING *;
 			`;
 
-			const result = await this.dbPool.query(query, [
+            const executor = tx?.client ?? this.dbPool;
+
+			const result = await executor.query(query, [
 				document.id,
 				document.documentId,
                 document.contentDelta,
@@ -86,6 +89,7 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 
 	async editVersionedDocument(
 		document: DocumentVersion,
+        tx?: TransactionContext
 	): Promise<DocumentVersion | null> {
 		try {
 			const query = `
@@ -102,7 +106,8 @@ class PostgresDocVersionRepositoryAdapter implements DocumentVersionRepositoryPo
 				RETURNING *;
 			`;
 
-			const result = await this.dbPool.query(query, [
+            const executor = tx?.client ?? this.dbPool;
+			const result = await executor.query(query, [
 				document.id,
 				document.documentId,
                 document.contentDelta,

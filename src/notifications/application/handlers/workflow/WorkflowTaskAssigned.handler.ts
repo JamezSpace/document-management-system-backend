@@ -1,7 +1,7 @@
 import type { EventDetails } from "../../../../shared/application/port/services/eventbus.port.js";
 import { NotificationPriority } from "../../../domain/enum/NotificationPriority.enum.js";
 import { NotificationRecipientType } from "../../../domain/enum/NotificationRecipientType.enum.js";
-import type CreateNotificationUseCase from "../../usecase/CreateNotification.usecase.js";
+import type CreateNotificationUseCase from "../../usecases/CreateNotification.usecase.js";
 
 class WorkflowTasksAssignedHandler {
 	constructor(
@@ -16,7 +16,7 @@ class WorkflowTasksAssignedHandler {
 
 		await Promise.all(
 			assignedTo.map((userId: any) =>
-				this.createNotification.create({
+				this.createNotification.execute({
 					actorId: "SYSTEM", // system triggered
 					recipientId: userId,
 					recipientType: NotificationRecipientType.USER,
@@ -24,7 +24,7 @@ class WorkflowTasksAssignedHandler {
 					eventType: ev.eventName,
 					subjectType,
 					subjectId: workflowInstanceId,
-					subjectName: `Workflow Step ${stepOrder}`,
+					inAppSubjectName: `Workflow Step ${stepOrder}`,
 					payload: {
 						documentId,
 						workflowInstanceId,

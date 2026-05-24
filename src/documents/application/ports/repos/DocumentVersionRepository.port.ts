@@ -1,11 +1,12 @@
+import type { TransactionContext } from "../../../../shared/infrastructure/persistence/primary/postgres.js";
 import type DocumentVersion from "../../../domain/entities/document/DocumentVersion.js";
 
 interface DocumentVersionRepositoryPort {
-    save(document: DocumentVersion): Promise<DocumentVersion>;
+    save(document: DocumentVersion, tx?: TransactionContext): Promise<DocumentVersion>;
 
     findVersionedDocumentById(id: string): Promise<DocumentVersion | null>;
 
-    editVersionedDocument(document: DocumentVersion): Promise<DocumentVersion | null>;
+    editVersionedDocument(document: DocumentVersion, tx?: TransactionContext): Promise<DocumentVersion | null>;
 
     softDeleteDocument(id: string): Promise<void>;
 

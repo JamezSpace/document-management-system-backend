@@ -8,6 +8,7 @@ import type WorkflowInstance from "../../domain/entities/WorkflowInstance.js";
 import type WorkflowTask from "../../domain/entities/WorkflowTask.js";
 import WorkflowInstanceEntity from "../../domain/entities/WorkflowInstance.js";
 import WorkflowTaskEntity from "../../domain/entities/WorkflowTask.js";
+import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
 
 class PostgresWorkflowRepository implements WorkflowRepositoryPort {
     constructor(private readonly dbPool: PostgresDb) {}
@@ -34,7 +35,7 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 		});
 	}
 
-    async saveInstance(instance: WorkflowInstance): Promise<void> {
+    async saveInstance(instance: WorkflowInstance, tx?: TransactionContext): Promise<void> {
 		try {
 			const query = `
 				INSERT INTO workflow.workflow_instances (
@@ -42,7 +43,9 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 				) VALUES ($1, $2, $3, $4, $5);
 			`;
 
-			await this.dbPool.query(query, [
+            const executor = tx?.client ?? this.dbPool;
+
+			await executor.query(query, [
 				instance.id,
 				instance.documentId,
 				instance.currentStep,
@@ -58,10 +61,13 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 		}
     }
 
-    async getInstanceById(instanceId: string): Promise<WorkflowInstance | null> {
+    async getInstanceById(instanceId: string, tx?: TransactionContext): Promise<WorkflowInstance | null> {
 		try {
 			const query = "SELECT * FROM workflow.workflow_instances WHERE id = $1 LIMIT 1;";
-			const result = await this.dbPool.query(query, [instanceId]);
+    
+            const executor = tx?.client ?? this.dbPool;
+
+			const result = await executor.query(query, [instanceId]);
 
 			if (!result.rows || result.rows.length === 0) return null;
 
@@ -119,7 +125,7 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 		}
     }
 
-    async saveTasks(tasks: WorkflowTask[]): Promise<void> {
+    async saveTasks(tasks: WorkflowTask[], tx?: TransactionContext): Promise<void> {
 		if (tasks.length === 0) return;
 
 		try {
@@ -128,9 +134,11 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 					id, workflow_instance_id, step_order, assigned_to, role, status, created_at
 				) VALUES ($1, $2, $3, $4, $5, $6, $7);
 			`;
+            
+            const executor = tx?.client ?? this.dbPool;
 
 			for (const task of tasks) {
-				await this.dbPool.query(query, [
+				await executor.query(query, [
 					task.id,
 					task.workflowInstanceId,
 					task.stepOrder,

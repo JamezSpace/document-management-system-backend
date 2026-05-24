@@ -5,8 +5,8 @@ class GetDocumentByIdUsecase {
         private readonly documentRepo: DocumentRepositoryPort
     ){}
 
-    async getDocById(docId: string) {
-        const doc = this.documentRepo.findDocumentById(docId);
+    async execute(docId: string) {
+        const doc = await this.documentRepo.findDocumentById(docId);        
 
         return doc;
     }

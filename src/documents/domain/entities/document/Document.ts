@@ -2,6 +2,7 @@ import DomainError from "../../../../shared/errors/DomainError.error.js";
 import { GlobalDomainErrors } from "../../../../shared/errors/enum/domain.enum.js";
 import { DisposalAction } from "../../enum/disposalAction.enum.js";
 import { LifecycleState } from "../../enum/lifecycleState.enum.js";
+import type { AddresseeMetadata } from "../../metadata/Addressee.metadata.js";
 import type { ClassificationMetadata } from "../../metadata/Classification.metadata.js";
 import type { CorrespondenceMetadata } from "../../metadata/Correspondence.metadata.js";
 import type { RetentionMetadata } from "../../metadata/Retention.metadata.js";
@@ -14,6 +15,7 @@ interface DocumentPayload {
 	version?: DocumentVersion | null;
 	referenceNumber?: string | null;
 
+    addressee: AddresseeMetadata;
 	classification: ClassificationMetadata;
 	correspondence: CorrespondenceMetadata;
 	retention: RetentionMetadata;
@@ -40,6 +42,7 @@ class Document {
 	readonly referenceNumber: string | null;
 
 	// Governance Domains (Value Objects)
+    addressee: AddresseeMetadata;
 	classification: ClassificationMetadata;
 	correspondence: CorrespondenceMetadata;
 	readonly retention: RetentionMetadata;
@@ -48,10 +51,6 @@ class Document {
 	readonly createdAt: Date;
 	private updatedAt: Date | null;
 
-	// system flags
-	// isLatestVersion!: boolean;
-	// isEditable!: boolean;
-
 	constructor(payload: DocumentPayload) {
 		this.id = payload.id;
 		this.ownerId = payload.ownerId;
@@ -59,6 +58,7 @@ class Document {
 		this.currentVersion = payload.version ?? null;
 		this.referenceNumber = payload.referenceNumber ?? null;
 
+		this.addressee = payload.addressee;
 		this.classification = payload.classification;
 		this.correspondence = payload.correspondence;
 		this.retention = payload.retention;

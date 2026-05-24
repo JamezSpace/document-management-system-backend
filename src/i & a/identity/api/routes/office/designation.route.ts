@@ -15,8 +15,9 @@ async function officeDesignationRoutes(
 ) {
     const designationController = options.controller;
 
+    // this gets all designations across all offices and units
     fastify.get(
-        "/office/designations",
+        "/offices/designations",
         async (request: FastifyRequest, reply: FastifyReply) => {            
             const officeDesignations = await designationController.getAllDesignations();
 
@@ -27,6 +28,7 @@ async function officeDesignationRoutes(
         },
     );
 
+    // this gets all designations within an office
     fastify.get(
         "/office/:officeId/designations",
         {schema: {params: editOfficeDesignationSchema}},

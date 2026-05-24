@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
-import MediaServiceAdapter from "../shared/infrastructure/adapters/services/media/MediaService.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
+import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
 import BusinessFunctionController from "./api/controllers/businessFunction/BusinessFunctionController.js";
 import CorrespondenceSubjectController from "./api/controllers/correspondenceSubject/CorrespondenceSubjectController.js";
 import DocumentController from "./api/controllers/document/DocumentController.js";
@@ -15,7 +15,7 @@ import CreateBusinessFunctionUseCase from "./application/usecases/businessFuncti
 import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
 import CreateCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/CreateCorrespondenceSubject.usecase.js";
 import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
-import DocumentCreation from "./application/usecases/document/CreateDocument.usecase.js";
+import DocumentCreationUseCase from "./application/usecases/document/CreateDocument.usecase.js";
 import DeleteDocumentUseCase from "./application/usecases/document/DeleteDocument.usecase.js";
 import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocumentsByStaff.usecase.js";
 import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
@@ -27,6 +27,7 @@ import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctio
 import CorrespondenceSubjectEventsAdapter from "./infrastructure/adapters/CorrSubjectEvents.adapter.js";
 import DocumentEventsAdapter from "./infrastructure/adapters/DocumentEvents.adapter.js";
 import DocumentTypeEventsAdapter from "./infrastructure/adapters/DocumentTypeEvents.adapter.js";
+import PostgresDocumentAddresseeRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentAddresseeRepository.adapter.js";
 import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
 import PostgresCorrespondenceSubjectRepoAdapter from "./infrastructure/persistence/PostgresCorrSubjectRepo.adapter.js";
 import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
@@ -35,6 +36,7 @@ import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/Po
 import PostgresLifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/PostgresLifecycleHistoryRepository.adapter.js";
 import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
+import DocumentSubmissionUseCase from "./application/usecases/document/SubmitDocument.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -52,11 +54,14 @@ export default async function DocumentSubsystem(
 	const postgres = fastify.pg;
 
 	const idGenerator = new UuidV7Generator();
+	const transactionManager = new PostgresTransactionManager(postgres);
 
 	// all module repos in documents subsystem
 	const documentRepository = new PostgresqlDocumentRepositoryAdapter(
 		postgres,
 	);
+	const documentAddresseeRepository =
+		new PostgresDocumentAddresseeRepositoryAdapter(postgres);
 	const docVersionRepository = new PostgresDocVersionRepositoryAdapter(
 		postgres,
 	);
@@ -76,29 +81,25 @@ export default async function DocumentSubsystem(
 
 	//  all module event adapters in documents subsystem
 	const documentEventsAdapter = new DocumentEventsAdapter(globalEventBus);
-	const corrSubjectEventsAdapter = new CorrespondenceSubjectEventsAdapter(
-		globalEventBus,
-	);
-	const bussFunctionEventsAdapter = new BusinessFunctionEventsAdapter(
-		globalEventBus,
-	);
+	const corrSubjectEventsAdapter = new CorrespondenceSubjectEventsAdapter(globalEventBus);
+	const bussFunctionEventsAdapter = new BusinessFunctionEventsAdapter(globalEventBus);
 	const docTypeEventsAdapter = new DocumentTypeEventsAdapter(globalEventBus);
 
 	// service
 	const refNumberService = new ReferenceNumberService(refSequenceRepository);
-	const mediaService = new MediaServiceAdapter();
 
 	// application layer - documents
-	const createNewDocumentUseCase = new DocumentCreation(
+	const createNewDocumentUseCase = new DocumentCreationUseCase(
 		idGenerator,
 		documentRepository,
+		documentAddresseeRepository,
 		docVersionRepository,
-        lifecycleHistoryRepository,
+		lifecycleHistoryRepository,
 		docTypeRepository,
 		documentEventsAdapter,
 		refNumberService,
-		mediaService,
 		retentionService,
+		transactionManager,
 	);
 
 	const getAllDocumentsUseCase = new GetAllDocumentsByStaffUseCase(
@@ -109,12 +110,13 @@ export default async function DocumentSubsystem(
 		documentRepository,
 	);
 
-	const submitDocumentUseCase = new DocumentSubmission(
+	const submitDocumentUseCase = new DocumentSubmissionUseCase(
         idGenerator,
 		documentRepository,
         docVersionRepository,
         lifecycleHistoryRepository,
 		documentEventsAdapter,
+        transactionManager
 	);
 
 	const deleteDocumentUseCase = new DeleteDocumentUseCase(

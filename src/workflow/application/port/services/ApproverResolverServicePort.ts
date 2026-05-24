@@ -1,4 +1,4 @@
-import type { DocumentView } from "../../../../shared/application/port/WorkflowDocumentPort.js";
+import type { DocumentView } from "../../../../shared/application/port/intersubsystem/WorkflowDocument.port.js";
 import type { ResolutionStrategy } from "../../../domain/enum/ResolutionStrategy.enum.js";
 
 interface ApproverResolverServicePort {

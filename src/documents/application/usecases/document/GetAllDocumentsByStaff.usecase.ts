@@ -3,8 +3,8 @@ import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepositor
 class GetAllDocumentsByStaffUseCase {
     constructor(private readonly documentsRepo: DocumentRepositoryPort){}
 
-    async getAllDocumentsAuthoredByStaff(staffId:string) {
-        const allDocsByStaff = await this.documentsRepo.fetchAllDocumentsAuthoredByStaff(staffId);
+    async getDocumentsAuthoredOrAddressedToStaff(staffId:string) {
+        const allDocsByStaff = await this.documentsRepo.fetchDocumentsAuthoredByStaff(staffId);
 
         return allDocsByStaff;
     }

@@ -1,11 +1,11 @@
 import type { EventDetails } from "../../../../shared/application/port/services/eventbus.port.js";
 import { NotificationPriority } from "../../../domain/enum/NotificationPriority.enum.js";
 import { NotificationRecipientType } from "../../../domain/enum/NotificationRecipientType.enum.js";
-import type CreateNotificationUseCase from "../../usecase/CreateNotification.usecase.js";
+import type CreateNotificationUseCase from "../../usecases/CreateNotification.usecase.js";
 
 class BusinessFunctionCreatedHandler {
 	constructor(
-		private readonly createNotification: CreateNotificationUseCase,
+		private readonly createNotificationUseCase: CreateNotificationUseCase,
 	) {}
 
 	async handle(ev: EventDetails) {
@@ -13,15 +13,16 @@ class BusinessFunctionCreatedHandler {
 
 		const subjectType = "BUSINESS_FUNCTION";
 
-		await this.createNotification.create({
+        // recipient id should be resolved by role "admin" 
+		await this.createNotificationUseCase.execute({
 			actorId,
 			recipientId: "ADMIN",
 			recipientType: NotificationRecipientType.ROLE,
 			priority: NotificationPriority.LOW,
 			eventType: ev.eventName,
-			subjectType: "BUSINESS_FUNCTION",
+			subjectType,
 			subjectId: businessFunction.id,
-			subjectName: businessFunction.name,
+			inAppSubjectName: businessFunction.name,
 			payload: ev.payload,
 		});
 	}

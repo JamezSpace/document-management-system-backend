@@ -55,7 +55,7 @@ export const AccessDomainErrors = {
 } as const;
 
 export const DocumentDomainErrors = {
-    INVALID_DOCUMENT_STATE: {
+    INVALID_DOCUMENT_STATE_TRANSITION: {
         codeName: "invalid_document_state",
         httpStatusCode: StatusCodes.BAD_REQUEST
     },

@@ -64,6 +64,10 @@ enum DocTypeEvents {
     DOC_TYPE_CREATED = "document_type_created"
 }
 
+enum DispatchDocumentEvents {
+    DOC_DISPATCHED = "document_dispatched"
+}
+
 enum MediaEvents {
     MEDIA_ADDED = "media_added",
     MEDIA_REPLACED = "media_replaced",
@@ -93,6 +97,7 @@ const GlobalEventTypes = {
         business_function: BussFunctionEvents,
         document_type: DocTypeEvents
     },
+    dispatch: DispatchDocumentEvents,
     media: MediaEvents,
     policy: PolicyEvents,
     workflow: WorkflowEvents

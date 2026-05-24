@@ -1,4 +1,4 @@
-import type { WorkflowDocumentPort } from "../../../shared/application/port/WorkflowDocumentPort.js";
+import type { WorkflowDocumentPort } from "../../../shared/application/port/intersubsystem/WorkflowDocument.port.js";
 import type { WorkflowPolicyPort } from "../../../shared/application/port/WorkflowPolicy.port.js";
 import ApplicationError from "../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../shared/errors/enum/application.enum.js";
