@@ -29,6 +29,7 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 			workflowInstanceId: row.workflow_instance_id,
 			stepOrder: row.step_order,
 			assignedTo: row.assigned_to,
+			minuteId: row.minute_id,
 			role: row.role,
 			status: row.status,
 			createdAt: row.created_at,
@@ -131,8 +132,8 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 		try {
 			const query = `
 				INSERT INTO workflow.workflow_tasks (
-					id, workflow_instance_id, step_order, assigned_to, role, status, created_at
-				) VALUES ($1, $2, $3, $4, $5, $6, $7);
+					id, workflow_instance_id, step_order, assigned_to, minute_id, role, status, created_at
+				) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 			`;
             
             const executor = tx?.client ?? this.dbPool;
@@ -140,13 +141,14 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 			for (const task of tasks) {
 				await executor.query(query, [
 					task.id,
-					task.workflowInstanceId,
-					task.stepOrder,
-					task.assignedTo,
-					task.role,
-					task.getStatus(),
-					task.createdAt ?? new Date(),
-				]);
+				task.workflowInstanceId,
+				task.stepOrder,
+				task.assignedTo,
+				task.getMinuteId(),
+				task.role,
+				task.getStatus(),
+				task.createdAt ?? new Date(),
+			]);
 			}
 		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
@@ -223,13 +225,15 @@ class PostgresWorkflowRepository implements WorkflowRepositoryPort {
 			const query = `
 				UPDATE workflow.workflow_tasks
 				SET status = $2,
-					acted_at = $3
+					minute_id = $3,
+					acted_at = $4
 				WHERE id = $1;
 			`;
 
 			await this.dbPool.query(query, [
 				task.id,
 				task.getStatus(),
+				task.getMinuteId(),
 				actedAt,
 			]);
 		} catch (error: any) {

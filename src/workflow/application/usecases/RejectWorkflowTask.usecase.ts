@@ -8,7 +8,7 @@ class RejectTaskUseCase {
 		private readonly workflowRepository: WorkflowRepositoryPort
 	) {}
 
-	async execute(taskId: string, actorId: string) {
+	async execute(taskId: string, actorId: string, minuteId?: string | null) {
 		// fetch task
 		const task = await this.workflowRepository.getTaskById(taskId);
 
@@ -20,7 +20,7 @@ class RejectTaskUseCase {
 		}
 
 		// reject task (domain enforces auth + state)
-		task.reject(actorId);
+		task.reject(actorId, minuteId);
 
 		// fetch workflow instance
 		const instance = await this.workflowRepository.getInstanceById(

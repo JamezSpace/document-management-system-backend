@@ -6,10 +6,12 @@ import BusinessFunctionController from "./api/controllers/businessFunction/Busin
 import CorrespondenceSubjectController from "./api/controllers/correspondenceSubject/CorrespondenceSubjectController.js";
 import DocumentController from "./api/controllers/document/DocumentController.js";
 import DocumentTypeController from "./api/controllers/documentType/DocumentTypeController.js";
+import MinuteController from "./api/controllers/minute/MinuteController.js";
 import businessFunctionRoutes from "./api/routes/bussFunction.route.js";
 import correspondenceSubjectRoutes from "./api/routes/corrSubject.route.js";
 import documentTypeRoutes from "./api/routes/docType.route.js";
 import documentRoutes from "./api/routes/documents.route.js";
+import minuteRoutes from "./api/routes/minute.route.js";
 import type { RetentionServicePort } from "./application/ports/services/RetentionService.port.js";
 import CreateBusinessFunctionUseCase from "./application/usecases/businessFunction/CreateBusinessFunction.usecase.js";
 import GetAllBusinessFunctionsUseCase from "./application/usecases/businessFunction/GetAllBusinessFunctions.usecase.js";
@@ -17,8 +19,11 @@ import CreateCorrespondenceSubjectUseCase from "./application/usecases/correspon
 import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
 import DocumentCreationUseCase from "./application/usecases/document/CreateDocument.usecase.js";
 import DeleteDocumentUseCase from "./application/usecases/document/DeleteDocument.usecase.js";
-import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocumentsByStaff.usecase.js";
+import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocsByStaff.usecase.js";
 import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
+import CreateMinuteUseCase from "./application/usecases/minute/CreateMinute.usecase.js";
+import GetMinuteByIdUseCase from "./application/usecases/minute/GetMinuteById.usecase.js";
+import GetMinutesByDocumentIdUseCase from "./application/usecases/minute/GetMinutesByDocumentId.usecase.js";
 import DocumentSubmission from "./application/usecases/document/SubmitDocument.usecase.js";
 import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
 import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
@@ -34,9 +39,11 @@ import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDoc
 import PostgresqlDocumentRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentRepo.adapter.js";
 import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/PostgresDocVersionRepo.adapter.js";
 import PostgresLifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/PostgresLifecycleHistoryRepository.adapter.js";
+import PostgresMinuteRepositoryAdapter from "./infrastructure/persistence/PostgresMinuteRepo.adapter.js";
 import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
 import DocumentSubmissionUseCase from "./application/usecases/document/SubmitDocument.usecase.js";
+import GetAllDocsAddressedToStaffUseCase from "./application/usecases/document/GetAllDocsAddressedToStaff.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -68,6 +75,7 @@ export default async function DocumentSubsystem(
 	const lifecycleHistoryRepository = new PostgresLifecycleHistoryRepositoryAdapter(
 		postgres,
 	);
+	const minuteRepository = new PostgresMinuteRepositoryAdapter(postgres);
 	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(
 		postgres,
 	);
@@ -102,7 +110,11 @@ export default async function DocumentSubsystem(
 		transactionManager,
 	);
 
-	const getAllDocumentsUseCase = new GetAllDocumentsByStaffUseCase(
+	const getAllDocsByStaffUseCase = new GetAllDocumentsByStaffUseCase(
+		documentRepository,
+	);
+
+	const getAllDocsAddressedToUseCase = new GetAllDocsAddressedToStaffUseCase(
 		documentRepository,
 	);
 
@@ -124,6 +136,18 @@ export default async function DocumentSubsystem(
 		documentRepository,
         lifecycleHistoryRepository,
 		documentEventsAdapter,
+	);
+
+	const createMinuteUseCase = new CreateMinuteUseCase(
+		idGenerator,
+		documentRepository,
+		minuteRepository,
+	);
+
+	const getMinuteByIdUseCase = new GetMinuteByIdUseCase(minuteRepository);
+
+	const getMinutesByDocumentIdUseCase = new GetMinutesByDocumentIdUseCase(
+		minuteRepository,
 	);
 
 	// application layer - correspondence subjects
@@ -163,7 +187,8 @@ export default async function DocumentSubsystem(
 	// controller Layer
 	const documentController = new DocumentController(
 		createNewDocumentUseCase,
-		getAllDocumentsUseCase,
+		getAllDocsByStaffUseCase,
+        getAllDocsAddressedToUseCase,
         getDocumentByIdUseCase,
 		submitDocumentUseCase,
 		deleteDocumentUseCase,
@@ -185,6 +210,12 @@ export default async function DocumentSubsystem(
         getDocumentTypeByIdUseCase
 	);
 
+	const minuteController = new MinuteController(
+		createMinuteUseCase,
+		getMinuteByIdUseCase,
+		getMinutesByDocumentIdUseCase,
+	);
+
 	await fastify.register(documentRoutes, {
 		controller: documentController,
 	});
@@ -199,5 +230,9 @@ export default async function DocumentSubsystem(
 
 	await fastify.register(documentTypeRoutes, {
 		controller: documentTypeController,
+	});
+
+	await fastify.register(minuteRoutes, {
+		controller: minuteController,
 	});
 }

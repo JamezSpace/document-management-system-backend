@@ -6,6 +6,8 @@ interface DocumentRepositoryPort {
 
     fetchDocumentsAuthoredByStaff(staffId: string): Promise<Document[]>;
 
+    fetchInboxDocumentsForStaff(staffId: string): Promise<Document[]>;
+
     findDocumentById(id: string): Promise<Document | null>;
 
     editDocument(document: Document, tx?: TransactionContext): Promise<Document | null>;

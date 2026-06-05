@@ -1,6 +1,7 @@
 interface RecipientResolverPort {
     resolveRecipients(input: {
-        documentId: string;
+        designationId: string;
+        unitId: string;
     }): Promise<Array<{
         staffId: string;
         unitId: string;

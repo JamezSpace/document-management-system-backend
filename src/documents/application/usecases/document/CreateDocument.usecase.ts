@@ -58,12 +58,25 @@ class DocumentCreationUseCase {
 					);
 
 				if (documentType.code === "memo") {
+					const primaryAddressee = payload.addressees.find(
+						(a) => a.isPrimary,
+					);
+
+					if (!primaryAddressee) {
+						throw new ApplicationError(
+							ApplicationErrorEnum.NOT_ALLOWED,
+							{
+								message: "Primary addressee is required",
+							},
+						);
+					}
+
 					referenceNumber = await this.refNumService.generate({
 						year: new Date().getFullYear(),
 						subjectCode: payload.correspondence.subjectCode,
 						functionCode: payload.classification.functionCode,
 						originUnitId: payload.correspondence.originatingUnitId,
-						recipientUnitId: payload.addressee.recipientUnitId,
+						recipientUnitId: primaryAddressee.recipientUnitId,
 					});
 				}
 
@@ -73,29 +86,32 @@ class DocumentCreationUseCase {
 					retention,
 					referenceNumber,
 					...payload,
-				});
-                
+				});                
+
 				const savedDoc = await this.documentRepo.save(
 					newDocument,
 					transactionInstance,
 				);
 
-				const savedDocAddressee = await this.documentAddresseeRepo.save(
-					{
-						documentId: docId,
-						recipientUnitId: payload.addressee.recipientUnitId,
-						addressedToDesignationId: payload.addressee.addressedToDesignationId,
-					},
-					transactionInstance,
+				const savedDocAddressees = await Promise.all(
+					payload.addressees.map((addr) =>
+						this.documentAddresseeRepo.save(
+							{
+								documentId: docId,
+								recipientUnitId: addr.recipientUnitId,
+								addressedToDesignationId:
+									addr.addressedToDesignationId,
+								isPrimary: addr.isPrimary, 
+							},
+							transactionInstance,
+						),
+					),
 				);
-                
+
 				return {
-                    ...savedDoc,
-                    addressee: {
-                        recipientUnitId: savedDocAddressee.recipientUnitId,
-                        addressedToDesignationId: savedDocAddressee.addressedToDesignationId
-                    }
-                };
+					...savedDoc,
+					addressees: savedDocAddressees,
+				};
 			},
 		);
 
@@ -124,27 +140,47 @@ class DocumentCreationUseCase {
 					transactionInstance,
 				);
 
-				const savedDoc = await this.documentRepo.editDocument(document, transactionInstance);
+				const savedDoc = await this.documentRepo.editDocument(
+					document,
+					transactionInstance,
+				);
 
-                const savedDocAddressee = await this.documentAddresseeRepo.editDocAddressee({
-                    documentId: document.id,
-                    editsToMake: {
-                        addressedToDesignationId: document.addressee.addressedToDesignationId
-                    }
-                }, transactionInstance);
+				await this.documentAddresseeRepo.deleteByDocumentId(
+					document.id,
+					transactionInstance,
+				);
 
-				await this.lifecycleHistoryRepo.save({
-					id: "CYCLE-HSTORY-" + this.idGenerator.generate(),
-					action: LifecycleActions.SAVE,
-					actorId,
-					documentId: savedVersionedDoc.documentId,
-					documentVersionId: savedVersionedDoc.id,
-					fromState: null,
-					toState: LifecycleState.DRAFT,
-					metadata: null,
-				}, transactionInstance);
+				
+const savedDocAddressees = await Promise.all(
+					document.addressees.map((addr) =>
+						this.documentAddresseeRepo.save(
+							{
+								documentId: document.id,
+								recipientUnitId: addr.recipientUnitId,
+								addressedToDesignationId:
+									addr.addressedToDesignationId,
+								isPrimary: addr.isPrimary,
+							},
+							transactionInstance,
+						),
+					),
+				);
 
-                return {savedDoc, savedVersionedDoc, savedDocAddressee}
+				await this.lifecycleHistoryRepo.save(
+					{
+						id: "CYCLE-HSTORY-" + this.idGenerator.generate(),
+						action: LifecycleActions.SAVE,
+						actorId,
+						documentId: savedVersionedDoc.documentId,
+						documentVersionId: savedVersionedDoc.id,
+						fromState: null,
+						toState: LifecycleState.DRAFT,
+						metadata: null,
+					},
+					transactionInstance,
+				);
+
+				return { savedDoc, savedVersionedDoc, savedDocAddressees };
 			},
 		);
 
@@ -156,7 +192,7 @@ class DocumentCreationUseCase {
 		return {
 			...result.savedDoc,
 			currentVersion: result.savedVersionedDoc,
-            addressee: result.savedDocAddressee
+			addressee: result.savedDocAddressees,
 		};
 	}
 }

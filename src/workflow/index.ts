@@ -5,6 +5,8 @@ import type { EventBusPort } from "../shared/application/port/services/eventbus.
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
 import StartWorkflowUseCase from "./application/usecases/StartWorkflow.usecase.js";
+import ApproveWorkflowTaskUseCase from "./application/usecases/ApproveWorkflowTask.usecase.js";
+import RejectWorkflowTaskUseCase from "./application/usecases/RejectWorkflowTask.usecase.js";
 import registerAllWorkflowSubscribers from "./bootstrap/registerDocumentSubscribers.js";
 import WorkflowEngine from "./domain/WorkflowEngine.service.js";
 import WorkflowEventsAdapter from "./infrastructure/adapters/events/WorkflowEventsAdapter.js";
@@ -12,6 +14,9 @@ import WorkflowStarterAdapter from "./infrastructure/adapters/WorkflowStarter.ad
 import PostgresWorkflowRepository from "./infrastructure/persistence/PostgresWorkflowRepository.adapter.js";
 import ApproverResolverServiceAdapter from "./infrastructure/services/ApproverResolverService.adapter.js";
 import type { WorkflowPolicyPort } from "../shared/application/port/intersubsystem/WorkflowPolicy.port.js";
+import WorkflowController from "./api/controller/WorkflowController.js";
+import workflowRoutes from "./api/routes/workflow.routes.js";
+import GetWorkflowUseCase from "./application/usecases/GetWorkflow.usecase.js";
 
 interface WorkflowSubsystemDependencies {
 	documentWorkflowAdapter: WorkflowDocumentPort;
@@ -63,5 +68,29 @@ export default async function WorkflowSubsystem(
 		startWorkflowUseCase,
 	);
 
+	const approveWorkflowTaskUseCase = new ApproveWorkflowTaskUseCase(
+		workflowRepository,
+		policyWorkflowAdapter,
+		documentWorkflowAdapter,
+		workflowEngine,
+		approverResolver,
+	);
+
+	const rejectWorkflowTaskUseCase = new RejectWorkflowTaskUseCase(
+		workflowRepository,
+	);
+
+	const getWorkflowUseCase = new GetWorkflowUseCase(workflowRepository);
+
+	const workflowController = new WorkflowController(
+		getWorkflowUseCase,
+		approveWorkflowTaskUseCase,
+		rejectWorkflowTaskUseCase,
+	);
+
 	registerAllWorkflowSubscribers(globalEventBus, workflowStarterAdapter);
+
+	await fastify.register(workflowRoutes, {
+		controller: workflowController,
+	});
 }

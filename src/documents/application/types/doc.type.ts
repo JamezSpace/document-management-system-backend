@@ -19,8 +19,8 @@ interface DocumentTypeForCreation {
     classification: ClassificationMetadataWithFunctionCode;
     correspondence: CorrespondenceMetadataWithSubjectCode;
     
-    // addressee
-    addressee: AddresseeMetadata
+    // addressees
+    addressees: AddresseeMetadata[]
 }
 
 export type { DocumentTypeForCreation };

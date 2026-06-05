@@ -10,13 +10,7 @@ interface DocumentAddresseeRepositoryPort {
 
 	fetchAll(): Promise<DocumentAddressee[]>;
 
-	editDocAddressee(
-		payload: {
-			documentId: string;
-			editsToMake: Omit<DocumentAddresseePayload, "documentId" | "recipientUnitId">;
-		},
-		tx?: TransactionContext,
-	): Promise<DocumentAddressee | null>;
+    deleteByDocumentId(documentId: string, tx?: TransactionContext): Promise<void>
 }
 
 export type { DocumentAddresseeRepositoryPort };

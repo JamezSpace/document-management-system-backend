@@ -15,13 +15,13 @@ interface DocumentPayload {
 	version?: DocumentVersion | null;
 	referenceNumber?: string | null;
 
-    addressee: AddresseeMetadata;
+	addressees: AddresseeMetadata[];
 	classification: ClassificationMetadata;
 	correspondence: CorrespondenceMetadata;
 	retention: RetentionMetadata;
 
 	createdAt?: Date;
-	updatedAt?: Date| null;
+	updatedAt?: Date | null;
 }
 
 /**
@@ -42,7 +42,7 @@ class Document {
 	readonly referenceNumber: string | null;
 
 	// Governance Domains (Value Objects)
-    addressee: AddresseeMetadata;
+	addressees: AddresseeMetadata[];
 	classification: ClassificationMetadata;
 	correspondence: CorrespondenceMetadata;
 	readonly retention: RetentionMetadata;
@@ -58,17 +58,49 @@ class Document {
 		this.currentVersion = payload.version ?? null;
 		this.referenceNumber = payload.referenceNumber ?? null;
 
-		this.addressee = payload.addressee;
 		this.classification = payload.classification;
 		this.correspondence = payload.correspondence;
 		this.retention = payload.retention;
 
 		this.createdAt = payload.createdAt ?? new Date();
 		this.updatedAt = payload.updatedAt ?? null;
+
+		const primaryCount = payload.addressees.filter(
+			(a) => a.isPrimary,
+		).length;
+
+		// if (primaryCount !== 1) {
+		// 	throw new DomainError(
+		// 		GlobalDomainErrors.document.INVALID_OPERATION,
+		// 		{
+		// 			details: {
+		// 				message:
+		// 					"Document must have exactly one primary addressee",
+		// 			},
+		// 		},
+		// 	);
+		// }
+
+		this.addressees = payload.addressees;
 	}
 
 	getCurrentVersion(): DocumentVersion | null {
 		return this.currentVersion;
+	}
+
+	getPrimaryAddressee(): AddresseeMetadata {
+		const primary = this.addressees.find((a) => a.isPrimary);
+
+		if (!primary) {
+			throw new DomainError(
+				GlobalDomainErrors.document.INVALID_OPERATION,
+				{
+					details: { message: "No primary addressee found" },
+				},
+			);
+		}
+
+		return primary;
 	}
 
 	public addVersion(
@@ -114,18 +146,24 @@ class Document {
 		if (!this.currentVersion) {
 			return this.addVersion(payload, actorId);
 		}
-        
-		return this.createNextVersion({
-			...payload,
-			mediaId: payload.mediaId ?? null
-		}, actorId);
+
+		return this.createNextVersion(
+			{
+				...payload,
+				mediaId: payload.mediaId ?? null,
+			},
+			actorId,
+		);
 	}
 
-	public createNextVersion(payload: {
-		contentDelta: unknown;
-		mediaId?: string | null;
-		uuid: string;
-	}, actorId: string): DocumentVersion {
+	public createNextVersion(
+		payload: {
+			contentDelta: unknown;
+			mediaId?: string | null;
+			uuid: string;
+		},
+		actorId: string,
+	): DocumentVersion {
 		if (!this.currentVersion) {
 			throw new DomainError(
 				GlobalDomainErrors.document.INVALID_OPERATION,

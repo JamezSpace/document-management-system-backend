@@ -1,5 +1,5 @@
 import type { WorkflowDocumentPort } from "../../../shared/application/port/intersubsystem/WorkflowDocument.port.js";
-import type { WorkflowPolicyPort } from "../../../shared/application/port/WorkflowPolicy.port.js";
+import type { WorkflowPolicyPort } from "../../../shared/application/port/intersubsystem/WorkflowPolicy.port.js";
 import ApplicationError from "../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../shared/errors/enum/application.enum.js";
 import type WorkflowEngine from "../../domain/WorkflowEngine.service.js";
@@ -16,7 +16,7 @@ class ApproveTaskUseCase {
 		// private readonly auditPort: AuditPort
 	) {}
 
-	async execute(taskId: string, actorId: string) {
+	async execute(taskId: string, actorId: string, minuteId?: string | null) {
 		// get task
 		const task = await this.workflowRepository.getTaskById(taskId);
 
@@ -40,10 +40,10 @@ class ApproveTaskUseCase {
 		}
 
 		// approve task
-		task.approve(actorId);
+		task.approve(actorId, minuteId);
 
 		// get workflow instance
-		const instance = await this.workflowRepository.getInstanceByDocumentId(task.workflowInstanceId);
+		const instance = await this.workflowRepository.getInstanceById(task.workflowInstanceId);
 
 		if (!instance) {
 			throw new ApplicationError(ApplicationErrorEnum.WRKFLOW_NOT_FOUND, {

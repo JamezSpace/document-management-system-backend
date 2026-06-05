@@ -81,7 +81,9 @@ VALUES
     'staff.pending_activation.list',
     'list staff pending activation'),
     -- ui
-    ('perm.notice.view', 'notice.view', 'Access the system notice board and university bulletin');
+    ('perm.notice.view', 'notice.view', 'Access the system notice board and university bulletin'),
+    ('perm.registry.intake', 'registry.intake', 'register and scan incoming correspondence'),
+    ('perm.registry.logbook.view', 'registry.logbook.view', 'view external correspondence register');
 
 
 

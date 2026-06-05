@@ -28,6 +28,7 @@ class WorkflowEngine {
 				workflowInstanceId: instanceId,
 				stepOrder: step.stepOrder,
 				assignedTo: userId,
+				minuteId: null,
 				role: step.role,
 				status: WorkflowTaskStatus.PENDING,
 			});

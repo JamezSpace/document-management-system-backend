@@ -5,11 +5,11 @@ import {
 } from "../../../shared/errors/enum/infrastructure.enum.js";
 import InfrastructureError from "../../../shared/errors/InfrastructureError.error.js";
 import { mapPostgresError } from "../../../shared/infrastructure/persistence/primary/helpers/mapPostgresError.helper.js";
+import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
 import type { DocumentRepositoryPort } from "../../application/ports/repos/DocumentRepository.port.js";
 import type Document from "../../domain/entities/document/Document.js";
 import DocumentEntity from "../../domain/entities/document/Document.js";
 import DocumentVersion from "../../domain/entities/document/DocumentVersion.js";
-import type { TransactionContext } from "../../../shared/infrastructure/persistence/primary/postgres.js";
 
 class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -31,22 +31,28 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 					},
 				})
 			: null;
-
+                    
+		const addressees = (row.addressees ?? []).map((a: any) => ({
+			recipientUnitId: a.recipient_unit_id,
+			addressedToDesignationId: a.addressed_to_designation_id,
+            isPrimary: a.is_primary
+		}));
+        
 		return new DocumentEntity({
 			id: row.id,
 			ownerId: row.owner_id,
 			title: row.title,
 			version,
 			referenceNumber: row.reference_number,
+
 			correspondence: {
 				originatingUnitId: row.originating_unit_id,
 				subjectCodeId: row.subject_code_id,
 				direction: row.direction,
 			},
-			addressee: {
-				recipientUnitId: row.recipient_unit_id,
-				addressedToDesignationId: row.addressed_to_designation_id,
-			},
+
+			addressees,
+
 			classification: {
 				sensitivity: row.sensitivity,
 				functionCodeId: row.business_function_id,
@@ -56,6 +62,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				lastReclassifiedAt: row.last_reclassified_at,
 				lastReclassifiedBy: row.last_reclassified_by,
 			},
+
 			retention: {
 				policyVersion: row.policy_version,
 				retentionScheduleId: row.retention_schedule_id,
@@ -63,6 +70,7 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 				disposalEligibilityDate: row.disposal_eligibility_date,
 				archivalRequired: row.archival_required,
 			},
+
 			createdAt: row.created_at,
 			updatedAt: row.updated_at,
 		});
@@ -117,8 +125,12 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 
 			const dbResponse = result.rows[0];
 
+            console.log(dbResponse);
+            
 			return this.toDomain(dbResponse);
 		} catch (error: any) {
+            console.log(error);
+            
 			const postgresError = mapPostgresError(error);
 
 			throw new InfrastructureError(postgresError.summary, {
@@ -244,9 +256,33 @@ class PostgresqlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 
 			const result = await this.dbPool.query(query, [staffId]);
 
-			if (!result.rows || result.rows.length === 0) return [];
+			if (!result.rows || result.rows.length === 0) return [];          
 
 			return result.rows.map((row) => this.toDomain(row));
+		} catch (error: any) {
+			throw new InfrastructureError(
+				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
+				{
+					category: Category.PERSISTENCE,
+					message: error.message,
+				},
+			);
+		}
+	}
+
+	async fetchInboxDocumentsForStaff(staffId: string): Promise<Document[]> {
+		try {
+			const query = `
+                SELECT * 
+                FROM document.docs_addressed_to_staff
+                WHERE staff_id = $1;
+            `;
+
+			const result = await this.dbPool.query(query, [staffId]);
+
+			if (!result.rows || result.rows.length === 0) return [];
+			
+            return result.rows.map((row) => this.toDomain(row));
 		} catch (error: any) {
 			throw new InfrastructureError(
 				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,

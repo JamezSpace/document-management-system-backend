@@ -7,6 +7,7 @@ interface WorkflowTaskPayload {
 	workflowInstanceId: string;
 	stepOrder: number;
 	assignedTo: string;
+	minuteId?: string | null;
 	role: string;
 	status: WorkflowTaskStatus;
 	createdAt?: Date;
@@ -17,6 +18,7 @@ class WorkflowTask {
 	readonly workflowInstanceId: string;
 	readonly stepOrder: number;
 	readonly assignedTo: string;
+	private minuteId: string | null;
 	readonly role: string;
 	private status: WorkflowTaskStatus;
 	readonly createdAt: Date;
@@ -26,6 +28,7 @@ class WorkflowTask {
 		this.workflowInstanceId = payload.workflowInstanceId;
 		this.stepOrder = payload.stepOrder;
 		this.assignedTo = payload.assignedTo;
+		this.minuteId = payload.minuteId ?? null;
 		this.role = payload.role;
 		this.status = payload.status;
 		this.createdAt = payload.createdAt ?? new Date();
@@ -50,17 +53,19 @@ class WorkflowTask {
 	}
 
 	// core domain actions
-	approve(actorId: string) {
+	approve(actorId: string, minuteId?: string | null) {
 		this.ensureCanAct(actorId);
 		this.ensurePending();
 
+		this.minuteId = minuteId ?? this.minuteId;
 		this.status = WorkflowTaskStatus.APPROVED;
 	}
 
-	reject(actorId: string) {
+	reject(actorId: string, minuteId?: string | null) {
 		this.ensureCanAct(actorId);
 		this.ensurePending();
 
+		this.minuteId = minuteId ?? this.minuteId;
 		this.status = WorkflowTaskStatus.REJECTED;
 	}
 
@@ -95,6 +100,10 @@ class WorkflowTask {
 	// exposing read-only status
 	getStatus(): WorkflowTaskStatus {
 		return this.status;
+	}
+
+	getMinuteId(): string | null {
+		return this.minuteId;
 	}
 }
 

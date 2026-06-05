@@ -21,6 +21,7 @@ class PostgresDocumentAddresseeRepositoryAdapter
 			documentId: row.document_id,
 			recipientUnitId: row.recipient_unit_id,
 			addressedToDesignationId: row.addressed_to_designation_id,
+            isPrimary: row.is_primary
 		});
 	}
 
@@ -33,26 +34,26 @@ class PostgresDocumentAddresseeRepositoryAdapter
 				INSERT INTO document.document_addressee (
 					document_id,
 					recipient_unit_id,
-					addressed_to_designation_id
+					addressed_to_designation_id,
+                    is_primary
 				)
-				VALUES ($1, $2, $3)
+				VALUES ($1, $2, $3, $4)
 				ON CONFLICT (
 					document_id,
 					recipient_unit_id,
-					addressed_to_designation_id
+					addressed_to_designation_id 
 				)
 				DO UPDATE SET
-					document_id = EXCLUDED.document_id,
-					recipient_unit_id = EXCLUDED.recipient_unit_id,
-					addressed_to_designation_id = EXCLUDED.addressed_to_designation_id
+                    is_primary = EXCLUDED.is_primary
 				RETURNING *;
 			`;
-
+            
 			const executor = tx?.client ?? this.dbPool;
 			const result = await executor.query(query, [
 				payload.documentId,
 				payload.recipientUnitId,
 				payload.addressedToDesignationId,
+                payload.isPrimary
 			]);
 
 			return this.toDomain(result.rows[0]);
@@ -131,6 +132,26 @@ class PostgresDocumentAddresseeRepositoryAdapter
 		} catch (error: any) {
 			if (error instanceof InfrastructureError) throw error;
 
+			const postgresError = mapPostgresError(error);
+
+			throw new InfrastructureError(postgresError.summary, {
+				category: Category.PERSISTENCE,
+				message: postgresError.details?.message ?? error.message,
+				table: postgresError.details?.table,
+				column: postgresError.details?.column,
+			});
+		}
+	}
+
+	async deleteByDocumentId(
+		documentId: string,
+		tx?: TransactionContext,
+	): Promise<void> {
+		try {
+			const query = "DELETE FROM document.document_addressee WHERE document_id = $1;";
+			const executor = tx?.client ?? this.dbPool;
+			await executor.query(query, [documentId]);
+		} catch (error: any) {
 			const postgresError = mapPostgresError(error);
 
 			throw new InfrastructureError(postgresError.summary, {

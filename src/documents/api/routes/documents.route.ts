@@ -71,6 +71,34 @@ async function documentRoutes(
 		},
 	);
 
+	// fetch all docs addressed to staff
+	fastify.get(
+		"/documents/shared/:staffId",
+		{ schema: { params: docStaffIdSchema } },
+		async (
+			request: FastifyRequest<{ Params: DocStaffIdSchemaType }>,
+			reply: FastifyReply,
+		) => {
+			const { uid } = request.user!;
+			const { staffId } = request.params;
+
+			if (!uid)
+				return reply.code(401).send({
+					success: true,
+					message: "No uid extracted from access token",
+				});
+
+			// fetch addressed to staff
+			const docsAddressedToStaff =
+				await documentController.fetchAllDocsAddressedToStaff(staffId);
+
+			return reply.code(200).send({
+				success: true,
+				data: docsAddressedToStaff,
+			});
+		},
+	);
+
 	// get a document with id
 	fastify.get(
 		"/:docId",

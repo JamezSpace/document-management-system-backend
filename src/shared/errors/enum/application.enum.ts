@@ -57,6 +57,10 @@ export const ApplicationErrorEnum = {
         codeName: "document_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND
     },
+    MINUTE_NOT_FOUND: {
+        codeName: "minute_not_found",
+        httpStatusCode: StatusCodes.NOT_FOUND
+    },
     POLICY_NOT_FOUND: {
         codeName: "policy_not_found",
         httpStatusCode: StatusCodes.NOT_FOUND

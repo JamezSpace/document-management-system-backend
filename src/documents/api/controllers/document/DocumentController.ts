@@ -2,21 +2,23 @@ import ApplicationError from "../../../../shared/errors/ApplicationError.error.j
 import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application.enum.js";
 import type DocumentCreationUseCase from "../../../application/usecases/document/CreateDocument.usecase.js";
 import type DeleteDocumentUseCase from "../../../application/usecases/document/DeleteDocument.usecase.js";
-import type GetAllDocumentsByStaffUseCase from "../../../application/usecases/document/GetAllDocumentsByStaff.usecase.js";
+import type GetAllDocsAddressedToStaffUseCase from "../../../application/usecases/document/GetAllDocsAddressedToStaff.usecase.js";
+import type GetAllDocumentsByStaffUseCase from "../../../application/usecases/document/GetAllDocsByStaff.usecase.js";
 import type GetDocumentByIdUsecase from "../../../application/usecases/document/GetDocById.usecase.js";
 import type DocumentSubmission from "../../../application/usecases/document/SubmitDocument.usecase.js";
 import Document from "../../../domain/entities/document/Document.js";
 import DocumentVersion from "../../../domain/entities/document/DocumentVersion.js";
 import { CorrespondenceDirection } from "../../../domain/enum/correspondenceDirection.enum.js";
 import type {
-	DocumentSchemaType,
-	DocumentSchemaTypeForCreation,
+    DocumentSchemaType,
+    DocumentSchemaTypeForCreation,
 } from "../../types/document.type.js";
 
 class DocumentController {
 	constructor(
 		private readonly createDocumentUseCase: DocumentCreationUseCase,
-		private readonly getAllDocumentsByStaffUsecase: GetAllDocumentsByStaffUseCase,
+		private readonly getAllDocsByStaffUsecase: GetAllDocumentsByStaffUseCase,
+		private readonly getAllDocsAddressedToStaffUsecase: GetAllDocsAddressedToStaffUseCase,
 		private readonly getDocumentByIdUsecase: GetDocumentByIdUsecase,
 		private readonly submitDocUsecase: DocumentSubmission,
 		private readonly deleteDocumentUseCase: DeleteDocumentUseCase,
@@ -106,23 +108,35 @@ class DocumentController {
 				direction: incomingDocument.correspondence.direction,
 			},
 
-			addressee: {
+			addressees: [{
 				recipientUnitId: incomingDocument.addressee.recipientUnitId,
 				addressedToDesignationId:
-					incomingDocument.addressee.addressedToDesignationId
-			},
+					incomingDocument.addressee.addressedToDesignationId,
+                isPrimary: true
+			}],
 		});
 
+        
+        
 		return newDoc;
 	}
 
 	async fetchAllDocsByStaff(staffId: string) {
 		const docsByStaff =
-			await this.getAllDocumentsByStaffUsecase.getDocumentsAuthoredOrAddressedToStaff(
+			await this.getAllDocsByStaffUsecase.execute(
 				staffId,
 			);
 
 		return docsByStaff;
+	}
+
+	async fetchAllDocsAddressedToStaff(staffId: string) {
+		const docsAddressedToStaff =
+			await this.getAllDocsAddressedToStaffUsecase.execute(
+				staffId
+			);
+
+		return docsAddressedToStaff;
 	}
 
 	async fetchDocById(docId: string) {
@@ -202,11 +216,11 @@ class DocumentController {
 
 		const document = {
 			...doc,
-			addressee: {
-				recipientUnitId: doc.addressee.recipientUnitId,
-				addressedToDesignationId:
-					doc.addressee.addressedToDesignationId,
-			},
+			// addressee: {
+			// 	recipientUnitId: doc.addressee.recipientUnitId,
+			// 	addressedToDesignationId:
+			// 		doc.addressee.addressedToDesignationId,
+			// },
 			classification: {
 				...doc.classification,
 				classifiedAt: new Date(doc.classification.classifiedAt),

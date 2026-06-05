@@ -60,7 +60,7 @@ class DocumentSubmissionUseCase {
 				);
 
                 // storing addresse here so it doesn't get lost during edit of the document
-                const docAddressee = document.addressee;
+                const docAddressees = document.addressees;
 				const submittedDocument = await this.documentRepo.editDocument(
 					document,
 					transactionInstance,
@@ -68,7 +68,7 @@ class DocumentSubmissionUseCase {
 
                 return submittedDocument && {
                     ...submittedDocument,
-                    addressee: docAddressee
+                    addressees: docAddressees
                 };
 			},
 		);

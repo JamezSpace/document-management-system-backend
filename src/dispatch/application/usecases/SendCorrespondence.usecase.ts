@@ -46,75 +46,89 @@ class SendCorrespondenceUseCase {
 						{ message: "Document is not valid to be dispatched" },
 					);
 
-				// this is redundant right now, given document addressee is in the core document, however this is left here solely for the case of dispatching a document to multiple designations. In that case, 'getDocAddresseeByDocIdMultiple' should be employed
-
-				// const docAddressee =
-				// 	await this.dispatchDocumentPort.getDocAddresseeByDocIdSingle(
-				// 		doc.id,
-				// 		transactionInstance,
-				// 	);
-
 				const senderDetails =
 					await this.dispatchStaffRepo.getStaffDetailsById(
-						doc.ownerId,
+						input.actorId,
 						transactionInstance,
 					);
 
-				// create dispatch record (intent only)
-				const dispatch = new DispatchRecord({
-					id: `D-RCD-${this.idGenerator.generate()}`,
-					documentId: doc.id,
+				const addressees = doc.addressees ?? [];
 
-					senderStaffId: input.actorId,
-					senderDesignationId: senderDetails.designationId,
-					senderUnitId: senderDetails.unitId,
+				if (addressees.length === 0) {
+					throw new ApplicationError(
+						ApplicationErrorEnum.NOT_ALLOWED,
+						{ message: "Document has no addressees to dispatch to" },
+					);
+				}
 
-					recipientDesignationId:
-						doc.addressee.addressedToDesignationId,
-					recipientUnitId: doc.addressee.recipientUnitId,
+                console.log(addressees)
 
-					dispatchType: DispatchType.DIRECT,
-					status: DispatchStatus.PENDING,
+				const dispatchRecords = addressees.map(
+					(addressee) => 
+						new DispatchRecord({
+							id: `D-RCD-${this.idGenerator.generate()}`,
+							documentId: doc.id,
+							senderStaffId: input.actorId,
+							senderDesignationId: senderDetails.designationId,
+							senderUnitId: senderDetails.unitId,
+							recipientDesignationId:
+								addressee.addressedToDesignationId,
+							recipientUnitId: addressee.recipientUnitId,
+							dispatchType: DispatchType.DIRECT,
+							status: DispatchStatus.PENDING,
+							dispatchedAt: new Date(),
+							parentDispatchId: null,
+						})
+				);
 
-					dispatchedAt: new Date(),
-					parentDispatchId: null,
-				});
-
-				await this.dispatchRecordRepo.save(
-					dispatch,
+				const savedDispatches = await this.dispatchRecordRepo.saveMany(
+					dispatchRecords,
 					transactionInstance,
 				);
 
-				// resolving actual staff
-				const recipients =
-					await this.recipientResolver.resolveRecipients({
-						documentId: doc.id,
-					});
+				const recipients: Array<{
+					staffId: string;
+					unitId: string;
+					designationId: string;
+				}> = [];
 
-				if (recipients.length === 0)
-					throw new ApplicationError(
-						ApplicationErrorEnum.NOT_ALLOWED,
-						{
-							message: "No recipients resolved",
-						},
-					);
+				const inboxEntries: InboxEntry[] = [];
 
-				// create inbox entries
-				const inboxEntries = recipients.map(
-					(r) =>
-						new InboxEntry({
-							id: `INBX-${this.idGenerator.generate()}`,
-							dispatchId: dispatch.id,
-							documentId: doc.id,
+				for (let index = 0; index < addressees.length; index++) {
+					const addressee = addressees[index]!;
+					const dispatch = savedDispatches[index]!;
 
-							staffId: r.staffId,
-							designationId: r.designationId,
-							unitId: r.unitId,
+					const resolvedRecipients =
+						await this.recipientResolver.resolveRecipients({
+							designationId: addressee.addressedToDesignationId,
+							unitId: addressee.recipientUnitId,
+						});
 
-							status: InboxEntryStatus.UNREAD,
-							receivedAt: new Date(),
-						}),
-				);
+					if (resolvedRecipients.length === 0)
+						throw new ApplicationError(
+							ApplicationErrorEnum.NOT_ALLOWED,
+							{
+								message: `No recipients resolved for addressee ${addressee.addressedToDesignationId}`,
+							},
+						);
+
+					recipients.push(...resolvedRecipients);
+
+					for (const recipient of resolvedRecipients) {
+						inboxEntries.push(
+							new InboxEntry({
+								id: `INBX-${this.idGenerator.generate()}`,
+								dispatchId: dispatch.id,
+								documentId: doc.id,
+								staffId: recipient.staffId,
+								designationId: recipient.designationId,
+								unitId: recipient.unitId,
+								status: InboxEntryStatus.UNREAD,
+								receivedAt: new Date(),
+							}),
+						);
+					}
+				}
 
 				await this.inboxRepo.saveMany(
 					inboxEntries,
@@ -122,7 +136,7 @@ class SendCorrespondenceUseCase {
 				);
 
 				return {
-					dispatchRecord: dispatch,
+					dispatchRecords: savedDispatches,
 					documentDispatched: doc,
 					sender: senderDetails,
 					recipients: recipients.map((r) => r.staffId),
@@ -137,14 +151,14 @@ class SendCorrespondenceUseCase {
 				title: result.documentDispatched.title,
 			},
 			sender: {
-				id: result.documentDispatched.ownerId,
+				id: input.actorId,
                 name: result.sender.fullName,
                 officeName: result.sender.officeName
 			},
 			recipients: result.recipients,
 		});
 
-		return result.dispatchRecord;
+		return result.dispatchRecords;
 	}
 }
 

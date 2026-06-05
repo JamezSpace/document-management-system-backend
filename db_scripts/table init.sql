@@ -64,6 +64,11 @@ CREATE TYPE document.lifecycle_state AS ENUM(
 CREATE TYPE document.lifecycle_actions AS ENUM(
 	'save', 'create', 'submit', 'approve', 'reject',  'cancel', 'activate', 'declare_record', 'archive', 'delete',   'dispose'
 );
+CREATE TYPE document.minute_action AS ENUM(
+	 'comment', 'instruction', 'recommend', 'approve',
+    'reject', 'forward', 'escalate', 'acknowledge'
+);
+
 
 -- DISPATCH SCHEMA TYPES
 CREATE TYPE dispatch.dispatch_type AS ENUM(
@@ -519,6 +524,7 @@ CREATE TABLE document.document_addressee (
     document_id varchar(50) REFERENCES document.documents(id) NOT NULL,
     recipient_unit_id varchar(50) REFERENCES identity.organizational_units(id) NOT NULL,
     addressed_to_designation_id varchar(50) REFERENCES identity.designations(id) NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
 
     PRIMARY KEY (document_id, recipient_unit_id, addressed_to_designation_id)
 );
@@ -535,6 +541,31 @@ CREATE TABLE document.document_media_assets (
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (document_id, media_id)
+);
+
+-- documents minutes
+CREATE TABLE document.minutes (
+    id VARCHAR(50) PRIMARY KEY,
+
+    document_id VARCHAR(50)
+        REFERENCES document.documents(id)
+        ON DELETE CASCADE NOT NULL,
+
+    inbox_entry_id VARCHAR(50)
+        REFERENCES dispatch.inbox_entries(id),
+
+    author_staff_id VARCHAR(50)
+        REFERENCES identity.staff(id)
+        NOT NULL,
+
+    parent_minute_id VARCHAR(50)
+        REFERENCES document.minutes(id),
+
+    action document.minute_action NOT NULL,
+
+    content TEXT DEFAULT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- DISPATCH SCHEMA
@@ -656,6 +687,9 @@ CREATE TABLE workflow.workflow_tasks (
 
     assigned_to VARCHAR(50)
         REFERENCES identity.staff(id),
+
+    minute_id VARCHAR(50)
+        REFERENCES document.minutes(id),
 
     role VARCHAR(100) NOT NULL,
 

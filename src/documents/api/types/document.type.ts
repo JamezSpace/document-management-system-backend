@@ -68,10 +68,11 @@ const documentSchema = Type.Object({
 		createdBy: Type.String(),
 	}),
 
-	addressee: Type.Object({
+	addressees: Type.Array(Type.Object({
 		recipientUnitId: Type.String(),
 		addressedToDesignationId: Type.String(),
-	}),
+        isPrimary: Type.Boolean()
+	})),
 
 	classification: Type.Object({
 		sensitivity: Type.Enum(SensitivityLevel),

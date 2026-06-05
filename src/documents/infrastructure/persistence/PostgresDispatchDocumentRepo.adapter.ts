@@ -10,6 +10,7 @@ import type { DispatchDocumentPort } from "../../../shared/application/port/inte
 import DocumentEntity from "../../domain/entities/document/Document.js";
 import DocumentVersion from "../../domain/entities/document/DocumentVersion.js";
 import { LifecycleState } from "../../domain/enum/lifecycleState.enum.js";
+import DocumentAddressee from "../../domain/valueobjects/DocumentAddressee.js";
 
 class DispatchDocumentEntity extends DocumentEntity {
 	isDispatchable() {
@@ -45,16 +46,19 @@ class PostgresDispatchDocumentAdapter implements DispatchDocumentPort {
 				})
 			: null;
 
+		const addressees = (row.addressees ?? []).map((a: any) => ({
+			recipientUnitId: a.recipient_unit_id,
+			addressedToDesignationId: a.addressed_to_designation_id,
+			isPrimary: a.is_primary,
+		}));
+
 		return new DispatchDocumentEntity({
 			id: row.id,
 			ownerId: row.owner_id,
 			title: row.title,
 			version,
 			referenceNumber: row.reference_number,
-            addressee: {
-                addressedToDesignationId: row.addressed_to_designation_id,
-                recipientUnitId: row.recipient_unit_id
-            },
+			addressees,
 			correspondence: {
 				originatingUnitId: row.originating_unit_id,
 				subjectCodeId: row.subject_code_id,

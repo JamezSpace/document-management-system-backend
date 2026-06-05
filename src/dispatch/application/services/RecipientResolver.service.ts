@@ -8,12 +8,7 @@ class RecipientResolverService implements RecipientResolverPort {
         private readonly dispatchStaffRepo: DispatchStaffPort,
     ) {}
 
-    async resolveRecipients(input: { documentId: string }) {
-        // right now, application allows a correspondence be addressed to one designation (which may include many staffs). For multiple addressees, use the 'getDocAddresseesByDocIdMultiple' method
-        const addressee = await this.dispatchDocumentRepo.getDocAddresseeByDocIdSingle(
-            input.documentId
-        );
-
+    async resolveRecipients(input: { designationId: string; unitId: string }) {
         const resolved: Array<{
             staffId: string;
             unitId: string;
@@ -22,15 +17,15 @@ class RecipientResolverService implements RecipientResolverPort {
 
         
         const staffs = await this.dispatchStaffRepo.getStaffIdsByDesignationAndUnit({
-            designationId: addressee.designationId,
-            unitId: addressee.unitId,
+            designationId: input.designationId,
+            unitId: input.unitId,
         });
 
         for (const staff of staffs) {
             resolved.push({
                 staffId: staff.id,
-                unitId: addressee.unitId,
-                designationId: addressee.designationId,
+                unitId: input.unitId,
+                designationId: input.designationId,
             });
         }
     
