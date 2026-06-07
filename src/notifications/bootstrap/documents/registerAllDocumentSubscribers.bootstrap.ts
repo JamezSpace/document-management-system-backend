@@ -4,14 +4,14 @@ import type { EventBusPort } from "../../../shared/application/port/services/eve
 import UuidV7Generator from "../../../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import BusinessFunctionCreatedHandler from "../../application/handlers/documents/BussFunctionCreated.handler.js";
 import CreateNotificationUseCase from "../../application/usecases/CreateNotification.usecase.js";
-import PostgresNotificationRepoAdapter from "../../infrastructre/repos/PostgresNotificationRepo.adapter.js";
+import NotificationRepositoryAdapter from "../../infrastructure/repos/NotificationRepository.adapter.js";
 
 
 export default function registerAllDocumentSubscribers(dbPool: PostgresDb, eventBus: EventBusPort) {
-    const notificationRepoAdapter = new PostgresNotificationRepoAdapter(dbPool);
+    const notificationRepoAdapter = new NotificationRepositoryAdapter(dbPool);
     const idGenerator = new UuidV7Generator();
 
-    const createNotificationUseCase = new CreateNotificationUseCase(notificationRepoAdapter, idGenerator);
+    const createNotificationUseCase = new CreateNotificationUseCase(idGenerator, notificationRepoAdapter);
 
     const businessFunctionHandler = new BusinessFunctionCreatedHandler(createNotificationUseCase)
 

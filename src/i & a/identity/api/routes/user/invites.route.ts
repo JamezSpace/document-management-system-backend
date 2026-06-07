@@ -4,7 +4,7 @@ import { ApiErrorEnum } from "../../../../../shared/errors/enum/api.enum.js";
 import AuthenticationController from "../../controllers/user/Authentication.controller.js";
 import { InviteStatus } from "../../../domain/enum/staff.enum.js";
 import type InvitesController from "../../controllers/user/Invites.controller.js";
-import { initInviteSchema, inviteIdSchema, type InitInviteType, type InviteIdType } from "../../types/user.type.js";
+import { initInviteSchema, inviteIdSchema, type InitInviteType, type InviteIdType } from "../../types/user/user.type.js";
 
 async function inviteRoutes(
 	fastify: FastifyInstance,

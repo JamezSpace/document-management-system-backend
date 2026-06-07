@@ -7,7 +7,7 @@ import type {
     EditOnboardingSessionType,
     InitOnboardingSessionType,
     UserSignUpType,
-} from "../../types/user.type.js";
+} from "../../types/user/user.type.js";
 
 class AuthenticationController {
 	constructor(

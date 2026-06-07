@@ -10,10 +10,10 @@ class ResendEmailServiceAdapter implements GlobalEmailServicePort {
 
 	async sendTo(
 		payload: { recipientEmail: string; message: string },
-		type: "onboarding" | "notif",
+		type: "onboarding" | "notification",
 	): Promise<boolean> {
 		let subject =
-			type === "notif"
+			type === "notification"
 				? "Notification"
 				: "Activation of Your Nexus-Fons Digital Office Account";
 

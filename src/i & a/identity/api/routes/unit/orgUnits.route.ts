@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import OrgUnitController from "../../controllers/organizationalUnit/OrganizationUnit.controller.js";
-import { createOrgUnitSchema, type CreateOrgUnitType } from "../../types/orgUnit.type.js";
+import { createOrgUnitSchema, type CreateOrgUnitType } from "../../types/unit/orgUnit.type.js";
 
 async function orgUnitRoutes(
 	fastify: FastifyInstance,

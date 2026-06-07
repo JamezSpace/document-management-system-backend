@@ -3,7 +3,7 @@ import type OfficeController from "../../controllers/office/Office.controller.js
 import {
 	createOfficeSchema,
 	type CreateOfficeType,
-} from "../../types/office.type.js";
+} from "../../types/office/office.type.js";
 import { unitIdSchema, type UnitIdType } from "../../types/staff/staff.type.js";
 
 async function officeRoutes(

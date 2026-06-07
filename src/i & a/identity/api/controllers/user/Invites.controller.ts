@@ -1,7 +1,7 @@
 import type CreateInviteUseCase from "../../../application/usecases/user/invites/CreateInvite.usecase.js";
 import type GetAllInvitesUecase from "../../../application/usecases/user/invites/GetAllInvites.usecase.js";
 import type NudgeInviteUsecase from "../../../application/usecases/user/invites/NudgeInvite.usecase.js";
-import type { InitInviteType } from "../../types/user.type.js";
+import type { InitInviteType } from "../../types/user/user.type.js";
 
 
 class InvitesController {

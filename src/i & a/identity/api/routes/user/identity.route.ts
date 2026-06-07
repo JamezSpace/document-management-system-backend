@@ -19,7 +19,7 @@ import {
 	type UploadOnboardingMediaType,
 	type UserLoginType,
 	type UserSignUpType,
-} from "../../types/user.type.js";
+} from "../../types/user/user.type.js";
 import { InviteStatus } from "../../../domain/enum/staff.enum.js";
 
 async function identityRoutes(

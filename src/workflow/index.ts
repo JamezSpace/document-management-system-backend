@@ -1,22 +1,22 @@
 import type { FastifyInstance } from "fastify";
 import type { WorkflowAccessPort } from "../shared/application/port/intersubsystem/WorkflowAccess.port.js";
 import type { WorkflowDocumentPort } from "../shared/application/port/intersubsystem/WorkflowDocument.port.js";
+import type { WorkflowPolicyPort } from "../shared/application/port/intersubsystem/WorkflowPolicy.port.js";
 import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
-import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
-import StartWorkflowUseCase from "./application/usecases/StartWorkflow.usecase.js";
+import TransactionManager from "../shared/infrastructure/persistence/primary/TransactionManager.js";
+import WorkflowController from "./api/controller/WorkflowController.js";
+import workflowRoutes from "./api/routes/workflow.routes.js";
 import ApproveWorkflowTaskUseCase from "./application/usecases/ApproveWorkflowTask.usecase.js";
+import GetWorkflowUseCase from "./application/usecases/GetWorkflow.usecase.js";
 import RejectWorkflowTaskUseCase from "./application/usecases/RejectWorkflowTask.usecase.js";
+import StartWorkflowUseCase from "./application/usecases/StartWorkflow.usecase.js";
 import registerAllWorkflowSubscribers from "./bootstrap/registerDocumentSubscribers.js";
 import WorkflowEngine from "./domain/WorkflowEngine.service.js";
 import WorkflowEventsAdapter from "./infrastructure/adapters/events/WorkflowEventsAdapter.js";
 import WorkflowStarterAdapter from "./infrastructure/adapters/WorkflowStarter.adapter.js";
-import PostgresWorkflowRepository from "./infrastructure/persistence/PostgresWorkflowRepository.adapter.js";
+import WorkflowRepository from "./infrastructure/persistence/WorkflowRepository.adapter.js";
 import ApproverResolverServiceAdapter from "./infrastructure/services/ApproverResolverService.adapter.js";
-import type { WorkflowPolicyPort } from "../shared/application/port/intersubsystem/WorkflowPolicy.port.js";
-import WorkflowController from "./api/controller/WorkflowController.js";
-import workflowRoutes from "./api/routes/workflow.routes.js";
-import GetWorkflowUseCase from "./application/usecases/GetWorkflow.usecase.js";
 
 interface WorkflowSubsystemDependencies {
 	documentWorkflowAdapter: WorkflowDocumentPort;
@@ -44,8 +44,8 @@ export default async function WorkflowSubsystem(
 	const workflowEventsAdapter = new WorkflowEventsAdapter(globalEventBus);
 
 	// adapter - persistence
-	const workflowRepository = new PostgresWorkflowRepository(postgres);
-    const transactionManager = new PostgresTransactionManager(postgres);
+	const workflowRepository = new WorkflowRepository(postgres);
+    const transactionManager = new TransactionManager(postgres);
 
 	// use cases
 	const workflowEngine = new WorkflowEngine(idGenerator);

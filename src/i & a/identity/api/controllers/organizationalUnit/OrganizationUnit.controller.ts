@@ -1,6 +1,6 @@
 import type AddNewOrgUnitUseCase from "../../../application/usecases/organizationalUnit/AddNewOrgUnit.usecase.js";
 import type GetAllUnitsUseCase from "../../../application/usecases/organizationalUnit/GetAllUnits.usecase.js";
-import type { CreateOrgUnitType } from "../../types/orgUnit.type.js";
+import type { CreateOrgUnitType } from "../../types/unit/orgUnit.type.js";
 
 class OrgUnitController {
     

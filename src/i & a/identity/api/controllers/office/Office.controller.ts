@@ -1,6 +1,6 @@
 import type AddNewOfficeUseCase from "../../../application/usecases/office/AddNewOffice.usecase.js";
 import type GetAllOfficesUseCase from "../../../application/usecases/office/GetAllOffices.usecase.js";
-import type { CreateOfficeType } from "../../types/office.type.js";
+import type { CreateOfficeType } from "../../types/office/office.type.js";
 
 class OfficeController {
     constructor(private readonly addOfficeUseCase: AddNewOfficeUseCase, private readonly getAllOfficesUseCase: GetAllOfficesUseCase){}

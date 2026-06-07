@@ -5,14 +5,14 @@ import type { TransactionManager } from "../../../shared/application/port/Transa
 import ApplicationError from "../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../shared/errors/enum/application.enum.js";
 import DispatchRecord from "../../domain/entities/DispatchRecord.js";
-import type { InboxEntryRepositoryPort } from "../port/repos/InboxEntryRepository.port.js";
+import InboxEntry from "../../domain/entities/InboxEntry.js";
 import { DispatchStatus } from "../../domain/enum/dispatchStatus.enum.js";
 import { DispatchType } from "../../domain/enum/dispatchType.enum.js";
-import type { DispatchRecordRepositoryPort } from "../port/repos/DispatchRecordRepository.port.js";
-import type { RecipientResolverPort } from "../port/services/RecipientResolver.port.js";
-import InboxEntry from "../../domain/entities/InboxEntry.js";
 import { InboxEntryStatus } from "../../domain/enum/inboxEntryStatus.enum.js";
 import type { DispatchRecordEvents } from "../port/events/DispatchRecordEvents.port.js";
+import type { DispatchRecordRepositoryPort } from "../port/repos/DispatchRecordRepository.port.js";
+import type { InboxEntryRepositoryPort } from "../port/repos/InboxEntryRepository.port.js";
+import type { RecipientResolverPort } from "../port/services/RecipientResolver.port.js";
 
 class SendCorrespondenceUseCase {
 	constructor(

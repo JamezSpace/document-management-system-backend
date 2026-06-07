@@ -1,16 +1,16 @@
 import type { FastifyInstance } from "fastify";
+import DispatchDocumentAdapter from "../documents/infrastructure/persistence/DispatchDocumentRepository.adapter.js";
+import DispatchStaffAdapter from "../i & a/identity/infrastructure/persistence/entities/staff/DispatchStaffRepo.adapter.js";
 import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
-import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
+import TransactionManager from "../shared/infrastructure/persistence/primary/TransactionManager.js";
 import RecipientResolverService from "./application/services/RecipientResolver.service.js";
 import SendCorrespondenceUseCase from "./application/usecases/SendCorrespondence.usecase.js";
-import PostgresDispatchRecordRepoAdapter from "./infrastructure/persistence/PostgresDispatchRecordRepo.adapter.js";
-import PostgresInboxEntryRepoAdapter from "./infrastructure/persistence/PostgresInboxEntryRepo.adapter.js";
-import PostgresDispatchDocumentAdapter from "../documents/infrastructure/persistence/PostgresDispatchDocumentRepo.adapter.js";
-import PostgresDispatchStaffAdapter from "../i & a/identity/infrastructure/persistence/entities/staff/PostgresDispatchStaffRepo.adapter.js";
-import DispatchStarterAdapter from "./infrastructure/events/DispatchStarter.adapter.js";
 import registerAllDispatchSubscribers from "./bootstrap/registerDispatchSubscribers.js";
 import DispatchEventsAdapter from "./infrastructure/events/DispatchEvents.adapter.js";
+import DispatchStarterAdapter from "./infrastructure/events/DispatchStarter.adapter.js";
+import DispatchRecordRepoAdapter from "./infrastructure/persistence/DispatchRecordRepo.adapter.js";
+import InboxEntryRepoAdapter from "./infrastructure/persistence/InboxEntryRepo.adapter.js";
 
 interface DispatchSubsystemDependencies {
 	globalEventBus: EventBusPort;
@@ -26,16 +26,14 @@ export default async function DispatchSubsystem(
 	// infrastructure layer
 	const postgres = fastify.pg;
 	const idGenerator = new UuidV7Generator();
-	const transactionManager = new PostgresTransactionManager(postgres);
+	const transactionManager = new TransactionManager(postgres);
 
-	const dispatchRecordRepository = new PostgresDispatchRecordRepoAdapter(
+	const dispatchRecordRepository = new DispatchRecordRepoAdapter(
 		postgres,
 	);
-	const inboxEntryRepository = new PostgresInboxEntryRepoAdapter(postgres);
-	const dispatchDocumentRepository = new PostgresDispatchDocumentAdapter(
-		postgres,
-	);
-	const dispatchStaffRepository = new PostgresDispatchStaffAdapter(postgres);
+	const inboxEntryRepository = new InboxEntryRepoAdapter(postgres);
+	const dispatchDocumentRepository = new DispatchDocumentAdapter(postgres);
+	const dispatchStaffRepository = new DispatchStaffAdapter(postgres);
 
     // events adapter
     const dispatchEventsAdapter = new DispatchEventsAdapter(globalEventBus);

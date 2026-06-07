@@ -12,7 +12,7 @@ import {
     type StaffIdType,
     type UnitIdType
 } from "../../types/staff/staff.type.js";
-import { inviteIdSchema, type InviteIdType } from "../../types/user.type.js";
+import { inviteIdSchema, type InviteIdType } from "../../types/user/user.type.js";
 
 async function staffRoutes(
 	fastify: FastifyInstance,

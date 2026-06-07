@@ -1,13 +1,12 @@
-import type { FastifyInstance } from "fastify"
-import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js"
-import PostgresNotificationRepoAdapter from "./infrastructre/repos/PostgresNotificationRepo.adapter.js";
-import GetStaffNotificationUseCase from "./application/usecases/GetStaffNotifications.usecase.js";
+import type { FastifyInstance } from "fastify";
+import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
+import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import NotificationController from "./api/controllers/NotificationController.js";
 import notificationRoutes from "./api/routes/notifications.route.js";
-import registerAllDocumentSubscribers from "./bootstrap/documents/registerAllDocumentSubscribers.bootstrap.js";
+import GetStaffNotificationUseCase from "./application/usecases/GetStaffNotifications.usecase.js";
 import registerAllDispatchSubscribers from "./bootstrap/dispatch/registerAllDispatchSubscribers.bootstrap.js";
-import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
-import CreateNotificationUseCase from "./application/usecases/CreateNotification.usecase.js";
+import registerAllDocumentSubscribers from "./bootstrap/documents/registerAllDocumentSubscribers.bootstrap.js";
+import NotificationRepositoryAdapter from "./infrastructre/repos/NotificationRepo.adapter.js";
 
 interface NotificationSubsystemDependencies {
     globalEventBus: EventBusPort
@@ -21,7 +20,7 @@ export default async function NotificationSubsystem(fastify: FastifyInstance, de
 
     const idGenerator = new UuidV7Generator();
 
-    const notificationRepository = new PostgresNotificationRepoAdapter(postgres);
+    const notificationRepository = new NotificationRepositoryAdapter(postgres);
     const getStaffNotificationUseCase = new GetStaffNotificationUseCase(notificationRepository);
     const notificationController = new NotificationController(getStaffNotificationUseCase);
 

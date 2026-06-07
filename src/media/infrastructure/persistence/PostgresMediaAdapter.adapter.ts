@@ -5,7 +5,7 @@ import { mapPostgresError } from "../../../shared/infrastructure/persistence/pri
 import type { MediaRepositoryPort } from "../../application/port/repos/MediaRepository.port.js";
 import MediaAsset from "../../domain/MediaAsset.js";
 
-class PostgresMediaAdapter implements MediaRepositoryPort {
+class MediaAdapter implements MediaRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
 
 	private toMediaAsset(row: any): MediaAsset {
@@ -121,4 +121,4 @@ class PostgresMediaAdapter implements MediaRepositoryPort {
 	}
 }
 
-export default PostgresMediaAdapter;
+export default MediaAdapter;

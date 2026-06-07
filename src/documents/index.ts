@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { EventBusPort } from "../shared/application/port/services/eventbus.port.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
-import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
+import TransactionManager from "../shared/infrastructure/persistence/primary/TransactionManager.js";
 import BusinessFunctionController from "./api/controllers/businessFunction/BusinessFunctionController.js";
 import CorrespondenceSubjectController from "./api/controllers/correspondenceSubject/CorrespondenceSubjectController.js";
 import DocumentController from "./api/controllers/document/DocumentController.js";
@@ -19,31 +19,30 @@ import CreateCorrespondenceSubjectUseCase from "./application/usecases/correspon
 import GetAllCorrespondenceSubjectUseCase from "./application/usecases/correspondenceSubject/GetAllCorrespondenceSubject.usecase.js";
 import DocumentCreationUseCase from "./application/usecases/document/CreateDocument.usecase.js";
 import DeleteDocumentUseCase from "./application/usecases/document/DeleteDocument.usecase.js";
+import GetAllDocsAddressedToStaffUseCase from "./application/usecases/document/GetAllDocsAddressedToStaff.usecase.js";
 import GetAllDocumentsByStaffUseCase from "./application/usecases/document/GetAllDocsByStaff.usecase.js";
 import GetDocumentByIdUsecase from "./application/usecases/document/GetDocById.usecase.js";
-import CreateMinuteUseCase from "./application/usecases/minute/CreateMinute.usecase.js";
-import GetMinuteByIdUseCase from "./application/usecases/minute/GetMinuteById.usecase.js";
-import GetMinutesByDocumentIdUseCase from "./application/usecases/minute/GetMinutesByDocumentId.usecase.js";
-import DocumentSubmission from "./application/usecases/document/SubmitDocument.usecase.js";
+import DocumentSubmissionUseCase from "./application/usecases/document/SubmitDocument.usecase.js";
 import CreateDocumentTypeUsecase from "./application/usecases/documentType/CreateDocType.usecase.js";
 import GetAllDocumentTypesUsecase from "./application/usecases/documentType/GetAllDocTypes.usecase.js";
 import GetDocumentTypeByIdUsecase from "./application/usecases/documentType/GetDocTypeById.usecase.js";
+import CreateMinuteUseCase from "./application/usecases/minute/CreateMinute.usecase.js";
+import GetMinuteByIdUseCase from "./application/usecases/minute/GetMinuteById.usecase.js";
+import GetMinutesByDocumentIdUseCase from "./application/usecases/minute/GetMinutesByDocumentId.usecase.js";
 import BusinessFunctionEventsAdapter from "./infrastructure/adapters/BussFunctionEvents.adapter.js";
 import CorrespondenceSubjectEventsAdapter from "./infrastructure/adapters/CorrSubjectEvents.adapter.js";
 import DocumentEventsAdapter from "./infrastructure/adapters/DocumentEvents.adapter.js";
 import DocumentTypeEventsAdapter from "./infrastructure/adapters/DocumentTypeEvents.adapter.js";
-import PostgresDocumentAddresseeRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentAddresseeRepository.adapter.js";
-import PostgresBusinessFunctionRepoAdapter from "./infrastructure/persistence/PostgresBussFunctionRepository.adapter.js";
-import PostgresCorrespondenceSubjectRepoAdapter from "./infrastructure/persistence/PostgresCorrSubjectRepo.adapter.js";
-import PostgresDocTypeRepoAdapter from "./infrastructure/persistence/PostgresDocTypeRepo.adapter.js";
-import PostgresqlDocumentRepositoryAdapter from "./infrastructure/persistence/PostgresDocumentRepo.adapter.js";
-import PostgresDocVersionRepositoryAdapter from "./infrastructure/persistence/PostgresDocVersionRepo.adapter.js";
-import PostgresLifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/PostgresLifecycleHistoryRepository.adapter.js";
-import PostgresMinuteRepositoryAdapter from "./infrastructure/persistence/PostgresMinuteRepo.adapter.js";
-import PostgresReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/PostgresReferenceSequenceRepo.adapter.js";
+import BusinessFunctionRepoAdapter from "./infrastructure/persistence/BussFunctionRepository.adapter.js";
+import CorrespondenceSubjectRepoAdapter from "./infrastructure/persistence/CorrSubjectRepository.adapter.js";
+import DocTypeRepoAdapter from "./infrastructure/persistence/DocTypeRepository.adapter.js";
+import DocumentAddresseeRepositoryAdapter from "./infrastructure/persistence/DocumentAddresseeRepository.adapter.js";
+import qlDocumentRepositoryAdapter from "./infrastructure/persistence/DocumentRepository.adapter.js";
+import DocVersionRepositoryAdapter from "./infrastructure/persistence/DocVersionRepository.adapter.js";
+import LifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/LifecycleHistoryRepository.adapter.js";
+import MinuteRepositoryAdapter from "./infrastructure/persistence/MinuteRepository.adapter.js";
+import ReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/ReferenceSequenceRepository.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
-import DocumentSubmissionUseCase from "./application/usecases/document/SubmitDocument.usecase.js";
-import GetAllDocsAddressedToStaffUseCase from "./application/usecases/document/GetAllDocsAddressedToStaff.usecase.js";
 
 interface DocumentSubsystemDependencies {
 	retentionService: RetentionServicePort;
@@ -61,31 +60,31 @@ export default async function DocumentSubsystem(
 	const postgres = fastify.pg;
 
 	const idGenerator = new UuidV7Generator();
-	const transactionManager = new PostgresTransactionManager(postgres);
+	const transactionManager = new TransactionManager(postgres);
 
 	// all module repos in documents subsystem
-	const documentRepository = new PostgresqlDocumentRepositoryAdapter(
+	const documentRepository = new qlDocumentRepositoryAdapter(
 		postgres,
 	);
 	const documentAddresseeRepository =
-		new PostgresDocumentAddresseeRepositoryAdapter(postgres);
-	const docVersionRepository = new PostgresDocVersionRepositoryAdapter(
+		new DocumentAddresseeRepositoryAdapter(postgres);
+	const docVersionRepository = new DocVersionRepositoryAdapter(
 		postgres,
 	);
-	const lifecycleHistoryRepository = new PostgresLifecycleHistoryRepositoryAdapter(
+	const lifecycleHistoryRepository = new LifecycleHistoryRepositoryAdapter(
 		postgres,
 	);
-	const minuteRepository = new PostgresMinuteRepositoryAdapter(postgres);
-	const corrSubjectRepository = new PostgresCorrespondenceSubjectRepoAdapter(
+	const minuteRepository = new MinuteRepositoryAdapter(postgres);
+	const corrSubjectRepository = new CorrespondenceSubjectRepoAdapter(
 		postgres,
 	);
-	const bussFunctionRepository = new PostgresBusinessFunctionRepoAdapter(
+	const bussFunctionRepository = new BusinessFunctionRepoAdapter(
 		postgres,
 	);
-	const docTypeRepository = new PostgresDocTypeRepoAdapter(postgres);
+	const docTypeRepository = new DocTypeRepoAdapter(postgres);
 
 	const refSequenceRepository =
-		new PostgresReferenceSequenceRepositoryAdapter(postgres);
+		new ReferenceSequenceRepositoryAdapter(postgres);
 
 	//  all module event adapters in documents subsystem
 	const documentEventsAdapter = new DocumentEventsAdapter(globalEventBus);

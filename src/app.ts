@@ -3,25 +3,25 @@ import fastifyMultipart from "@fastify/multipart";
 import { fastifyPostgres } from "@fastify/postgres";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import fastify, {
-	type FastifyInstance,
-	type FastifyReply,
-	type FastifyRequest,
+    type FastifyInstance,
+    type FastifyReply,
+    type FastifyRequest,
 } from "fastify";
+import DispatchSubsystem from "./dispatch/index.js";
 import DocumentSubsystem from "./documents/index.js";
-import PostgresWorkflowDocumentAdapter from "./documents/infrastructure/persistence/PostgresWorkflowDocument.adapter.js";
-import RetentionService from "./documents/infrastructure/services/RetentionService.js";
-import PostgresWorkflowAccessRepositoryAdapter from "./i & a/access/infrastructure/persistence/PostgresWorkflowAccessRepository.adapter.js";
+import WorkflowDocumentAdapter from "./documents/infrastructure/persistence/WorkflowDocument.adapter.js";
+import RetentionService from "./documents/infrastructure/services/RetentionService.adapter.js";
+import WorkflowAccessRepositoryAdapter from "./i & a/access/infrastructure/persistence/WorkflowAccessRepository.adapter.js";
 import middlewareAdapterInstance from "./i & a/identity/api/middleware/adapter/FirebaseMiddleware.adapter.js";
 import IdentityAccessSubsystem from "./i & a/index.js";
 import NotificationSubsystem from "./notifications/index.js";
 import PolicySubsystem from "./policy/index.js";
-import PostgresDocumentRetentionPolicyAdapter from "./policy/infrastructre/persistence/PostgresDocRetentionPolicy.adapter.js";
-import PostgresWorkflowPolicyAdapter from "./policy/infrastructre/persistence/PostgresWorkflowPolicy.adapter.js";
+import DocumentRetentionPolicyAdapter from "./policy/infrastructre/persistence/DocRetentionPolicy.adapter.js";
+import WorkflowPolicyAdapter from "./policy/infrastructre/persistence/WorkflowPolicy.adapter.js";
 import type { NexusAppError } from "./shared/errors/api/nexusAppError.type.js";
 import InMemoryEventBusAdapter from "./shared/infrastructure/InMemoryEventBus.js";
 import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.config.js";
 import WorkflowSubsystem from "./workflow/index.js";
-import DispatchSubsystem from "./dispatch/index.js";
 
 const server: FastifyInstance = fastify({
 	logger: true,
@@ -49,10 +49,10 @@ server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
 
 server.after(() => {
 	// documents subsystem - cross system repo adapters
-	const documentPolicyAdapter = new PostgresDocumentRetentionPolicyAdapter(server.pg);
-	const documentWorkflowAdapter = new PostgresWorkflowDocumentAdapter(server.pg);
-	const policyWorkflowAdapter = new PostgresWorkflowPolicyAdapter(server.pg);
-	const accessWorkflowAdapter = new PostgresWorkflowAccessRepositoryAdapter(server.pg);
+	const documentPolicyAdapter = new DocumentRetentionPolicyAdapter(server.pg);
+	const documentWorkflowAdapter = new WorkflowDocumentAdapter(server.pg);
+	const policyWorkflowAdapter = new WorkflowPolicyAdapter(server.pg);
+	const accessWorkflowAdapter = new WorkflowAccessRepositoryAdapter(server.pg);
 
 	// documents subsystem - services
 	const retentionService = new RetentionService(documentPolicyAdapter);

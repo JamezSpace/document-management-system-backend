@@ -1,6 +1,8 @@
 interface GlobalEmailServicePort {
-    sendTo(payload: {recipientEmail: string, message: string}, type: 'onboarding' | 'notif'): Promise<boolean>;
+	sendTo(
+		payload: { recipientEmail: string; message: string },
+		type: "onboarding" | "notification",
+	): Promise<boolean>;
 }
 
-export type {GlobalEmailServicePort};
-
+export type { GlobalEmailServicePort };
