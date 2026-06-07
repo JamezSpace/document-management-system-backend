@@ -68,6 +68,10 @@ CREATE TYPE document.minute_action AS ENUM(
 	 'comment', 'instruction', 'recommend', 'approve',
     'reject', 'forward', 'escalate', 'acknowledge'
 );
+CREATE TYPE document.relationship_type AS ENUM (
+    'attachment', 'annexure',
+    'reference', 'related'
+);
 
 
 -- DISPATCH SCHEMA TYPES
@@ -216,10 +220,20 @@ CREATE TABLE identity.designations(
 	id VARCHAR(50) PRIMARY KEY,
 	title VARCHAR(150) UNIQUE NOT NULL,
 	description TEXT,
-	hierarchy_level INTEGER NOT NULL,
 	office_id VARCHAR(50) REFERENCES identity.offices(id),
 	created_at TIMESTAMPTZ NOT NULL,
 	updated_at TIMESTAMPTZ 
+);
+
+-- table allows same designation in different units to have different hierarchy_level
+CREATE TABLE identity.office_designations(
+    id VARCHAR(50) PRIMARY KEY,
+    office_id VARCHAR(50) REFERENCES identity.offices(id) ON DELETE CASCADE,
+    designation_id VARCHAR(50) REFERENCES identity.designations(id),
+    hierarchy_level INTEGER NOT NULL, 
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ,
+    UNIQUE(office_id, designation_id) -- prevents duplicate designations in the same office
 );
 
 -- staff table
@@ -236,7 +250,11 @@ CREATE TABLE identity.staff(
 	created_by VARCHAR(50) REFERENCES identity.staff(id),
 	activated_by VARCHAR(50) REFERENCES identity.staff(id),
 	activated_at TIMESTAMPTZ,
-	updated_at TIMESTAMPTZ
+	updated_at TIMESTAMPTZ,
+
+    CONSTRAINT fk_staff_office_designation 
+        FOREIGN KEY (office_id, designation_id) 
+        REFERENCES identity.office_designations(office_id, designation_id)
 );
 
 -- staff reporting line
@@ -566,6 +584,24 @@ CREATE TABLE document.minutes (
     content TEXT DEFAULT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- makes attachments on docs possible
+CREATE TABLE document.document_relationships (
+    id VARCHAR(50) PRIMARY KEY,
+
+    source_document_id VARCHAR(50)
+        REFERENCES document.documents(id),
+
+    target_document_id VARCHAR(50)
+        REFERENCES document.documents(id),
+
+    relationship_type document.relationship_type NOT NULL,
+
+    created_by VARCHAR(50)
+        REFERENCES identity.staff(id),
+
+    created_at TIMESTAMPTZ NOT NULL
 );
 
 -- DISPATCH SCHEMA

@@ -8,18 +8,19 @@ import StaffClassification from "../../../../domain/entities/staff/StaffClassifi
 import { Status } from "../../../../domain/enum/staff.enum.js";
 import type { StaffEventsPort } from "../../../ports/events/staff/StaffEvent.port.js";
 import type { StaffMediaRepositoryPort } from "../../../ports/repos/entities/media/StaffMediaRepository.port.js";
-import type { OfficeDesignationRepositoryPort } from "../../../ports/repos/entities/office/OfficeDesignationRepository.port.js";
+import type { DesignationRepositoryPort } from "../../../ports/repos/entities/designation/DesignationRepository.port.js";
 import type { StaffClassificationRepositoryPort } from "../../../ports/repos/entities/staff/StaffClassificationRepository.port.js";
 import type { StaffRepositoryPort } from "../../../ports/repos/entities/staff/StaffRepository.port.js";
 import type { OnboardingSessionRepositoryPort } from "../../../ports/repos/entities/user/OnboardingSessionRepository.port.js";
 import type { ClassificationServicePort } from "../../../ports/services/ClassificationService.port.js";
 import type { RoleServicePort } from "../../../ports/services/RoleService.port.js";
+import type { OfficeDesignationRepositoryPort } from "../../../ports/repos/mappings/OfficeDesignationRepository.port.js";
 
 class ActivateStaffUseCase {
 	constructor(
 		private readonly idGenerator: IdGeneratorPort,
 		private readonly staffRepo: StaffRepositoryPort,
-		private readonly designationRepo: OfficeDesignationRepositoryPort,
+		private readonly officeDesignationRepo: OfficeDesignationRepositoryPort,
 		private readonly sessionRepo: OnboardingSessionRepositoryPort,
 		private readonly staffClassificationRepo: StaffClassificationRepositoryPort,
 		private readonly staffMediaRepo: StaffMediaRepositoryPort,
@@ -72,14 +73,15 @@ class ActivateStaffUseCase {
 				);
 
                 // fetch designation
-				const designation = await this.designationRepo.findOfficeDesignationById(
-					staff.designationId,
-					transactionInstance,
-				);
+				const officeDesignation = await this.officeDesignationRepo.findDesignationWithinAnOffice({
+                    designationId: staff.designationId,
+                    officeId: staff.officeId
+                }, transactionInstance);
+                
 
-				if (!designation) {
+				if (!officeDesignation) {
 					throw new ApplicationError(ApplicationErrorEnum.DESIGNATION_NOT_FOUND, {
-						message: `Designation with id ${staff.designationId} not found.`,
+						message: `Designation with id ${staff.designationId} not found within office with id ${staff.officeId}.`,
 					});
 				}
 
@@ -111,7 +113,7 @@ class ActivateStaffUseCase {
 					id: classificationId,
 					staffId,
 					capabilityClass: capClassId,
-					authorityLevel: designation.hierarchyLevel,
+					authorityLevel: officeDesignation.hierarchyLevel,
 					effectiveFrom: activatedAt,
 				});
 

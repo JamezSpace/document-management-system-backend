@@ -209,16 +209,16 @@ VALUES
 INSERT INTO identity.designation_capability_defaults (designation_id, capability_class_id)
 VALUES 
     -- Entry to Mid-Level: Processing Officers
-    ('OFFICE-DESIG-019c9ee6-afa7-727a-a23f-a7deafde9b28', 'CC-019cc29a-f81a-73a6-801b-85b4f0bc52d6'), -- Ind. Coord II
-    ('OFFICE-DESIG-019c9ee7-1dba-7d65-9e7d-ec828b0476ba', 'CC-019cc29a-f81a-73a6-801b-85b4f0bc52d6'), -- Ind. Coord I
+    ('DESIG-019c9ee6-afa7-727a-a23f-a7deafde9b28', 'CC-019cc29a-f81a-73a6-801b-85b4f0bc52d6'), -- Ind. Coord II
+    ('DESIG-019c9ee7-1dba-7d65-9e7d-ec828b0476ba', 'CC-019cc29a-f81a-73a6-801b-85b4f0bc52d6'), -- Ind. Coord I
     
     -- Senior Level: Reviewing Officers
-    ('OFFICE-DESIG-019c9ee8-2a58-752d-b86e-20296882c96a', 'CC-019cc29a-8600-712f-9fc3-15944310bc6e'), -- Senior Coord
-    ('OFFICE-DESIG-019c9eef-bc0f-7471-a4c6-3a433df34c83', 'CC-019cc29a-8600-712f-9fc3-15944310bc6e'), -- Principal Coord
+    ('DESIG-019c9ee8-2a58-752d-b86e-20296882c96a', 'CC-019cc29a-8600-712f-9fc3-15944310bc6e'), -- Senior Coord
+    ('DESIG-019c9eef-bc0f-7471-a4c6-3a433df34c83', 'CC-019cc29a-8600-712f-9fc3-15944310bc6e'), -- Principal Coord
     
     -- Executive Level: Leadership/Unit Heads
-    ('OFFICE-DESIG-019c9ef0-0a68-7966-bdd1-7bd3d3dd2829', 'CC-019cc298-fe2d-7471-9d9b-f20f87ad6cbf'), -- Asst. Chief (Deputy Head)
-    ('OFFICE-DESIG-019c9ef0-2444-7df9-843e-8d1c0d0ded2a', 'CC-019cc298-857f-76ca-b4c8-ce11cb271a19'); -- Chief (Unit Head)
+    ('DESIG-019c9ef0-0a68-7966-bdd1-7bd3d3dd2829', 'CC-019cc298-fe2d-7471-9d9b-f20f87ad6cbf'), -- Asst. Chief (Deputy Head)
+    ('DESIG-019c9ef0-2444-7df9-843e-8d1c0d0ded2a', 'CC-019cc298-857f-76ca-b4c8-ce11cb271a19'); -- Chief (Unit Head)
 
 -- role assignments table
 INSERT INTO identity.role_assignments VALUES (

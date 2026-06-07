@@ -4,17 +4,17 @@ import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/service
 import CloudinaryMediaServiceAdapter from "../shared/infrastructure/adapters/services/media/CloudinaryMediaService.adapter.js";
 import UuidV7Generator from "../shared/infrastructure/adapters/Uuidv7Generator.adapter.js";
 import InMemoryEventBusAdapter from "../shared/infrastructure/InMemoryEventBus.js";
-import PostgresMediaAssetRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresMediaAssetRepository.adapter.js";
-import PostgresRecoveryTaskRepositoryAdapter from "../shared/infrastructure/persistence/primary/PostgresRecoveryTaskRepository.adapter.js";
-import PostgresTransactionManager from "../shared/infrastructure/persistence/primary/PostgresTransactionManager.js";
+import MediaAssetRepositoryAdapter from "../shared/infrastructure/persistence/primary/MediaAssetRepository.adapter.js";
+import RecoveryTaskRepositoryAdapter from "../shared/infrastructure/persistence/primary/RecoveryTaskRepository.adapter.js";
+import TransactionManager from "../shared/infrastructure/persistence/primary/TransactionManager.js";
 import AssignOfficialRoleUseCase from "./access/application/usecases/AssignOfficialRole.js";
 import GetEffectivePermissionsUseCase from "./access/application/usecases/GetEffectivePermissions.usecase.js";
 import ResolveStaffAuthorityUseCase from "./access/application/usecases/ResolveStaffAuthority.usecase.js";
-import PostgresqlRoleAssignmentRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleAssignmentRepository.adapter.js";
-import PostgresqlRoleRepositoryAdapter from "./access/infrastructure/persistence/PostgresRoleRepository.adapter.js";
+import RoleAssignmentRepositoryAdapter from "./access/infrastructure/persistence/RoleAssignmentRepository.adapter.js";
+import RoleRepositoryAdapter from "./access/infrastructure/persistence/RoleRepository.adapter.js";
 import AccessEventsAdapter from "./access/infrastructure/queue/AccessEvents.adapter.js";
+import DesignationController from "./identity/api/controllers/office/Designation.controller.js";
 import OfficeController from "./identity/api/controllers/office/Office.controller.js";
-import OfficeDesignationController from "./identity/api/controllers/office/OfficeDesignation.controller.js";
 import OrgUnitController from "./identity/api/controllers/organizationalUnit/OrganizationUnit.controller.js";
 import StaffController from "./identity/api/controllers/staff/Staff.controller.js";
 import StaffClassificationController from "./identity/api/controllers/staff/StaffClassification.controller.js";
@@ -28,9 +28,9 @@ import staffClassificationRoutes from "./identity/api/routes/staff/staffClass.ro
 import orgUnitRoutes from "./identity/api/routes/unit/orgUnits.route.js";
 import identityRoutes from "./identity/api/routes/user/identity.route.js";
 import inviteRoutes from "./identity/api/routes/user/invites.route.js";
-import AddNewOfficeDesignationUseCase from "./identity/application/usecases/office/AddNewDesignation.usecase.js";
+import AddNewDesignationUseCase from "./identity/application/usecases/office/AddNewDesignation.usecase.js";
 import AddNewOfficeUseCase from "./identity/application/usecases/office/AddNewOffice.usecase.js";
-import GetAllOfficeDesignationUseCase from "./identity/application/usecases/office/GetAllOfficeDesignations.usecase.js";
+import GetAllDesignationUseCase from "./identity/application/usecases/office/GetAllDesignations.usecase.js";
 import GetAllOfficesUseCase from "./identity/application/usecases/office/GetAllOffices.usecase.js";
 import AddNewOrgUnitUseCase from "./identity/application/usecases/organizationalUnit/AddNewOrgUnit.usecase.js";
 import GetAllUnitsUseCase from "./identity/application/usecases/organizationalUnit/GetAllUnits.usecase.js";
@@ -53,27 +53,28 @@ import CreateInviteUseCase from "./identity/application/usecases/user/invites/Cr
 import GetAllInvitesUecase from "./identity/application/usecases/user/invites/GetAllInvites.usecase.js";
 import NudgeInviteUsecase from "./identity/application/usecases/user/invites/NudgeInvite.usecase.js";
 import OnboardingInviteUseCase from "./identity/application/usecases/user/invites/OnboardInvite.usecase.js";
-import OfficeDesignationEventsAdapter from "./identity/infrastructure/events/office/OfficeDesignationsEvents.adapter.js";
+import DesignationEventsAdapter from "./identity/infrastructure/events/office/DesignationsEvents.adapter.js";
 import OfficeEventsAdapter from "./identity/infrastructure/events/office/OfficeEvents.adapter.js";
 import StaffClassEventsAdapter from "./identity/infrastructure/events/staff/StaffClassEventsAdapter.adapter.js";
 import StaffEventsAdapter from "./identity/infrastructure/events/staff/StaffEventsAdapter.adapter.js";
 import OrgUnitsEventsAdapter from "./identity/infrastructure/events/unit/OrgUnitsEvents.adapter.js";
 import IdentityEventsAdapter from "./identity/infrastructure/events/user/IdentityEvents.adapter.js";
-import PostgresOfficeDesignationRepositoryAdapter from "./identity/infrastructure/persistence/entities/office/PostgresOfficeDesignationRepository.adapter.js";
-import PostgresOfficeRepositoryAdapter from "./identity/infrastructure/persistence/entities/office/PostgresOfficeRepository.adapter.js";
-import PostgresStaffActivationFailureRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/PostgresStaffActivationFailureRepository.adapter.js";
-import PostgresStaffCapabilityClassRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/PostgresStaffCapabilityClassRepository.adapter.js";
-import PostgresStaffClassificationRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/PostgresStaffClassificationRepositoryAdapter.adapter.js";
-import PostgresStaffMediaRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/PostgresStaffMediaRepository.adapter.js";
-import PostgresStaffRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/PostgresStaffRepositoryAdapter.adapter.js";
-import PostgresOrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/entities/unit/PostgresOrgUnitRepository.adapter.js";
-import PostgresqlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/PostgresIdentityRepository.adapter.js";
-import PostgresqlOnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/PostgresOnboardingSessionRepository.adapter.js";
-import PostgresqlInviteRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/PostgresqlInviteRepository.adapter.js";
-import PostgresqlCapRoleRepositoryAdapter from "./identity/infrastructure/persistence/mappings/PostgresCapRoleRepository.adapter.js";
-import PostgresqlDesigCapClassRepositoryAdapter from "./identity/infrastructure/persistence/mappings/PostgresDesignCapClassRepository.adapter.js";
+import DesignationRepositoryAdapter from "./identity/infrastructure/persistence/entities/designation/DesignationRepository.adapter.js";
+import OfficeRepositoryAdapter from "./identity/infrastructure/persistence/entities/office/OfficeRepository.adapter.js";
+import StaffActivationFailureRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffActivationFailureRepository.adapter.js";
+import StaffCapabilityClassRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffCapabilityClassRepository.adapter.js";
+import StaffClassificationRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffClassificationRepositoryAdapter.adapter.js";
+import StaffMediaRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffMediaRepository.adapter.js";
+import StaffRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffRepositoryAdapter.adapter.js";
+import OrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/entities/unit/OrgUnitRepository.adapter.js";
+import qlIdentityRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/IdentityRepository.adapter.js";
+import qlOnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/OnboardingSessionRepository.adapter.js";
+import InviteRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/InviteRepository.adapter.js";
+import qlCapRoleRepositoryAdapter from "./identity/infrastructure/persistence/mappings/CapRoleRepository.adapter.js";
+import DesigCapClassRepositoryAdapter from "./identity/infrastructure/persistence/mappings/DesigCapClassRepository.adapter.js";
+import OfficeDesignationRepositoryAdapter from "./identity/infrastructure/persistence/mappings/OfficeDesignationRepository.adapter.js";
 import FirebaseAuthAdapter from "./identity/infrastructure/services/auth/FirebaseAuth.adapter.js";
-import PostgresClassificationServiceAdapter from "./identity/infrastructure/services/ClassificationService.adapter.js";
+import ClassificationServiceAdapter from "./identity/infrastructure/services/ClassificationService.adapter.js";
 import IdentityEmailServiceAdapter from "./identity/infrastructure/services/EmailService.adapter.js";
 import OpaqueTokenServiceAdapter from "./identity/infrastructure/services/OpaqueTokenService.adapter.js";
 import RoleServiceAdapter from "./identity/infrastructure/services/RoleService.adapter.js";
@@ -89,41 +90,42 @@ export default async function IdentityAccessSubsystem(
 	const globalNodemailerEmailService = new NodemailerEmailServiceAdapter();
 	const globalResendEmailService = new ResendEmailServiceAdapter();
 	const idGenerator = new UuidV7Generator();
-	const transactionManager = new PostgresTransactionManager(postgres);
+	const transactionManager = new TransactionManager(postgres);
 	const mediaService = new CloudinaryMediaServiceAdapter();
 
 	// all module repos in identity subsystem
-	const identityRepository = new PostgresqlIdentityRepositoryAdapter(postgres);
-	const inviteRepository = new PostgresqlInviteRepositoryAdapter(postgres);
-    const onboardingSessionRepo = new PostgresqlOnboardingSessionRepositoryAdapter(postgres);
-	const orgUnitRepository = new PostgresOrgUnitRepositoryAdapter(postgres);
-	const roleRepository = new PostgresqlRoleRepositoryAdapter(postgres);
-	const roleAssignmentsRepository = new PostgresqlRoleAssignmentRepositoryAdapter(postgres);
-	const officeRepository = new PostgresOfficeRepositoryAdapter(postgres);
+	const identityRepository = new qlIdentityRepositoryAdapter(postgres);
+	const inviteRepository = new InviteRepositoryAdapter(postgres);
+    const onboardingSessionRepo = new qlOnboardingSessionRepositoryAdapter(postgres);
+	const orgUnitRepository = new OrgUnitRepositoryAdapter(postgres);
+	const roleRepository = new RoleRepositoryAdapter(postgres);
+	const roleAssignmentsRepository = new RoleAssignmentRepositoryAdapter(postgres);
+	const officeRepository = new OfficeRepositoryAdapter(postgres);
+	const designationRepository = new DesignationRepositoryAdapter(postgres);
 	const officeDesignationRepository =
-		new PostgresOfficeDesignationRepositoryAdapter(postgres);
-	const staffRepositoryAdapter = new PostgresStaffRepositoryAdapter(
+		new OfficeDesignationRepositoryAdapter(postgres);
+	const staffRepositoryAdapter = new StaffRepositoryAdapter(
 		postgres,
 		mediaService,
 	);
-	const staffMediaRepository = new PostgresStaffMediaRepositoryAdapter(postgres);
+	const staffMediaRepository = new StaffMediaRepositoryAdapter(postgres);
 	const staffClassificationRepository =
-		new PostgresStaffClassificationRepositoryAdapter(postgres);
+		new StaffClassificationRepositoryAdapter(postgres);
 	const staffCapabilityClassRepository =
-		new PostgresStaffCapabilityClassRepositoryAdapter(postgres);
-    const desigCapClassRepository = new PostgresqlDesigCapClassRepositoryAdapter(postgres);
-    const capRoleRepository = new PostgresqlCapRoleRepositoryAdapter(postgres);
-	const mediaAssetRepository = new PostgresMediaAssetRepositoryAdapter(postgres);
-	const staffMediaAssetRepository = new PostgresStaffMediaRepositoryAdapter(postgres);
-    const activationFailureRepository = new PostgresStaffActivationFailureRepositoryAdapter(postgres);
-	const recoveryTaskRepository = new PostgresRecoveryTaskRepositoryAdapter(postgres);
+		new StaffCapabilityClassRepositoryAdapter(postgres);
+    const desigCapClassRepository = new DesigCapClassRepositoryAdapter(postgres);
+    const capRoleRepository = new qlCapRoleRepositoryAdapter(postgres);
+	const mediaAssetRepository = new MediaAssetRepositoryAdapter(postgres);
+	const staffMediaAssetRepository = new StaffMediaRepositoryAdapter(postgres);
+    const activationFailureRepository = new StaffActivationFailureRepositoryAdapter(postgres);
+	const recoveryTaskRepository = new RecoveryTaskRepositoryAdapter(postgres);
 
 	//  all module event adapters in identity subsystem
 	const accessEventsAdapter = new AccessEventsAdapter(globalEventBus);
 	const identityEventsAdapter = new IdentityEventsAdapter(globalEventBus);
 	const unitEventsAdapter = new OrgUnitsEventsAdapter(globalEventBus);
 	const officeEventsAdapter = new OfficeEventsAdapter(globalEventBus);
-	const designationEventsAdapter = new OfficeDesignationEventsAdapter(
+	const designationEventsAdapter = new DesignationEventsAdapter(
 		globalEventBus,
 	);
 	const staffEventsAdapter = new StaffEventsAdapter(globalEventBus);
@@ -138,7 +140,7 @@ export default async function IdentityAccessSubsystem(
 
     const tokenService = new OpaqueTokenServiceAdapter();
 	const cloudinaryMediaService = new CloudinaryMediaServiceAdapter();
-	const classificationService = new PostgresClassificationServiceAdapter(
+	const classificationService = new ClassificationServiceAdapter(
 		desigCapClassRepository
 	);
 	const roleService = new RoleServiceAdapter(capRoleRepository, roleRepository);
@@ -199,14 +201,14 @@ export default async function IdentityAccessSubsystem(
 	const getAllOfficesUseCase = new GetAllOfficesUseCase(officeRepository);
 
 	// application layer - office designation
-	const addNewDesignationUseCase = new AddNewOfficeDesignationUseCase(
+	const addNewDesignationUseCase = new AddNewDesignationUseCase(
 		idGenerator,
 		designationEventsAdapter,
-		officeDesignationRepository,
+		designationRepository,
 	);
 
-	const getAllOfficeDesignationUseCase = new GetAllOfficeDesignationUseCase(
-		officeDesignationRepository,
+	const getAllDesignationUseCase = new GetAllDesignationUseCase(
+		designationRepository,
 	);
 
 	// application layer - staff
@@ -310,9 +312,9 @@ export default async function IdentityAccessSubsystem(
 		getAllOfficesUseCase,
 	);
 
-	const officeDesignationController = new OfficeDesignationController(
+	const officeDesignationController = new DesignationController(
 		addNewDesignationUseCase,
-		getAllOfficeDesignationUseCase,
+		getAllDesignationUseCase,
 	);
 
 	const staffController = new StaffController(

@@ -1,43 +1,41 @@
 import type { IdGeneratorPort } from "../../../../../shared/application/port/services/IdGenerator.port.js";
-import OfficeDesignation from "../../../domain/entities/office/OfficeDesignation.js";
-import type { OfficeDesignationEventsPort } from "../../ports/events/office/OfficeDesignationEvents.port.js";
-import type { OfficeDesignationRepositoryPort } from "../../ports/repos/entities/office/OfficeDesignationRepository.port.js";
-import type { OfficeDesignationTypeForCreation } from "../../types/office/officeDesignation.type.js";
+import Designation from "../../../domain/entities/office/Designation.js";
+import type { DesignationEventsPort } from "../../ports/events/office/DesignationEvents.port.js";
+import type { DesignationRepositoryPort } from "../../ports/repos/entities/office/DesignationRepository.port.js";
+import type { DesignationTypeForCreation } from "../../types/office/designation.type.js";
 
-class AddNewOfficeDesignationUseCase {
+class AddNewDesignationUseCase {
     constructor(
             private readonly idGenerator: IdGeneratorPort,
-            private readonly designationEvents: OfficeDesignationEventsPort,
-            private readonly designationRepo: OfficeDesignationRepositoryPort,
+            private readonly designationEvents: DesignationEventsPort,
+            private readonly designationRepo: DesignationRepositoryPort,
         ) {}
 
-    async addNewDesignation(payload: OfficeDesignationTypeForCreation) {
+    async execute(payload: DesignationTypeForCreation) {
         const uuid = this.idGenerator.generate();
-		const designationId = "OFFICE-DESIG-" + uuid;
+		const designationId = "DESIG-" + uuid;
 
         // create an office designation
-        const officeDesignation = payload.description ? new OfficeDesignation({
+        const designation = payload.description ? new Designation({
             id: designationId,
             description: payload.description,
-            hierarchyLevel: payload.hierarchyLevel,
             officeId: payload.officeId,
             title: payload.title
-        }) : new OfficeDesignation({
+        }) : new Designation({
             id: designationId,
-            hierarchyLevel: payload.hierarchyLevel,
             officeId: payload.officeId,
             title: payload.title
         });
 
-		const newOfficeDesignation = await this.designationRepo.save(officeDesignation)        
+		const newDesignation = await this.designationRepo.save(designation)        
 
-		if (newOfficeDesignation)
+		if (newDesignation)
 			await this.designationEvents.officeDesignationCreated({
-				designationId: newOfficeDesignation.getOfficeDesignationId(),
+				designationId: newDesignation.getDesignationId(),
 			});
 
-		return newOfficeDesignation;
+		return newDesignation;
     }
 }
 
-export default AddNewOfficeDesignationUseCase;
+export default AddNewDesignationUseCase;
