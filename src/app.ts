@@ -22,6 +22,9 @@ import type { NexusAppError } from "./shared/errors/api/nexusAppError.type.js";
 import InMemoryEventBusAdapter from "./shared/infrastructure/InMemoryEventBus.js";
 import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.config.js";
 import WorkflowSubsystem from "./workflow/index.js";
+import DispatchStaffAdapter from "./i & a/identity/infrastructure/persistence/entities/staff/DispatchStaffRepo.adapter.js";
+import DispatchDocumentAdapter from "./documents/infrastructure/persistence/PostgresDispatchDocumentRepo.adapter.js";
+import DocumentIdentityAdapter from "./i & a/identity/infrastructure/persistence/DocumentIdentity.adapter.js";
 
 const server: FastifyInstance = fastify({
 	logger: true,
@@ -48,17 +51,24 @@ const eventBusAdapter = new InMemoryEventBusAdapter();
 server.register(IdentityAccessSubsystem, { prefix: "api/identity" });
 
 server.after(() => {
-	// documents subsystem - cross system repo adapters
+	// intersubsystem repo adapters
+    // documents subsystem
 	const documentPolicyAdapter = new DocumentRetentionPolicyAdapter(server.pg);
 	const documentWorkflowAdapter = new WorkflowDocumentAdapter(server.pg);
 	const policyWorkflowAdapter = new WorkflowPolicyAdapter(server.pg);
 	const accessWorkflowAdapter = new WorkflowAccessRepositoryAdapter(server.pg);
+    const documentIdentityAdapter = new DocumentIdentityAdapter(server.pg);
 
 	// documents subsystem - services
 	const retentionService = new RetentionService(documentPolicyAdapter);
 
+    // dispatch subsystem
+    const dispatchStaffAdapter = new DispatchStaffAdapter(server.pg);
+    const dispatchDocumentAdapter = new DispatchDocumentAdapter(server.pg);
+
 	server.register(DocumentSubsystem, {
 		prefix: "api/document",
+        documentIdentityAdapter,
 		retentionService,
 		globalEventBus: eventBusAdapter,
 	});
@@ -75,6 +85,8 @@ server.after(() => {
 
     server.register(DispatchSubsystem, {
         globalEventBus: eventBusAdapter,
+        dispatchStaffAdapter,
+        dispatchDocumentAdapter
     })
 
 	server.register(NotificationSubsystem, {
