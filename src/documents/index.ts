@@ -37,14 +37,16 @@ import BusinessFunctionRepoAdapter from "./infrastructure/persistence/BussFuncti
 import CorrespondenceSubjectRepoAdapter from "./infrastructure/persistence/CorrSubjectRepository.adapter.js";
 import DocTypeRepoAdapter from "./infrastructure/persistence/DocTypeRepository.adapter.js";
 import DocumentAddresseeRepositoryAdapter from "./infrastructure/persistence/DocumentAddresseeRepository.adapter.js";
-import qlDocumentRepositoryAdapter from "./infrastructure/persistence/DocumentRepository.adapter.js";
+import DocumentRepositoryAdapter from "./infrastructure/persistence/DocumentRepository.adapter.js";
 import DocVersionRepositoryAdapter from "./infrastructure/persistence/DocVersionRepository.adapter.js";
 import LifecycleHistoryRepositoryAdapter from "./infrastructure/persistence/LifecycleHistoryRepository.adapter.js";
 import MinuteRepositoryAdapter from "./infrastructure/persistence/MinuteRepository.adapter.js";
 import ReferenceSequenceRepositoryAdapter from "./infrastructure/persistence/ReferenceSequenceRepository.adapter.js";
 import ReferenceNumberService from "./infrastructure/services/ReferenceNumberService.adapter.js";
+import type { DocumentIdentityPort } from "../shared/application/port/intersubsystem/DocumentIdentity.port.js";
 
 interface DocumentSubsystemDependencies {
+    documentIdentityAdapter: DocumentIdentityPort;
 	retentionService: RetentionServicePort;
     globalEventBus: EventBusPort
 }
@@ -54,7 +56,7 @@ export default async function DocumentSubsystem(
 	dependencies: DocumentSubsystemDependencies,
 ) {
 	// dependencies
-	const { retentionService, globalEventBus } = dependencies;
+	const { documentIdentityAdapter,retentionService, globalEventBus } = dependencies;
 
 	// infrastructure Layer
 	const postgres = fastify.pg;
@@ -63,24 +65,14 @@ export default async function DocumentSubsystem(
 	const transactionManager = new TransactionManager(postgres);
 
 	// all module repos in documents subsystem
-	const documentRepository = new qlDocumentRepositoryAdapter(
-		postgres,
-	);
+	const documentRepository = new DocumentRepositoryAdapter(postgres);
 	const documentAddresseeRepository =
 		new DocumentAddresseeRepositoryAdapter(postgres);
-	const docVersionRepository = new DocVersionRepositoryAdapter(
-		postgres,
-	);
-	const lifecycleHistoryRepository = new LifecycleHistoryRepositoryAdapter(
-		postgres,
-	);
+	const docVersionRepository = new DocVersionRepositoryAdapter(postgres);
+	const lifecycleHistoryRepository = new LifecycleHistoryRepositoryAdapter(postgres);
 	const minuteRepository = new MinuteRepositoryAdapter(postgres);
-	const corrSubjectRepository = new CorrespondenceSubjectRepoAdapter(
-		postgres,
-	);
-	const bussFunctionRepository = new BusinessFunctionRepoAdapter(
-		postgres,
-	);
+	const corrSubjectRepository = new CorrespondenceSubjectRepoAdapter(postgres);
+	const bussFunctionRepository = new BusinessFunctionRepoAdapter(postgres);
 	const docTypeRepository = new DocTypeRepoAdapter(postgres);
 
 	const refSequenceRepository =
@@ -105,6 +97,7 @@ export default async function DocumentSubsystem(
 		docTypeRepository,
 		documentEventsAdapter,
 		refNumberService,
+        documentIdentityAdapter,
 		retentionService,
 		transactionManager,
 	);

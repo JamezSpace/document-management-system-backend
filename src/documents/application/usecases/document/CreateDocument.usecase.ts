@@ -1,3 +1,4 @@
+import type { DocumentIdentityPort } from "../../../../shared/application/port/intersubsystem/DocumentIdentity.port.js";
 import type { IdGeneratorPort } from "../../../../shared/application/port/services/IdGenerator.port.js";
 import type { TransactionManager } from "../../../../shared/application/port/TransactionManager.port.js";
 import ApplicationError from "../../../../shared/errors/ApplicationError.error.js";
@@ -25,6 +26,7 @@ class DocumentCreationUseCase {
 		private readonly docTypeRepo: DocumentTypeRepositoryPort,
 		private readonly documentEvents: DocumentEventsPort,
 		private readonly refNumService: ReferenceNumberServicePort,
+		private readonly documentIdentity: DocumentIdentityPort,
 		private readonly retentionService: RetentionServicePort,
 		private readonly transactionManager: TransactionManager,
 	) {}
@@ -59,7 +61,7 @@ class DocumentCreationUseCase {
 
 				if (documentType.code === "memo") {
 					const primaryAddressee = payload.addressees.find(
-						(a) => a.isPrimary,
+						(addr) => addr.isPrimary,
 					);
 
 					if (!primaryAddressee) {
@@ -78,6 +80,19 @@ class DocumentCreationUseCase {
 						originUnitId: payload.correspondence.originatingUnitId,
 						recipientUnitId: primaryAddressee.recipientUnitId,
 					});
+
+					if (payload.correspondence.direction === "external") {
+						const recipientUnitId =
+							primaryAddressee.recipientUnitId;
+
+						// resolve the director or unit head of that unit
+						const unitHeadDesignation =
+							await this.documentIdentity.resolveUnitHeadDesignation(recipientUnitId);
+
+						// address the doc to the director
+						primaryAddressee.addressedToDesignationId =
+							unitHeadDesignation.id;
+					}
 				}
 
 				const newDocument = new Document({
@@ -86,7 +101,7 @@ class DocumentCreationUseCase {
 					retention,
 					referenceNumber,
 					...payload,
-				});                
+				});
 
 				const savedDoc = await this.documentRepo.save(
 					newDocument,
@@ -101,7 +116,7 @@ class DocumentCreationUseCase {
 								recipientUnitId: addr.recipientUnitId,
 								addressedToDesignationId:
 									addr.addressedToDesignationId,
-								isPrimary: addr.isPrimary, 
+								isPrimary: addr.isPrimary,
 							},
 							transactionInstance,
 						),
@@ -150,8 +165,7 @@ class DocumentCreationUseCase {
 					transactionInstance,
 				);
 
-				
-const savedDocAddressees = await Promise.all(
+				const savedDocAddressees = await Promise.all(
 					document.addressees.map((addr) =>
 						this.documentAddresseeRepo.save(
 							{

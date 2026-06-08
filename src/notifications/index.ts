@@ -6,7 +6,7 @@ import notificationRoutes from "./api/routes/notifications.route.js";
 import GetStaffNotificationUseCase from "./application/usecases/GetStaffNotifications.usecase.js";
 import registerAllDispatchSubscribers from "./bootstrap/dispatch/registerAllDispatchSubscribers.bootstrap.js";
 import registerAllDocumentSubscribers from "./bootstrap/documents/registerAllDocumentSubscribers.bootstrap.js";
-import NotificationRepositoryAdapter from "./infrastructre/repos/NotificationRepo.adapter.js";
+import NotificationRepositoryAdapter from "./infrastructure/repos/NotificationRepository.adapter.js";
 
 interface NotificationSubsystemDependencies {
     globalEventBus: EventBusPort

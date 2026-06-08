@@ -233,6 +233,7 @@ CREATE TABLE identity.office_designations(
     hierarchy_level INTEGER NOT NULL, 
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ,
+    
     UNIQUE(office_id, designation_id) -- prevents duplicate designations in the same office
 );
 
@@ -249,7 +250,7 @@ CREATE TABLE identity.staff(
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by VARCHAR(50) REFERENCES identity.staff(id),
 	activated_by VARCHAR(50) REFERENCES identity.staff(id),
-	activated_at TIMESTAMPTZ,
+	acivated_at TIMESTAMPTZ,
 	updated_at TIMESTAMPTZ,
 
     CONSTRAINT fk_staff_office_designation 

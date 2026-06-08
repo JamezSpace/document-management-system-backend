@@ -202,8 +202,6 @@ VALUES
     ('CC-019cc29d-7b97-7ea6-988b-1b152b3a5576', 'role.staff_member'),
     ('CC-019cc29e-3b53-7b0e-8826-69a2719236e3', 'role.staff_member');
 
-    -- designation_capability_defaults
--- Assuming some Designation IDs like 'DES-CIO', 'DES-SA', etc.
 
 -- designation_capability_defaults
 INSERT INTO identity.designation_capability_defaults (designation_id, capability_class_id)
@@ -216,9 +214,9 @@ VALUES
     ('DESIG-019c9ee8-2a58-752d-b86e-20296882c96a', 'CC-019cc29a-8600-712f-9fc3-15944310bc6e'), -- Senior Coord
     ('DESIG-019c9eef-bc0f-7471-a4c6-3a433df34c83', 'CC-019cc29a-8600-712f-9fc3-15944310bc6e'), -- Principal Coord
     
-    -- Executive Level: Leadership/Unit Heads
-    ('DESIG-019c9ef0-0a68-7966-bdd1-7bd3d3dd2829', 'CC-019cc298-fe2d-7471-9d9b-f20f87ad6cbf'), -- Asst. Chief (Deputy Head)
-    ('DESIG-019c9ef0-2444-7df9-843e-8d1c0d0ded2a', 'CC-019cc298-857f-76ca-b4c8-ce11cb271a19'); -- Chief (Unit Head)
+    -- Executive Level: Coordinating Officers
+    ('DESIG-019c9ef0-0a68-7966-bdd1-7bd3d3dd2829', 'CC-019cc29b-9005-76cc-bfb1-33da64b852df'), -- Asst. Chief (Deputy Head)
+    ('DESIG-019c9ef0-2444-7df9-843e-8d1c0d0ded2a', 'CC-019cc29b-9005-76cc-bfb1-33da64b852df'); -- Chief (Unit Head)
 
 -- role assignments table
 INSERT INTO identity.role_assignments VALUES (

@@ -11,7 +11,7 @@ import type Document from "../../domain/entities/document/Document.js";
 import DocumentEntity from "../../domain/entities/document/Document.js";
 import DocumentVersion from "../../domain/entities/document/DocumentVersion.js";
 
-class qlDocumentRepositoryAdapter implements DocumentRepositoryPort {
+class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
 
 	private toDomain(row: any): Document {
@@ -295,4 +295,4 @@ class qlDocumentRepositoryAdapter implements DocumentRepositoryPort {
 	}
 }
 
-export default qlDocumentRepositoryAdapter;
+export default DocumentRepositoryAdapter;
