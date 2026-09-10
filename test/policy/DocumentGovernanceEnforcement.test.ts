@@ -25,7 +25,10 @@ const context = {
 };
 const obligations = new DocumentGovernanceObligationExecutor({ record: async () => undefined });
 
-function documentFixture(sensitivity: "public" | "internal" | "confidential" | "restricted") {
+function documentFixture(
+	sensitivity: "public" | "internal" | "confidential" | "restricted",
+	direction: "internal" | "external" = "external",
+) {
 	return {
 		id: "DOC-1",
 		ownerId: "STAFF-1",
@@ -40,7 +43,7 @@ function documentFixture(sensitivity: "public" | "internal" | "confidential" | "
 			governancePolicyKey: policyReference.policyId,
 			governancePolicyVersion: policyReference.policyVersion,
 		},
-		correspondence: { direction: "external" },
+		correspondence: { direction },
 		retention: {},
 		createdAt: new Date("2026-08-20T00:00:00.000Z"),
 		getCurrentVersion: () => null,
@@ -68,7 +71,6 @@ const canvasPolicy: DocumentGovernancePolicyPort = {
 test("canvas projection removes confidential CC data before serialization", async () => {
 	const projected = await DocumentCanvasProjector.project(
 		documentFixture("confidential"),
-		"internal",
 		context,
 		canvasPolicy,
 	);
@@ -77,17 +79,23 @@ test("canvas projection removes confidential CC data before serialization", asyn
 	assert.equal(projected.document.addressees[0]!.isPrimary, true);
 });
 
-test("canvas projection distinguishes public letterhead and internal routing views", async () => {
+test("canvas projection derives letterhead and internal routing from correspondence", async () => {
 	const publicCanvas = await DocumentCanvasProjector.project(
-		documentFixture("public"), "letterhead", context, canvasPolicy,
+		documentFixture("public", "external"), context, canvasPolicy,
 	);
 	const internalLetterhead = await DocumentCanvasProjector.project(
-		documentFixture("internal"), "letterhead", context, canvasPolicy,
+		documentFixture("internal", "external"), context, canvasPolicy,
+	);
+	const internalRouting = await DocumentCanvasProjector.project(
+		documentFixture("internal", "internal"), context, canvasPolicy,
 	);
 	assert.equal(publicCanvas.ccHeader.placement, "letterhead_footer");
 	assert.equal(publicCanvas.document.addressees.length, 2);
 	assert.equal(internalLetterhead.ccHeader.visible, false);
 	assert.equal(internalLetterhead.document.addressees.length, 1);
+	assert.equal(internalRouting.ccHeader.visible, true);
+	assert.equal(internalRouting.ccHeader.placement, "internal_routing");
+	assert.equal(internalRouting.document.addressees.length, 2);
 });
 
 test("attachment command denies confidential bindings before persistence", async () => {

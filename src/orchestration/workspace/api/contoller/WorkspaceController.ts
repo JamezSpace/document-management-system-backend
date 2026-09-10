@@ -5,7 +5,7 @@ import { ApplicationErrorEnum } from "../../../../shared/errors/enum/application
 import type { DocumentGovernancePolicyPort } from "../../../../shared/application/port/intersubsystem/DocumentGovernancePolicy.port.js";
 import type { DocumentGovernanceContextPort } from "../../../../shared/application/port/intersubsystem/DocumentGovernanceContext.port.js";
 import WorkspacePolicyEvaluator from "../../application/services/WorkspacePolicyEvaluator.js";
-import DocumentCanvasProjector, { type CanvasKind } from "../../application/services/DocumentCanvasProjector.js";
+import DocumentCanvasProjector from "../../application/services/DocumentCanvasProjector.js";
 import type { DocumentGovernanceAuditPort } from "../../../../shared/application/port/intersubsystem/DocumentGovernanceAudit.port.js";
 import type GetDocumentUsecase from "../../application/usecases/GetDocument.usecase.js";
 import type GetWorkflowContextUsecase from "../../application/usecases/GetWorkflowContext.usecase.js";
@@ -22,7 +22,6 @@ class WorkspaceController {
 	async resolveWorkspacePermissions(
 		documentId: string,
 		actorStaffId: string,
-		canvas: CanvasKind,
 	) {
 		// fetch necessary items for workspace
 		const staffActor = { id: actorStaffId };
@@ -37,18 +36,20 @@ class WorkspaceController {
 			documentId,
 			actorStaffId,
 		);
+
 		const policyReference = {
 			policyId: document.classification.governancePolicyKey!,
 			policyVersion: document.classification.governancePolicyVersion!,
 		};
-		const viewDecision = await this.documentGovernancePolicy.evaluateAction(
-			"view",
+
+		const viewDecision = await this.documentGovernancePolicy.evaluateAction("view",
 			{
 				sensitivity: document.classification.sensitivity,
 				...governanceContext,
 			},
 			policyReference,
 		);
+
 		if (!viewDecision.allowed) {
 			await this.documentGovernanceAudit.record({
 				actorStaffId,
@@ -60,17 +61,20 @@ class WorkspaceController {
 				policyVersion: viewDecision.policyVersion,
 				obligations: viewDecision.obligations,
 			});
+
 			const useGuestGrantError = document.classification.sensitivity === "confidential";
 			const grantError = useGuestGrantError && governanceContext.guestReaderGrantStatus === "expired"
 				? ApplicationErrorEnum.GRANT_EXPIRED
 				: useGuestGrantError && governanceContext.guestReaderGrantStatus === "revoked"
 					? ApplicationErrorEnum.GRANT_REVOKED
 					: ApplicationErrorEnum.NOT_ALLOWED;
-			throw new ApplicationError(grantError, {
+			
+            throw new ApplicationError(grantError, {
 				message: "Document governance denied workspace access",
 				details: { documentId, reasonCode: viewDecision.reasonCode },
 			});
 		}
+
 		if (viewDecision.obligations.includes("audit_security_event")) {
 			await this.documentGovernanceAudit.record({
 				actorStaffId,
@@ -94,9 +98,9 @@ class WorkspaceController {
 			governanceContext,
 			this.documentGovernancePolicy,
 		);
+        
 		const canvasProjection = await DocumentCanvasProjector.project(
 			document,
-			canvas,
 			governanceContext,
 			this.documentGovernancePolicy,
 		);

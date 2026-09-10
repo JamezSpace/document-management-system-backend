@@ -2,31 +2,32 @@ import type { Document } from "../../../../shared/application/port/intersubsyste
 import type { ResolvedDocumentGovernanceContext } from "../../../../shared/application/port/intersubsystem/DocumentGovernanceContext.port.js";
 import type { DocumentGovernancePolicyPort } from "../../../../shared/application/port/intersubsystem/DocumentGovernancePolicy.port.js";
 
-type CanvasKind = "internal" | "letterhead";
-
 class DocumentCanvasProjector {
 	static async project(
 		document: Document,
-		canvas: CanvasKind,
 		context: ResolvedDocumentGovernanceContext,
 		policy: DocumentGovernancePolicyPort,
 	) {
+		const isInternalCanvas = document.correspondence.direction === "internal";
 		const policyReference = {
 			policyId: document.classification.governancePolicyKey!,
 			policyVersion: document.classification.governancePolicyVersion!,
 		};
+
 		const decision = await policy.evaluateAction(
 			"render_cc_header",
 			{
 				sensitivity: document.classification.sensitivity,
 				...context,
-				isInternalCanvas: canvas === "internal",
+				isInternalCanvas,
 			},
 			policyReference,
 		);
+
 		const primaryAddressees = document.addressees.filter(
 			(addressee) => addressee.isPrimary,
 		);
+
 		const visibleAddressees = decision.allowed
 			? document.addressees
 			: primaryAddressees;
@@ -48,7 +49,7 @@ class DocumentCanvasProjector {
 			ccHeader: {
 				visible: decision.allowed,
 				placement: decision.allowed
-					? canvas === "internal"
+					? isInternalCanvas
 						? "internal_routing"
 						: "letterhead_footer"
 					: null,
@@ -58,5 +59,4 @@ class DocumentCanvasProjector {
 	}
 }
 
-export { type CanvasKind };
 export default DocumentCanvasProjector;
