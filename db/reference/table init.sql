@@ -1,6 +1,8 @@
 -- REFERENCE-ONLY SQL CATALOGUE. `db/migrations` is the authoritative schema history.
 -- Do not apply this file as a schema change. Add every new or modified database change
 -- to a numbered migration first; mirror it here only for browsing or test support.
+-- This catalogue shows the final structural state. Data backfills, permission inserts,
+-- and versioned governance-policy/rule records remain in their numbered migrations.
 
 CREATE SCHEMA IF NOT EXISTS identity;
 CREATE SCHEMA IF NOT EXISTS media;
@@ -10,6 +12,11 @@ CREATE SCHEMA IF NOT EXISTS dispatch;
 CREATE SCHEMA IF NOT EXISTS policy;
 CREATE SCHEMA IF NOT EXISTS workflow;
 CREATE SCHEMA IF NOT EXISTS notifications;
+CREATE SCHEMA IF NOT EXISTS audit;
+CREATE SCHEMA IF NOT EXISTS registry;
+CREATE SCHEMA IF NOT EXISTS records;
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 drop table if exists identity.users cascade;
 drop table if exists identity.staff;
@@ -36,7 +43,10 @@ CREATE TYPE identity.capability_class_category AS ENUM(
 	'leadership', 'professional officers', 'clerical & records', 'operational support'
 );
 CREATE TYPE identity.role_assignments_source AS ENUM(
-	'derived', 'manual'
+	'derived', 'manual', 'delegated'
+);
+CREATE TYPE identity.authorization_scope_type AS ENUM (
+	'organization', 'unit', 'office'
 );
 CREATE TYPE identity.activation_status AS ENUM (
     'pending',
@@ -67,6 +77,18 @@ CREATE TYPE policy.document_governance_policy_status AS ENUM(
 CREATE TYPE policy.document_governance_rule_effect AS ENUM(
 	'allow', 'deny'
 );
+CREATE TYPE policy.document_grant_type AS ENUM(
+	'guest_reader', 'export'
+);
+CREATE TYPE policy.document_grantor_authority AS ENUM(
+	'originator', 'unit_head'
+);
+CREATE TYPE policy.sensitivity_change_status AS ENUM(
+	'pending', 'approved', 'rejected', 'applied'
+);
+CREATE TYPE policy.extraction_action AS ENUM(
+	'export', 'print'
+);
 
 -- DOCUMENT SCHEMA TYPES
 CREATE TYPE document.correspondence_direction AS ENUM(
@@ -93,10 +115,20 @@ CREATE TYPE dispatch.dispatch_type AS ENUM(
     'direct', 'cc', 'broadcast', 'forward', 'escalation'
 );
 CREATE TYPE dispatch.status AS ENUM(
-    'pending', 'delivered', 'read', 'acknowledged', 'forwarded'
+    'pending', 'delivered', 'read', 'acknowledged', 'forwarded',
+	'in_transit', 'returned', 'failed', 'cancelled'
 );
 CREATE TYPE dispatch.inbox_entry_status AS ENUM(
 	'unread', 'read', 'acknowledged', 'in_handover'
+);
+CREATE TYPE dispatch.delivery_channel AS ENUM (
+	'internal_inbox', 'email', 'courier', 'hand_delivery', 'postal'
+);
+CREATE TYPE dispatch.recipient_type AS ENUM (
+	'staff', 'designation', 'office', 'unit', 'external'
+);
+CREATE TYPE dispatch.source_type AS ENUM (
+	'document', 'registry_entry'
 );
 
 -- WORKFLOW SCHEMA TYPES
@@ -147,6 +179,85 @@ CREATE TYPE notifications.state as ENUM (
 -- MEDIA TYPES
 CREATE TYPE media.uploaded_by_type as ENUM (
     'staff', 'onboarding_session', 'system'
+);
+
+-- AUDIT SCHEMA TYPES
+CREATE TYPE audit.actor_type AS ENUM (
+	'staff', 'system', 'external'
+);
+CREATE TYPE audit.outcome AS ENUM (
+	'success', 'denied', 'failed'
+);
+
+-- REGISTRY SCHEMA TYPES
+CREATE TYPE registry.intake_channel AS ENUM (
+	'physical', 'email', 'courier', 'upload', 'postal', 'other'
+);
+CREATE TYPE registry.priority AS ENUM (
+	'low', 'normal', 'high', 'urgent'
+);
+CREATE TYPE registry.intake_status AS ENUM (
+	'received', 'awaiting_digitization', 'digitizing', 'awaiting_verification',
+	'awaiting_registration', 'awaiting_dispatch', 'dispatched', 'closed', 'cancelled'
+);
+CREATE TYPE registry.reference_reset_period AS ENUM (
+	'annual', 'monthly', 'never'
+);
+CREATE TYPE registry.digitization_status AS ENUM (
+	'pending', 'in_progress', 'awaiting_verification', 'verified', 'rejected', 'failed', 'cancelled'
+);
+CREATE TYPE registry.ocr_status AS ENUM (
+	'queued', 'processing', 'completed', 'failed'
+);
+CREATE TYPE registry.verification_outcome AS ENUM (
+	'accepted', 'rejected'
+);
+CREATE TYPE registry.entry_status AS ENUM (
+	'registered', 'awaiting_dispatch', 'dispatched', 'closed'
+);
+CREATE TYPE registry.custodian_type AS ENUM (
+	'staff', 'office', 'unit', 'external'
+);
+CREATE TYPE registry.custody_event_type AS ENUM (
+	'released', 'received', 'returned', 'located'
+);
+CREATE TYPE registry.correspondence_direction AS ENUM (
+	'incoming', 'outgoing'
+);
+CREATE TYPE registry.correspondence_channel AS ENUM (
+	'physical', 'email', 'courier', 'internal', 'postal', 'other'
+);
+
+-- RECORDS SCHEMA TYPES
+CREATE TYPE records.retention_trigger_event AS ENUM (
+	'declaration', 'case_closed', 'contract_ended', 'last_action', 'custom'
+);
+CREATE TYPE records.disposition_action AS ENUM (
+	'archive', 'destroy', 'review'
+);
+CREATE TYPE records.record_status AS ENUM (
+	'active', 'on_hold', 'transferring', 'archived', 'disposed'
+);
+CREATE TYPE records.location_type AS ENUM (
+	'room', 'cabinet', 'shelf', 'box', 'digital'
+);
+CREATE TYPE records.placement_event_type AS ENUM (
+	'placed', 'removed'
+);
+CREATE TYPE records.legal_hold_status AS ENUM (
+	'active', 'released'
+);
+CREATE TYPE records.legal_hold_event_type AS ENUM (
+	'placed', 'record_added', 'released'
+);
+CREATE TYPE records.transfer_status AS ENUM (
+	'pending', 'approved', 'rejected', 'in_transit', 'completed', 'cancelled'
+);
+CREATE TYPE records.disposal_request_status AS ENUM (
+	'pending', 'approved', 'rejected', 'executed', 'cancelled'
+);
+CREATE TYPE records.disposal_decision AS ENUM (
+	'approved', 'rejected'
 );
 
 
@@ -218,7 +329,7 @@ CREATE TABLE identity.organizational_units(
     parent_id varchar(50) REFERENCES identity.organizational_units(id),
 	created_at TIMESTAMPTZ NOT NULL,
 	updated_at TIMESTAMPTZ
-)
+);
 
 -- offices table
 CREATE TABLE identity.offices(
@@ -264,7 +375,7 @@ CREATE TABLE identity.staff(
 	created_at TIMESTAMPTZ NOT NULL,
 	created_by VARCHAR(50) REFERENCES identity.staff(id),
 	activated_by VARCHAR(50) REFERENCES identity.staff(id),
-	acivated_at TIMESTAMPTZ,
+	activated_at TIMESTAMPTZ,
 	updated_at TIMESTAMPTZ,
 
     CONSTRAINT fk_staff_office_designation 
@@ -336,8 +447,8 @@ CREATE TABLE identity.roles(
 CREATE TABLE identity.role_permissions(
     role_id varchar(50) REFERENCES identity.roles(id),
     permission_id varchar(50) REFERENCES identity.permissions(id),
-    PRIMARY KEY (role_id, permission_id)
-)
+	PRIMARY KEY (role_id, permission_id)
+);
 
 CREATE TABLE identity.capability_role_mappings (
     capability_class_id VARCHAR(50) 
@@ -352,13 +463,49 @@ CREATE TABLE identity.role_assignments(
 	id varchar(50) PRIMARY KEY,
 	staff_id varchar(50) REFERENCES identity.staff(id),
 	role_id varchar(50) REFERENCES identity.roles(id),
-	scope JSONB, -- e.g { unitId: '...', officeId: '...' }
+	scope JSONB, -- deprecated compatibility column
+	scope_type identity.authorization_scope_type NOT NULL DEFAULT 'organization',
+	scope_unit_id VARCHAR(50),
+	scope_office_id VARCHAR(50),
 	delegated_by varchar(50) REFERENCES identity.staff(id),
+	assigned_by VARCHAR(50),
+	revoked_by VARCHAR(50),
+	revoked_at TIMESTAMPTZ,
     source identity.role_assignments_source not null,
 	valid_from TIMESTAMPTZ NOT NULL,
 	valid_to TIMESTAMPTZ,
-	created_at TIMESTAMPTZ NOT NULL
+	created_at TIMESTAMPTZ NOT NULL,
+	CONSTRAINT fk_role_assignments_scope_unit FOREIGN KEY (scope_unit_id)
+		REFERENCES identity.organizational_units(id),
+	CONSTRAINT fk_role_assignments_scope_office FOREIGN KEY (scope_office_id)
+		REFERENCES identity.offices(id),
+	CONSTRAINT fk_role_assignments_assigned_by FOREIGN KEY (assigned_by)
+		REFERENCES identity.staff(id),
+	CONSTRAINT fk_role_assignments_revoked_by FOREIGN KEY (revoked_by)
+		REFERENCES identity.staff(id),
+	CONSTRAINT role_assignments_valid_range
+		CHECK (valid_to IS NULL OR valid_to > valid_from),
+	CONSTRAINT role_assignments_scope_shape CHECK (
+		(scope_type = 'organization' AND scope_unit_id IS NULL AND scope_office_id IS NULL)
+		OR (scope_type = 'unit' AND scope_unit_id IS NOT NULL AND scope_office_id IS NULL)
+		OR (scope_type = 'office' AND scope_unit_id IS NULL AND scope_office_id IS NOT NULL)
+	),
+	CONSTRAINT role_assignments_revocation_shape CHECK (
+		(revoked_at IS NULL AND revoked_by IS NULL)
+		OR (revoked_at IS NOT NULL AND revoked_by IS NOT NULL)
+	),
+	CONSTRAINT role_assignments_no_overlapping_scope EXCLUDE USING gist (
+		staff_id WITH =,
+		role_id WITH =,
+		scope_type WITH =,
+		(COALESCE(scope_unit_id, '')) WITH =,
+		(COALESCE(scope_office_id, '')) WITH =,
+		tstzrange(valid_from, COALESCE(valid_to, 'infinity'::TIMESTAMPTZ), '[)') WITH &&
+	) WHERE (revoked_at IS NULL)
 );
+
+COMMENT ON COLUMN identity.role_assignments.scope IS
+	'Deprecated compatibility column. Use scope_type, scope_unit_id and scope_office_id.';
 
 -- staff media
 CREATE TABLE identity.staff_media_assets (
@@ -381,8 +528,6 @@ CREATE TABLE identity.staff_activation_failures (
     staff_id VARCHAR(50)
         REFERENCES identity.staff(id) NOT NULL,
 
-	previous_staff_id VARCHAR(50) REFERENCES identity.staff(id),
-	handed_over_at TIMESTAMPTZ,
     invite_id VARCHAR(50)
         REFERENCES identity.invites(id) NOT NULL,
     failure_stage VARCHAR(100) NOT NULL,
@@ -394,6 +539,7 @@ CREATE TABLE identity.staff_activation_failures (
     last_failed_at TIMESTAMPTZ NOT NULL,
     resolved_at TIMESTAMPTZ
 );
+
 CREATE TABLE identity.recovery_tasks (
     id VARCHAR(50) PRIMARY KEY,
     task_type identity.recovery_task_type NOT NULL,
@@ -469,7 +615,7 @@ CREATE TABLE document.reference_sequences (
     subject_code varchar(50) REFERENCES document.correspondence_subjects(code) NOT NULL,
     function_code varchar(50) REFERENCES document.business_functions(code) NOT NULL,
     current_value INT NOT NULL,
-    UNIQUE(year, origin_unit_id, recipient_code, subject_code, function_code)
+	UNIQUE(year, origin_unit_id, recipient_unit_id, subject_code, function_code)
 );
 
 CREATE TABLE document.documents (
@@ -479,7 +625,8 @@ CREATE TABLE document.documents (
     title VARCHAR(200) NOT NULL,
     owner_id varchar(50) REFERENCES identity.staff(id) NOT NULL,
     reference_number VARCHAR(50),
-	revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
+	revision BIGINT NOT NULL DEFAULT 1
+		CONSTRAINT document_revision_positive CHECK (revision > 0),
 
 	-- version data
 	current_version_id varchar(50),
@@ -492,7 +639,8 @@ CREATE TABLE document.documents (
     -- classification metadata
     sensitivity policy.document_sensitivity_level NOT NULL,
 	governance_policy_key VARCHAR(100) NOT NULL,
-	governance_policy_version INT NOT NULL CHECK(governance_policy_version > 0),
+	governance_policy_version INT NOT NULL
+		CONSTRAINT documents_governance_policy_version_positive CHECK(governance_policy_version > 0),
     business_function_id varchar(50) REFERENCES document.business_functions(id) NOT NULL,
     document_type_id varchar(50) REFERENCES document.document_type(id) NOT NULL,
 
@@ -503,7 +651,7 @@ CREATE TABLE document.documents (
     last_reclassified_by varchar(50) REFERENCES identity.staff(id),
 
     -- retention metadata
-    policy_version INT NOT NULL,
+	policy_version INT NOT NULL,
     retention_schedule_id VARCHAR(50) REFERENCES policy.document_retention(id) NOT NULL,
     retention_start_date TIMESTAMPTZ NOT NULL,
     disposal_eligibility_date TIMESTAMPTZ NOT NULL,
@@ -582,7 +730,7 @@ CREATE TABLE document.document_media_assets (
     PRIMARY KEY (document_id, media_id)
 );
 
--- Effective digital authorization used by governance rules for internal attachments.
+-- effective digital authorization used by governance rules for internal attachments.
 CREATE TABLE document.document_unit_head_signatures (
 	id VARCHAR(80) PRIMARY KEY,
 	document_id VARCHAR(50) NOT NULL REFERENCES document.documents(id) ON DELETE CASCADE,
@@ -590,7 +738,11 @@ CREATE TABLE document.document_unit_head_signatures (
 	signed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	revoked_by VARCHAR(50) REFERENCES identity.staff(id),
 	revoked_at TIMESTAMPTZ,
-	revocation_reason TEXT
+	revocation_reason TEXT,
+	CHECK (
+		(revoked_at IS NULL AND revoked_by IS NULL AND revocation_reason IS NULL)
+		OR (revoked_at IS NOT NULL AND revoked_by IS NOT NULL AND revocation_reason IS NOT NULL)
+	)
 );
 
 -- documents minutes
@@ -638,31 +790,43 @@ CREATE TABLE document.document_relationships (
 
 -- DISPATCH SCHEMA
 CREATE TABLE dispatch.dispatch_records (
-    id VARCHAR(50) PRIMARY KEY,
-
-    document_id VARCHAR(50)
-        REFERENCES document.documents(id)
-        ON DELETE CASCADE NOT NULL,
-
-    -- sender (for accountability sake)
-    sender_staff_id VARCHAR(50)
-        REFERENCES identity.staff(id) NOT NULL,
-    sender_designation_id VARCHAR(50) REFERENCES identity.designations(id),
-    sender_unit_id VARCHAR(50)
-        REFERENCES identity.organizational_units(id) NOT NULL,
-
-    -- recipient (policy-based routing)
-    recipient_designation_id VARCHAR(50) REFERENCES identity.designations(id),
-    recipient_unit_id VARCHAR(50) REFERENCES identity.organizational_units(id) NOT NULL,
-
-    -- dispatch metadata
-    dispatch_type dispatch.dispatch_type NOT NULL,
-    status dispatch.status NOT NULL,
-
-    dispatched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    parent_dispatch_id VARCHAR(50)
-        REFERENCES dispatch.dispatch_records(id)
+	id VARCHAR(50) PRIMARY KEY,
+	document_id VARCHAR(50) REFERENCES document.documents(id) ON DELETE CASCADE,
+	source_type dispatch.source_type NOT NULL DEFAULT 'document',
+	registry_entry_id VARCHAR(80) REFERENCES registry.entries(id),
+	sender_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	sender_designation_id VARCHAR(50) REFERENCES identity.designations(id),
+	sender_unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	recipient_type dispatch.recipient_type NOT NULL DEFAULT 'designation',
+	recipient_staff_id VARCHAR(50) REFERENCES identity.staff(id),
+	recipient_designation_id VARCHAR(50) REFERENCES identity.designations(id),
+	recipient_office_id VARCHAR(50) REFERENCES identity.offices(id),
+	recipient_unit_id VARCHAR(50) REFERENCES identity.organizational_units(id),
+	external_recipient JSONB,
+	dispatch_type dispatch.dispatch_type NOT NULL,
+	delivery_channel dispatch.delivery_channel NOT NULL DEFAULT 'internal_inbox',
+	status dispatch.status NOT NULL,
+	tracking_number VARCHAR(150),
+	acknowledgement_required BOOLEAN NOT NULL DEFAULT FALSE,
+	dispatched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	delivered_at TIMESTAMPTZ,
+	returned_at TIMESTAMPTZ,
+	failure_reason TEXT,
+	delivery_evidence_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+	parent_dispatch_id VARCHAR(50) REFERENCES dispatch.dispatch_records(id),
+	version INTEGER NOT NULL DEFAULT 1,
+	CONSTRAINT dispatch_records_source_shape CHECK (
+		(source_type = 'document' AND document_id IS NOT NULL AND registry_entry_id IS NULL)
+		OR (source_type = 'registry_entry' AND document_id IS NULL AND registry_entry_id IS NOT NULL)
+	),
+	CONSTRAINT dispatch_records_recipient_shape CHECK (
+		(recipient_type = 'staff' AND recipient_staff_id IS NOT NULL)
+		OR (recipient_type = 'designation' AND recipient_designation_id IS NOT NULL AND recipient_unit_id IS NOT NULL)
+		OR (recipient_type = 'office' AND recipient_office_id IS NOT NULL)
+		OR (recipient_type = 'unit' AND recipient_unit_id IS NOT NULL)
+		OR (recipient_type = 'external' AND external_recipient IS NOT NULL AND jsonb_typeof(external_recipient) = 'object')
+	),
+	CONSTRAINT dispatch_records_version_positive CHECK (version > 0)
 );
 
 CREATE TABLE dispatch.inbox_entries (
@@ -689,26 +853,28 @@ CREATE TABLE dispatch.inbox_entries (
 
     received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     read_at TIMESTAMPTZ,
-    acknowledged_at TIMESTAMPTZ,
+	 acknowledged_at TIMESTAMPTZ,
+	previous_staff_id VARCHAR(50) REFERENCES identity.staff(id),
+	handed_over_at TIMESTAMPTZ,
 
-    UNIQUE (dispatch_id, staff_id)
+	 UNIQUE (dispatch_id, staff_id)
 );
 
 
 -- POLICY SCHEMA
 CREATE TABLE policy.document_retention (
     id VARCHAR(50) PRIMARY KEY,
-    policy_version INT NOT NULL,
+	policy_version INT NOT NULL
+		CONSTRAINT document_retention_policy_version_positive CHECK(policy_version > 0),
     document_type_id varchar(50) REFERENCES document.document_type(id) NOT NULL,
     archival_required BOOLEAN NOT NULL,
-    retention_duration INT NOT NULL,
+	retention_duration INT NOT NULL
+		CONSTRAINT document_retention_duration_positive CHECK(retention_duration > 0),
     effective_from DATE NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
 	UNIQUE(document_type_id, policy_version),
-	UNIQUE(document_type_id, effective_from),
-	CHECK(policy_version > 0),
-	CHECK(retention_duration > 0)
+	UNIQUE(document_type_id, effective_from)
 );
 
 CREATE TABLE policy.document_retention_version_counters (
@@ -765,17 +931,22 @@ CREATE TABLE policy.document_governance_grants (
 	id VARCHAR(80) PRIMARY KEY,
 	document_id VARCHAR(50) NOT NULL REFERENCES document.documents(id) ON DELETE CASCADE,
 	grantee_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
-	grant_type VARCHAR(30) NOT NULL,
+	grant_type policy.document_grant_type NOT NULL,
 	granted_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
-	grantor_authority VARCHAR(30) NOT NULL,
-	reason TEXT NOT NULL,
+	grantor_authority policy.document_grantor_authority NOT NULL,
+	reason TEXT NOT NULL CHECK (length(trim(reason)) > 0),
 	valid_from TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	valid_to TIMESTAMPTZ,
-	remaining_uses INT,
+	remaining_uses INT CHECK (remaining_uses IS NULL OR remaining_uses >= 0),
 	revoked_by VARCHAR(50) REFERENCES identity.staff(id),
 	revoked_at TIMESTAMPTZ,
 	revocation_reason TEXT,
-	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	CHECK (valid_to IS NULL OR valid_to > valid_from),
+	CHECK (
+		(revoked_at IS NULL AND revoked_by IS NULL AND revocation_reason IS NULL)
+		OR (revoked_at IS NOT NULL AND revoked_by IS NOT NULL AND length(trim(revocation_reason)) > 0)
+	)
 );
 
 CREATE TABLE policy.document_sensitivity_change_requests (
@@ -784,13 +955,18 @@ CREATE TABLE policy.document_sensitivity_change_requests (
 	from_sensitivity policy.document_sensitivity_level NOT NULL,
 	to_sensitivity policy.document_sensitivity_level NOT NULL,
 	requested_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
-	reason TEXT NOT NULL,
-	status VARCHAR(20) NOT NULL,
+	reason TEXT NOT NULL CHECK (length(trim(reason)) > 0),
+	status policy.sensitivity_change_status NOT NULL,
 	reviewed_by VARCHAR(50) REFERENCES identity.staff(id),
 	review_reason TEXT,
 	requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	reviewed_at TIMESTAMPTZ,
-	applied_at TIMESTAMPTZ
+	applied_at TIMESTAMPTZ,
+	CHECK (from_sensitivity <> to_sensitivity),
+	CHECK (
+		(status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL)
+		OR (status <> 'pending' AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL)
+	)
 );
 
 CREATE TABLE policy.document_extractions (
@@ -798,10 +974,10 @@ CREATE TABLE policy.document_extractions (
 	document_id VARCHAR(50) NOT NULL REFERENCES document.documents(id) ON DELETE CASCADE,
 	document_revision BIGINT NOT NULL,
 	actor_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
-	extraction_action VARCHAR(20) NOT NULL,
+	extraction_action policy.extraction_action NOT NULL,
 	grant_id VARCHAR(80) REFERENCES policy.document_governance_grants(id),
 	policy_key VARCHAR(100) NOT NULL,
-	policy_version INT NOT NULL,
+	policy_version INT NOT NULL CHECK (policy_version > 0),
 	obligations TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
 	watermark_text TEXT,
 	artifact_sha256 CHAR(64) NOT NULL,
@@ -994,3 +1170,662 @@ CREATE TABLE notifications.notifications (
     sent_at TIMESTAMPTZ,
     read_at TIMESTAMPTZ
 );
+
+
+-- AUDIT SCHEMA
+CREATE TABLE audit.events (
+	id VARCHAR(80) PRIMARY KEY,
+	actor_id VARCHAR(80) NOT NULL,
+	actor_type audit.actor_type NOT NULL,
+	capability VARCHAR(150),
+	action VARCHAR(100) NOT NULL,
+	event_type VARCHAR(150) NOT NULL,
+	aggregate_type VARCHAR(100) NOT NULL,
+	aggregate_id VARCHAR(100) NOT NULL,
+	office_id VARCHAR(50) REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) REFERENCES identity.organizational_units(id),
+	outcome audit.outcome NOT NULL,
+	reason TEXT,
+	request_id VARCHAR(100),
+	correlation_id VARCHAR(100),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+	previous_hash CHAR(64),
+	event_hash CHAR(64),
+	hash_algorithm VARCHAR(30),
+	occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE audit.events IS
+	'Immutable security and business evidence. Business mutations append within the same transaction.';
+
+CREATE OR REPLACE FUNCTION audit.prevent_append_only_mutation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	RAISE EXCEPTION '% is append-only; % is not permitted', TG_TABLE_NAME, TG_OP
+		USING ERRCODE = '55000';
+END
+$$;
+
+
+-- REGISTRY SCHEMA (migration 0003 final state)
+CREATE TABLE registry.intakes (
+	id VARCHAR(80) PRIMARY KEY,
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	channel registry.intake_channel NOT NULL,
+	sender JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(sender) = 'object'),
+	subject TEXT NOT NULL,
+	document_date DATE,
+	received_at TIMESTAMPTZ NOT NULL,
+	received_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	priority registry.priority NOT NULL DEFAULT 'normal',
+	status registry.intake_status NOT NULL DEFAULT 'received',
+	document_id VARCHAR(50) REFERENCES document.documents(id),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ
+);
+
+CREATE TABLE registry.reference_series (
+	id VARCHAR(80) PRIMARY KEY,
+	code VARCHAR(50) NOT NULL,
+	name VARCHAR(150) NOT NULL,
+	office_id VARCHAR(50) REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) REFERENCES identity.organizational_units(id),
+	format_pattern VARCHAR(250) NOT NULL,
+	reset_period registry.reference_reset_period NOT NULL DEFAULT 'annual',
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+	CHECK (office_id IS NOT NULL OR unit_id IS NOT NULL)
+);
+
+CREATE TABLE registry.reference_sequences (
+	series_id VARCHAR(80) NOT NULL REFERENCES registry.reference_series(id),
+	period_key VARCHAR(20) NOT NULL,
+	current_value BIGINT NOT NULL DEFAULT 0 CHECK (current_value >= 0),
+	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (series_id, period_key)
+);
+
+CREATE TABLE registry.reference_allocations (
+	id VARCHAR(80) PRIMARY KEY,
+	series_id VARCHAR(80) NOT NULL REFERENCES registry.reference_series(id),
+	period_key VARCHAR(20) NOT NULL,
+	sequence_value BIGINT NOT NULL CHECK (sequence_value > 0),
+	reference_number VARCHAR(150) NOT NULL UNIQUE,
+	intake_id VARCHAR(80) NOT NULL UNIQUE REFERENCES registry.intakes(id),
+	allocated_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	allocated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (series_id, period_key, sequence_value),
+	FOREIGN KEY (series_id, period_key) REFERENCES registry.reference_sequences(series_id, period_key)
+);
+
+CREATE TABLE registry.digitization_jobs (
+	id VARCHAR(80) PRIMARY KEY,
+	intake_id VARCHAR(80) NOT NULL REFERENCES registry.intakes(id),
+	status registry.digitization_status NOT NULL DEFAULT 'pending',
+	assigned_to VARCHAR(50) REFERENCES identity.staff(id),
+	expected_page_count INTEGER CHECK (expected_page_count IS NULL OR expected_page_count > 0),
+	started_at TIMESTAMPTZ,
+	completed_at TIMESTAMPTZ,
+	failure_reason TEXT,
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0)
+);
+
+CREATE TABLE registry.scan_pages (
+	id VARCHAR(80) PRIMARY KEY,
+	digitization_job_id VARCHAR(80) NOT NULL REFERENCES registry.digitization_jobs(id) ON DELETE RESTRICT,
+	page_number INTEGER NOT NULL CHECK (page_number > 0),
+	media_asset_id VARCHAR(50) NOT NULL REFERENCES media.media_assets(id),
+	checksum VARCHAR(128) NOT NULL,
+	captured_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+	UNIQUE (digitization_job_id, page_number)
+);
+
+CREATE TABLE registry.ocr_runs (
+	id VARCHAR(80) PRIMARY KEY,
+	digitization_job_id VARCHAR(80) NOT NULL REFERENCES registry.digitization_jobs(id) ON DELETE RESTRICT,
+	scan_page_id VARCHAR(80) REFERENCES registry.scan_pages(id) ON DELETE RESTRICT,
+	provider VARCHAR(80) NOT NULL,
+	status registry.ocr_status NOT NULL DEFAULT 'queued',
+	extracted_text TEXT,
+	confidence NUMERIC(5, 4) CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
+	provider_output JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(provider_output) = 'object'),
+	started_at TIMESTAMPTZ,
+	completed_at TIMESTAMPTZ,
+	failure_reason TEXT,
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE registry.scan_verifications (
+	id VARCHAR(80) PRIMARY KEY,
+	digitization_job_id VARCHAR(80) NOT NULL REFERENCES registry.digitization_jobs(id) ON DELETE RESTRICT,
+	outcome registry.verification_outcome NOT NULL,
+	verified_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	reason TEXT,
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+	verified_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE registry.entries (
+	id VARCHAR(80) PRIMARY KEY,
+	intake_id VARCHAR(80) NOT NULL UNIQUE REFERENCES registry.intakes(id),
+	reference_allocation_id VARCHAR(80) NOT NULL UNIQUE REFERENCES registry.reference_allocations(id),
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	document_id VARCHAR(50) REFERENCES document.documents(id),
+	document_version_id VARCHAR(50) REFERENCES document.document_versions(id),
+	subject TEXT NOT NULL,
+	status registry.entry_status NOT NULL DEFAULT 'registered',
+	current_custodian_type registry.custodian_type,
+	current_custodian_id VARCHAR(100),
+	registered_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+	CHECK ((document_id IS NULL AND document_version_id IS NULL) OR (document_id IS NOT NULL AND document_version_id IS NOT NULL)),
+	CHECK ((current_custodian_type IS NULL AND current_custodian_id IS NULL) OR (current_custodian_type IS NOT NULL AND current_custodian_id IS NOT NULL))
+);
+
+CREATE TABLE registry.custody_movements (
+	id VARCHAR(80) PRIMARY KEY,
+	registry_entry_id VARCHAR(80) NOT NULL REFERENCES registry.entries(id),
+	event_type registry.custody_event_type NOT NULL,
+	from_custodian_type registry.custodian_type,
+	from_custodian_id VARCHAR(100),
+	to_custodian_type registry.custodian_type NOT NULL,
+	to_custodian_id VARCHAR(100) NOT NULL,
+	related_movement_id VARCHAR(80) REFERENCES registry.custody_movements(id),
+	performed_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	performed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	evidence_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+	notes TEXT,
+	CHECK ((from_custodian_type IS NULL AND from_custodian_id IS NULL) OR (from_custodian_type IS NOT NULL AND from_custodian_id IS NOT NULL))
+);
+
+CREATE TABLE registry.correspondence_log_entries (
+	id VARCHAR(80) PRIMARY KEY,
+	registry_entry_id VARCHAR(80) REFERENCES registry.entries(id),
+	direction registry.correspondence_direction NOT NULL,
+	channel registry.correspondence_channel NOT NULL,
+	reference_number VARCHAR(150),
+	counterparty JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(counterparty) = 'object'),
+	subject TEXT NOT NULL,
+	dispatch_id VARCHAR(80),
+	logged_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+	CONSTRAINT fk_registry_correspondence_dispatch FOREIGN KEY (dispatch_id)
+		REFERENCES dispatch.dispatch_records(id)
+);
+
+
+-- DISPATCH EXTENSIONS (migration 0004 final state)
+CREATE TABLE dispatch.dispatch_acknowledgements (
+	id VARCHAR(80) PRIMARY KEY,
+	dispatch_id VARCHAR(80) NOT NULL REFERENCES dispatch.dispatch_records(id),
+	acknowledged_by_staff_id VARCHAR(50) REFERENCES identity.staff(id),
+	external_acknowledger_name VARCHAR(200),
+	evidence_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+	notes TEXT,
+	acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	created_by VARCHAR(50) REFERENCES identity.staff(id),
+	CHECK (
+		(acknowledged_by_staff_id IS NOT NULL AND external_acknowledger_name IS NULL)
+		OR (acknowledged_by_staff_id IS NULL AND external_acknowledger_name IS NOT NULL)
+	)
+);
+
+
+-- RECORDS SCHEMA (migration 0005 final state)
+CREATE TABLE records.retention_schedules (
+	id VARCHAR(80) PRIMARY KEY,
+	code VARCHAR(50) NOT NULL UNIQUE,
+	name VARCHAR(150) NOT NULL,
+	description TEXT,
+	office_id VARCHAR(50) REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) REFERENCES identity.organizational_units(id),
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0)
+);
+
+CREATE TABLE records.retention_schedule_versions (
+	id VARCHAR(80) PRIMARY KEY,
+	schedule_id VARCHAR(80) NOT NULL REFERENCES records.retention_schedules(id),
+	version INTEGER NOT NULL CHECK (version > 0),
+	document_type_id VARCHAR(50) REFERENCES document.document_type(id),
+	duration_months INTEGER NOT NULL CHECK (duration_months >= 0),
+	trigger_event records.retention_trigger_event NOT NULL,
+	disposition_action records.disposition_action NOT NULL,
+	effective_from DATE NOT NULL,
+	effective_to DATE,
+	approved_by VARCHAR(50) REFERENCES identity.staff(id),
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (schedule_id, version),
+	CHECK (effective_to IS NULL OR effective_to > effective_from),
+	CONSTRAINT retention_schedule_versions_no_overlap EXCLUDE USING gist (
+		schedule_id WITH =,
+		daterange(effective_from, COALESCE(effective_to, 'infinity'::DATE), '[)') WITH &&
+	)
+);
+
+CREATE TABLE records.records (
+	id VARCHAR(80) PRIMARY KEY,
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	registry_entry_id VARCHAR(80) REFERENCES registry.entries(id),
+	title VARCHAR(250) NOT NULL,
+	status records.record_status NOT NULL DEFAULT 'active',
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0)
+);
+
+CREATE TABLE records.record_declarations (
+	id VARCHAR(80) PRIMARY KEY,
+	record_id VARCHAR(80) NOT NULL UNIQUE REFERENCES records.records(id),
+	document_id VARCHAR(50) NOT NULL REFERENCES document.documents(id),
+	document_version_id VARCHAR(50) NOT NULL UNIQUE REFERENCES document.document_versions(id),
+	content_checksum CHAR(64) NOT NULL CHECK (content_checksum ~ '^[0-9a-fA-F]{64}$'),
+	declared_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	declared_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object')
+);
+
+CREATE TABLE records.storage_locations (
+	id VARCHAR(80) PRIMARY KEY,
+	parent_id VARCHAR(80) REFERENCES records.storage_locations(id),
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	location_type records.location_type NOT NULL,
+	code VARCHAR(80) NOT NULL,
+	name VARCHAR(150) NOT NULL,
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+	UNIQUE (office_id, code),
+	CHECK (parent_id IS NULL OR parent_id <> id)
+);
+
+CREATE TABLE records.record_placements (
+	id VARCHAR(80) PRIMARY KEY,
+	record_id VARCHAR(80) NOT NULL REFERENCES records.records(id),
+	location_id VARCHAR(80) NOT NULL REFERENCES records.storage_locations(id),
+	event_type records.placement_event_type NOT NULL,
+	related_placement_id VARCHAR(80) REFERENCES records.record_placements(id),
+	performed_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	performed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	notes TEXT
+);
+
+CREATE TABLE records.record_retention (
+	id VARCHAR(80) PRIMARY KEY,
+	record_id VARCHAR(80) NOT NULL REFERENCES records.records(id),
+	schedule_version_id VARCHAR(80) NOT NULL REFERENCES records.retention_schedule_versions(id),
+	trigger_date DATE NOT NULL,
+	disposal_eligibility_date DATE NOT NULL,
+	supersedes_id VARCHAR(80) REFERENCES records.record_retention(id),
+	applied_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	CHECK (disposal_eligibility_date >= trigger_date)
+);
+
+CREATE TABLE records.legal_holds (
+	id VARCHAR(80) PRIMARY KEY,
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	title VARCHAR(200) NOT NULL,
+	reason TEXT NOT NULL,
+	status records.legal_hold_status NOT NULL DEFAULT 'active',
+	placed_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	placed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	released_by VARCHAR(50) REFERENCES identity.staff(id),
+	released_at TIMESTAMPTZ,
+	release_reason TEXT,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+	CHECK (
+		(status = 'active' AND released_by IS NULL AND released_at IS NULL)
+		OR (status = 'released' AND released_by IS NOT NULL AND released_at IS NOT NULL)
+	)
+);
+
+CREATE TABLE records.legal_hold_records (
+	id VARCHAR(80) PRIMARY KEY,
+	legal_hold_id VARCHAR(80) NOT NULL REFERENCES records.legal_holds(id),
+	record_id VARCHAR(80) NOT NULL REFERENCES records.records(id),
+	added_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (legal_hold_id, record_id)
+);
+
+CREATE TABLE records.legal_hold_events (
+	id VARCHAR(80) PRIMARY KEY,
+	legal_hold_id VARCHAR(80) NOT NULL REFERENCES records.legal_holds(id),
+	event_type records.legal_hold_event_type NOT NULL,
+	actor_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	reason TEXT,
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+	occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE records.transfers (
+	id VARCHAR(80) PRIMARY KEY,
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	from_location_id VARCHAR(80) REFERENCES records.storage_locations(id),
+	to_location_id VARCHAR(80) REFERENCES records.storage_locations(id),
+	destination JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(destination) = 'object'),
+	status records.transfer_status NOT NULL DEFAULT 'pending',
+	requested_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	approved_by VARCHAR(50) REFERENCES identity.staff(id),
+	approved_at TIMESTAMPTZ,
+	completed_by VARCHAR(50) REFERENCES identity.staff(id),
+	completed_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0)
+);
+
+CREATE TABLE records.transfer_items (
+	id VARCHAR(80) PRIMARY KEY,
+	transfer_id VARCHAR(80) NOT NULL REFERENCES records.transfers(id),
+	record_id VARCHAR(80) NOT NULL REFERENCES records.records(id),
+	added_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (transfer_id, record_id)
+);
+
+CREATE TABLE records.archive_accessions (
+	id VARCHAR(80) PRIMARY KEY,
+	transfer_id VARCHAR(80) UNIQUE REFERENCES records.transfers(id),
+	accession_number VARCHAR(100) NOT NULL UNIQUE,
+	location_id VARCHAR(80) REFERENCES records.storage_locations(id),
+	accessioned_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	accessioned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object')
+);
+
+CREATE TABLE records.disposal_requests (
+	id VARCHAR(80) PRIMARY KEY,
+	office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id),
+	unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id),
+	status records.disposal_request_status NOT NULL DEFAULT 'pending',
+	reason TEXT NOT NULL,
+	required_approvals INTEGER NOT NULL DEFAULT 1 CHECK (required_approvals > 0),
+	requested_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	approved_at TIMESTAMPTZ,
+	executed_at TIMESTAMPTZ,
+	version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0)
+);
+
+CREATE TABLE records.disposal_request_items (
+	id VARCHAR(80) PRIMARY KEY,
+	disposal_request_id VARCHAR(80) NOT NULL REFERENCES records.disposal_requests(id),
+	record_id VARCHAR(80) NOT NULL REFERENCES records.records(id),
+	retention_assignment_id VARCHAR(80) NOT NULL REFERENCES records.record_retention(id),
+	added_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (disposal_request_id, record_id)
+);
+
+CREATE TABLE records.disposal_approvals (
+	id VARCHAR(80) PRIMARY KEY,
+	disposal_request_id VARCHAR(80) NOT NULL REFERENCES records.disposal_requests(id),
+	decision records.disposal_decision NOT NULL,
+	approver_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	reason TEXT,
+	decided_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (disposal_request_id, approver_id)
+);
+
+CREATE TABLE records.disposal_certificates (
+	id VARCHAR(80) PRIMARY KEY,
+	disposal_request_id VARCHAR(80) NOT NULL UNIQUE REFERENCES records.disposal_requests(id),
+	certificate_number VARCHAR(100) NOT NULL UNIQUE,
+	executed_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	evidence_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+	certificate_checksum CHAR(64) CHECK (certificate_checksum IS NULL OR certificate_checksum ~ '^[0-9a-fA-F]{64}$'),
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object')
+);
+
+
+-- MIGRATION-DERIVED FUNCTIONS
+CREATE FUNCTION policy.gen_next_policy_version(_document_type_id VARCHAR)
+RETURNS INT
+LANGUAGE sql
+AS $$
+	INSERT INTO policy.document_retention_version_counters AS counter (
+		document_type_id,
+		last_version
+	)
+	VALUES (
+		_document_type_id,
+		(
+			SELECT COALESCE(MAX(policy_version), 0) + 1
+			FROM policy.document_retention
+			WHERE document_type_id = _document_type_id
+		)
+	)
+	ON CONFLICT (document_type_id)
+	DO UPDATE SET last_version = GREATEST(
+		counter.last_version,
+		(
+			SELECT COALESCE(MAX(policy_version), 0)
+			FROM policy.document_retention
+			WHERE document_type_id = _document_type_id
+		)
+	) + 1
+	RETURNING last_version;
+$$;
+
+CREATE OR REPLACE FUNCTION records.prevent_declared_version_mutation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	IF EXISTS (
+		SELECT 1 FROM records.record_declarations
+		WHERE document_version_id = OLD.id
+	) THEN
+		RAISE EXCEPTION 'Declared document version % is immutable', OLD.id
+			USING ERRCODE = '55000';
+	END IF;
+
+	IF TG_OP = 'DELETE' THEN
+		RETURN OLD;
+	END IF;
+	RETURN NEW;
+END
+$$;
+
+
+-- MIGRATION-DERIVED INDEXES
+CREATE INDEX idx_role_assignments_effective_staff
+	ON identity.role_assignments (staff_id, valid_from, valid_to)
+	WHERE revoked_at IS NULL;
+CREATE INDEX idx_role_assignments_unit_scope
+	ON identity.role_assignments (scope_unit_id, role_id)
+	WHERE scope_type = 'unit' AND revoked_at IS NULL;
+CREATE INDEX idx_role_assignments_office_scope
+	ON identity.role_assignments (scope_office_id, role_id)
+	WHERE scope_type = 'office' AND revoked_at IS NULL;
+
+CREATE INDEX idx_audit_events_aggregate
+	ON audit.events (aggregate_type, aggregate_id, occurred_at DESC);
+CREATE INDEX idx_audit_events_actor
+	ON audit.events (actor_id, occurred_at DESC);
+CREATE INDEX idx_audit_events_office
+	ON audit.events (office_id, occurred_at DESC) WHERE office_id IS NOT NULL;
+CREATE INDEX idx_audit_events_unit
+	ON audit.events (unit_id, occurred_at DESC) WHERE unit_id IS NOT NULL;
+CREATE INDEX idx_audit_events_correlation
+	ON audit.events (correlation_id, occurred_at) WHERE correlation_id IS NOT NULL;
+CREATE INDEX idx_audit_events_type
+	ON audit.events (event_type, occurred_at DESC);
+CREATE UNIQUE INDEX audit_event_hash_unique
+	ON audit.events(event_hash) WHERE event_hash IS NOT NULL;
+
+CREATE UNIQUE INDEX uq_registry_reference_series_scope_code
+	ON registry.reference_series (COALESCE(office_id, ''), COALESCE(unit_id, ''), code);
+CREATE INDEX idx_registry_digitization_jobs_queue
+	ON registry.digitization_jobs (status, created_at);
+CREATE UNIQUE INDEX uq_registry_scan_verification_accepted
+	ON registry.scan_verifications (digitization_job_id) WHERE outcome = 'accepted';
+CREATE INDEX idx_registry_entries_scope_status
+	ON registry.entries (office_id, unit_id, status, registered_at DESC);
+CREATE INDEX idx_registry_custody_movement_timeline
+	ON registry.custody_movements (registry_entry_id, performed_at, id);
+CREATE INDEX idx_registry_correspondence_timeline
+	ON registry.correspondence_log_entries (logged_at DESC, id DESC);
+
+CREATE UNIQUE INDEX uq_dispatch_tracking_number
+	ON dispatch.dispatch_records (delivery_channel, tracking_number)
+	WHERE tracking_number IS NOT NULL;
+CREATE INDEX idx_dispatch_registry_entry
+	ON dispatch.dispatch_records (registry_entry_id, dispatched_at DESC)
+	WHERE registry_entry_id IS NOT NULL;
+CREATE INDEX idx_dispatch_delivery_queue
+	ON dispatch.dispatch_records (status, delivery_channel, dispatched_at);
+CREATE INDEX idx_dispatch_acknowledgements_dispatch
+	ON dispatch.dispatch_acknowledgements (dispatch_id, acknowledged_at);
+
+CREATE INDEX idx_records_scope_status
+	ON records.records (office_id, unit_id, status, created_at DESC);
+CREATE INDEX idx_record_placements_timeline
+	ON records.record_placements (record_id, performed_at, id);
+CREATE INDEX idx_record_retention_eligibility
+	ON records.record_retention (disposal_eligibility_date, record_id);
+CREATE INDEX idx_legal_hold_records_record
+	ON records.legal_hold_records (record_id, legal_hold_id);
+CREATE INDEX idx_records_disposal_queue
+	ON records.disposal_requests (office_id, unit_id, status, requested_at);
+CREATE INDEX idx_records_transfer_queue
+	ON records.transfers (office_id, unit_id, status, requested_at);
+
+CREATE UNIQUE INDEX document_retention_type_effective
+	ON policy.document_retention(document_type_id, effective_from);
+CREATE UNIQUE INDEX document_governance_one_active_policy
+	ON policy.document_governance_policies(policy_key) WHERE status = 'active';
+CREATE UNIQUE INDEX document_governance_scoped_rule_identity
+	ON policy.document_governance_rules(governance_policy_id, sensitivity, action, priority)
+	WHERE sensitivity IS NOT NULL;
+CREATE UNIQUE INDEX document_governance_global_rule_identity
+	ON policy.document_governance_rules(governance_policy_id, action, priority)
+	WHERE sensitivity IS NULL;
+CREATE INDEX document_governance_rule_lookup
+	ON policy.document_governance_rules(governance_policy_id, sensitivity, action, priority);
+CREATE UNIQUE INDEX document_one_effective_unit_head_signature
+	ON document.document_unit_head_signatures(document_id) WHERE revoked_at IS NULL;
+CREATE INDEX document_governance_grant_lookup
+	ON policy.document_governance_grants(document_id, grantee_staff_id, grant_type, valid_from, valid_to)
+	WHERE revoked_at IS NULL;
+CREATE UNIQUE INDEX one_pending_sensitivity_change_per_document
+	ON policy.document_sensitivity_change_requests(document_id) WHERE status = 'pending';
+CREATE INDEX document_search_cursor
+	ON document.documents(created_at DESC, id DESC);
+CREATE INDEX governance_grants_document_status
+	ON policy.document_governance_grants(document_id, created_at DESC, id DESC);
+CREATE INDEX sensitivity_change_approval_queue
+	ON policy.document_sensitivity_change_requests(status, requested_at, id)
+	WHERE status = 'pending';
+CREATE INDEX document_extractions_document_history
+	ON policy.document_extractions(document_id, created_at DESC);
+
+
+-- APPEND-ONLY AND IMMUTABILITY TRIGGERS
+CREATE TRIGGER prevent_audit_event_mutation
+	BEFORE UPDATE OR DELETE ON audit.events
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_reference_allocation_mutation
+	BEFORE UPDATE OR DELETE ON registry.reference_allocations
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_scan_page_mutation
+	BEFORE UPDATE OR DELETE ON registry.scan_pages
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_scan_verification_mutation
+	BEFORE UPDATE OR DELETE ON registry.scan_verifications
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_custody_movement_mutation
+	BEFORE UPDATE OR DELETE ON registry.custody_movements
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_correspondence_log_mutation
+	BEFORE UPDATE OR DELETE ON registry.correspondence_log_entries
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_dispatch_acknowledgement_mutation
+	BEFORE UPDATE OR DELETE ON dispatch.dispatch_acknowledgements
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_declared_version_mutation
+	BEFORE UPDATE OR DELETE ON document.document_versions
+	FOR EACH ROW EXECUTE FUNCTION records.prevent_declared_version_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.record_declarations
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.record_placements
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.record_retention
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.legal_hold_records
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.legal_hold_events
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.transfer_items
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.archive_accessions
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.disposal_request_items
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.disposal_approvals
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON records.disposal_certificates
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_document_extraction_mutation
+	BEFORE UPDATE OR DELETE ON policy.document_extractions
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+
+REVOKE UPDATE, DELETE, TRUNCATE ON audit.events FROM PUBLIC;
+REVOKE UPDATE, DELETE, TRUNCATE ON
+	registry.reference_allocations,
+	registry.scan_pages,
+	registry.scan_verifications,
+	registry.custody_movements,
+	registry.correspondence_log_entries,
+	dispatch.dispatch_acknowledgements,
+	records.record_declarations,
+	records.record_placements,
+	records.record_retention,
+	records.legal_hold_records,
+	records.legal_hold_events,
+	records.transfer_items,
+	records.archive_accessions,
+	records.disposal_request_items,
+	records.disposal_approvals,
+	records.disposal_certificates,
+	policy.document_extractions
+FROM PUBLIC;
