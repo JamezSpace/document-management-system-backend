@@ -8,12 +8,13 @@ interface DocumentRepositoryPort {
 
     discover(searchTerm: string, limit: number, cursor?: { createdAt: Date; id: string } | null): Promise<Document[]>;
 
-    findDocumentById(id: string): Promise<Document | null>;
+    findDocumentById(id: string, tx?: TransactionContext): Promise<Document | null>;
 
     editDocument(document: Document, expectedRevision: number, tx?: TransactionContext): Promise<Document | null>;
 
 	incrementRevision(id: string, expectedRevision: number, tx?: TransactionContext): Promise<number | null>;
 	lockRevision(id: string, expectedRevision: number, tx: TransactionContext): Promise<boolean>;
+	lockAttachmentDocuments(parentDocumentId: string, sourceDocumentId: string, expectedRevision: number, tx: TransactionContext): Promise<boolean>;
 
     softDeleteDocument(id: string): Promise<void>;
 

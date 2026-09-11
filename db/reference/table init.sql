@@ -109,7 +109,7 @@ CREATE TYPE document.relationship_type AS ENUM (
     'reference', 'related'
 );
 CREATE TYPE document.attachment_source_type AS ENUM (
-	'internal_document', 'external_upload'
+	'internal_document', 'uploaded_file'
 );
 
 
@@ -182,6 +182,9 @@ CREATE TYPE notifications.state as ENUM (
 -- MEDIA TYPES
 CREATE TYPE media.uploaded_by_type as ENUM (
     'staff', 'onboarding_session', 'system'
+);
+CREATE TYPE media.virus_scan_status AS ENUM (
+	'pending', 'clean', 'infected', 'failed'
 );
 
 -- AUDIT SCHEMA TYPES
@@ -576,7 +579,14 @@ CREATE TABLE media.media_assets (
 
     uploaded_at TIMESTAMPTZ NOT NULL,
     uploaded_by VARCHAR(50) NOT NULL,
-    uploaded_by_type media.uploaded_by_type NOT NULL
+    uploaded_by_type media.uploaded_by_type NOT NULL,
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	virus_scan_status media.virus_scan_status NOT NULL DEFAULT 'pending',
+	virus_scanned_at TIMESTAMPTZ,
+	CONSTRAINT media_assets_virus_scan_state_shape CHECK (
+		(virus_scan_status = 'pending' AND virus_scanned_at IS NULL)
+		OR (virus_scan_status <> 'pending' AND virus_scanned_at IS NOT NULL)
+	)
 );
 
 
@@ -741,42 +751,42 @@ CREATE TABLE document.document_media_assets (
 -- external files reference an uploaded media asset.
 CREATE TABLE document.document_attachments (
 	id VARCHAR(80) PRIMARY KEY,
-	document_id VARCHAR(50) NOT NULL
+	parent_document_id VARCHAR(50) NOT NULL
 		REFERENCES document.documents(id) ON DELETE CASCADE,
-	document_version_id VARCHAR(50),
+	parent_document_version_id VARCHAR(50),
 	source_type document.attachment_source_type NOT NULL,
-	target_document_id VARCHAR(50)
+	source_document_id VARCHAR(50)
 		REFERENCES document.documents(id),
-	target_document_version_id VARCHAR(50),
-	media_asset_id VARCHAR(50)
+	source_document_version_id VARCHAR(50),
+	media_id VARCHAR(50)
 		REFERENCES media.media_assets(id),
 	display_order INTEGER NOT NULL DEFAULT 0,
 	attached_by VARCHAR(50) NOT NULL
 		REFERENCES identity.staff(id),
 	attached_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-	CONSTRAINT document_attachments_document_version_fk
-		FOREIGN KEY (document_id, document_version_id)
+	CONSTRAINT document_attachments_parent_version_fk
+		FOREIGN KEY (parent_document_id, parent_document_version_id)
 		REFERENCES document.document_versions(document_id, id),
-	CONSTRAINT document_attachments_target_version_fk
-		FOREIGN KEY (target_document_id, target_document_version_id)
+	CONSTRAINT document_attachments_source_version_fk
+		FOREIGN KEY (source_document_id, source_document_version_id)
 		REFERENCES document.document_versions(document_id, id),
 	CONSTRAINT document_attachments_source_shape CHECK (
 		(
 			source_type = 'internal_document'
-			AND target_document_id IS NOT NULL
-			AND target_document_version_id IS NOT NULL
-			AND media_asset_id IS NULL
+			AND source_document_id IS NOT NULL
+			AND source_document_version_id IS NOT NULL
+			AND media_id IS NULL
 		)
 		OR (
-			source_type = 'external_upload'
-			AND target_document_id IS NULL
-			AND target_document_version_id IS NULL
-			AND media_asset_id IS NOT NULL
+			source_type = 'uploaded_file'
+			AND source_document_id IS NULL
+			AND source_document_version_id IS NULL
+			AND media_id IS NOT NULL
 		)
 	),
 	CONSTRAINT document_attachments_not_self_referencing CHECK (
-		target_document_id IS NULL OR target_document_id <> document_id
+		source_document_id IS NULL OR source_document_id <> parent_document_id
 	),
 	CONSTRAINT document_attachments_display_order_non_negative CHECK (
 		display_order >= 0
@@ -1791,15 +1801,15 @@ CREATE INDEX document_governance_rule_lookup
 CREATE UNIQUE INDEX document_one_effective_unit_head_signature
 	ON document.document_unit_head_signatures(document_id) WHERE revoked_at IS NULL;
 CREATE UNIQUE INDEX document_attachments_one_internal_document
-	ON document.document_attachments(document_id, target_document_id)
+	ON document.document_attachments(parent_document_id, source_document_id)
 	WHERE source_type = 'internal_document';
-CREATE UNIQUE INDEX document_attachments_one_external_upload
-	ON document.document_attachments(document_id, media_asset_id)
-	WHERE source_type = 'external_upload';
+CREATE UNIQUE INDEX document_attachments_one_uploaded_file
+	ON document.document_attachments(parent_document_id, media_id)
+	WHERE source_type = 'uploaded_file';
 CREATE INDEX document_attachments_document_listing
-	ON document.document_attachments(document_id, display_order, attached_at, id);
+	ON document.document_attachments(parent_document_id, display_order, attached_at, id);
 CREATE INDEX document_attachments_internal_reverse_lookup
-	ON document.document_attachments(target_document_id)
+	ON document.document_attachments(source_document_id)
 	WHERE source_type = 'internal_document';
 CREATE INDEX document_governance_grant_lookup
 	ON policy.document_governance_grants(document_id, grantee_staff_id, grant_type, valid_from, valid_to)

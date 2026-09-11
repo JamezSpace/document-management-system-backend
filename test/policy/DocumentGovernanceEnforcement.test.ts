@@ -105,15 +105,16 @@ test("attachment command denies confidential bindings before persistence", async
 		resolve: async () => context,
 	}, obligations);
 	const useCase = new ManageDocumentAttachmentUseCase(
-		{ findDocumentById: async () => documentFixture("confidential") } as any,
+		{ findDocumentById: async () => documentFixture("confidential"), lockRevision: async () => true } as any,
 		{
-			mediaExistsForUploader: async () => true,
+			findUploadedMedia: async () => null,
 			save: async () => { attachmentWasSaved = true; },
 			listByDocument: async () => [],
 			remove: async () => false,
 		} as any,
 		governance,
 		{ execute: async (operation: any) => operation({ client: {} }) } as any,
+		{ generate: () => "1" },
 	);
 
 	await assert.rejects(
@@ -131,15 +132,16 @@ test("attachment command requires Unit Head signature evidence for internal docu
 		resolve: async () => unsignedContext,
 	}, obligations);
 	const useCase = new ManageDocumentAttachmentUseCase(
-		{ findDocumentById: async () => documentFixture("internal") } as any,
+		{ findDocumentById: async () => documentFixture("internal"), lockRevision: async () => true } as any,
 		{
-			mediaExistsForUploader: async () => true,
+			findUploadedMedia: async () => null,
 			save: async () => { attachmentWasSaved = true; },
 			listByDocument: async () => [],
 			remove: async () => false,
 		} as any,
 		governance,
 		{ execute: async (operation: any) => operation({ client: {} }) } as any,
+		{ generate: () => "1" },
 	);
 
 	await assert.rejects(
@@ -156,23 +158,40 @@ test("attachment command binds requester-owned media for a public draft", async 
 		resolve: async () => context,
 	}, obligations);
 	const useCase = new ManageDocumentAttachmentUseCase(
-		{ findDocumentById: async () => documentFixture("public"), incrementRevision: async () => 2 } as any,
 		{
-			mediaExistsForUploader: async () => true,
+			findDocumentById: async () => documentFixture("public"),
+			incrementRevision: async () => 2,
+			lockRevision: async () => true,
+		} as any,
+		{
+			findUploadedMedia: async () => ({
+				id: "MEDIA-1",
+				format: "pdf",
+				mimeType: "application/pdf",
+				sizeBytes: 1024,
+				checksum: "a".repeat(64),
+				uploadedBy: "STAFF-1",
+				uploadedByType: "staff",
+				isActive: true,
+				virusScanStatus: "clean",
+			}),
 			save: async (payload: unknown) => { savedPayload = payload; },
 			listByDocument: async () => [],
 			remove: async () => false,
 		} as any,
 		governance,
 		{ execute: async (operation: any) => operation({ client: {} }) } as any,
+		{ generate: () => "1" },
 	);
 
 	await useCase.attach({ documentId: "DOC-1", mediaId: "MEDIA-1", actorStaffId: "STAFF-1", expectedRevision: 1 });
 	assert.deepEqual(savedPayload, {
-		documentId: "DOC-1",
-		documentVersionId: null,
+		id: "DOC-ATTACH-1",
+		parentDocumentId: "DOC-1",
+		parentDocumentVersionId: null,
+		sourceType: "uploaded_file",
 		mediaId: "MEDIA-1",
-		assetRole: "attachment",
+		attachedBy: "STAFF-1",
 	});
 });
 

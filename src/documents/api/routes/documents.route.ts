@@ -24,12 +24,23 @@ import { ApplicationErrorEnum } from "../../../shared/errors/enum/application.en
 const attachmentBodySchema = Type.Object({
 	mediaId: Type.String({ minLength: 1 }),
 }, { additionalProperties: false });
+const internalAttachmentBodySchema = Type.Object({
+	sourceDocumentId: Type.String({ minLength: 1 }),
+	sourceVersionId: Type.String({ minLength: 1 }),
+}, { additionalProperties: false });
 const attachmentParamsSchema = Type.Object({
 	docId: Type.String({ minLength: 1 }),
-	mediaId: Type.String({ minLength: 1 }),
+	attachmentId: Type.String({ minLength: 1 }),
 });
 type AttachmentBody = Static<typeof attachmentBodySchema>;
+type InternalAttachmentBody = Static<typeof internalAttachmentBodySchema>;
 type AttachmentParams = Static<typeof attachmentParamsSchema>;
+const attachmentCandidateQuerySchema = Type.Object({
+	search: Type.String({ minLength: 1, maxLength: 200 }),
+	limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 25 })),
+	cursor: Type.Optional(Type.String({ minLength: 1 })),
+}, { additionalProperties: false });
+type AttachmentCandidateQuery = Static<typeof attachmentCandidateQuerySchema>;
 const discoveryQuerySchema = Type.Object({
 	query: Type.String({ minLength: 1, maxLength: 200 }),
 	limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 25 })),
@@ -234,6 +245,68 @@ async function documentRoutes(
 	);
 
 	fastify.get(
+		"/:docId/attachment-candidates",
+		{
+			config: { authorization: routePolicies.capability(DocumentCapabilities.UPDATE) },
+			schema: { params: documentIdSchema, querystring: attachmentCandidateQuerySchema },
+		},
+		async (
+			request: FastifyRequest<{ Params: DocumentIdSchemaType; Querystring: AttachmentCandidateQuery }>,
+			reply: FastifyReply,
+		) => {
+			const candidates = await documentController.attachmentCandidates(
+				request.params.docId,
+				request.query.search,
+				request.actor!.staffId,
+				request.query.limit,
+				request.query.cursor,
+			);
+			return reply.code(200).send({ success: true, data: candidates });
+		},
+	);
+
+	fastify.post(
+		"/:docId/attachments/internal",
+		{
+			config: { authorization: routePolicies.capability(DocumentCapabilities.UPDATE) },
+			schema: { params: documentIdSchema, body: internalAttachmentBodySchema, headers: mutationHeadersSchema },
+		},
+		async (
+			request: FastifyRequest<{ Params: DocumentIdSchemaType; Body: InternalAttachmentBody; Headers: MutationHeaders }>,
+			reply: FastifyReply,
+		) => {
+			const attachments = await documentController.attachInternalDocument(
+				request.params.docId,
+				request.body.sourceDocumentId,
+				request.body.sourceVersionId,
+				request.actor!.staffId,
+				expectedRevision(request.headers),
+			);
+			return reply.header("ETag", `"${attachments.documentRevision}"`).code(201).send({ success: true, data: attachments });
+		},
+	);
+
+	fastify.post(
+		"/:docId/attachments/uploaded",
+		{
+			config: { authorization: routePolicies.capability(DocumentCapabilities.UPDATE) },
+			schema: { params: documentIdSchema, body: attachmentBodySchema, headers: mutationHeadersSchema },
+		},
+		async (
+			request: FastifyRequest<{ Params: DocumentIdSchemaType; Body: AttachmentBody; Headers: MutationHeaders }>,
+			reply: FastifyReply,
+		) => {
+			const attachments = await documentController.attachUploadedFile(
+				request.params.docId,
+				request.body.mediaId,
+				request.actor!.staffId,
+				expectedRevision(request.headers),
+			);
+			return reply.header("ETag", `"${attachments.documentRevision}"`).code(201).send({ success: true, data: attachments });
+		},
+	);
+
+	fastify.get(
 		"/:docId/governance/grants",
 		{
 			config: { authorization: routePolicies.capability(DocumentCapabilities.VIEW) },
@@ -314,7 +387,7 @@ async function documentRoutes(
 	);
 
 	fastify.delete(
-		"/:docId/attachments/:mediaId",
+		"/:docId/attachments/:attachmentId",
 		{
 			config: { authorization: routePolicies.capability(DocumentCapabilities.UPDATE) },
 			schema: { params: attachmentParamsSchema, headers: mutationHeadersSchema },
@@ -325,7 +398,7 @@ async function documentRoutes(
 		) => {
 			const removed = await documentController.removeAttachment(
 				request.params.docId,
-				request.params.mediaId,
+				request.params.attachmentId,
 				request.actor!.staffId,
 				expectedRevision(request.headers),
 			);

@@ -148,7 +148,7 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 		}
 	}
 
-	async findDocumentById(id: string): Promise<Document | null> {
+	async findDocumentById(id: string, tx?: TransactionContext): Promise<Document | null> {
 		try {
 			const query = `
 				SELECT details.*, source.governance_policy_key, source.governance_policy_version
@@ -158,7 +158,8 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 				LIMIT 1;
 			`;
 
-			const result = await this.dbPool.query(query, [id]);
+			const executor = tx?.client ?? this.dbPool;
+			const result = await executor.query(query, [id]);
 
 			if (!result.rows || result.rows.length === 0) return null;
 
@@ -305,6 +306,25 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 			[id, expectedRevision],
 		);
 		return result.rows.length === 1;
+	}
+
+	async lockAttachmentDocuments(
+		parentDocumentId: string,
+		sourceDocumentId: string,
+		expectedRevision: number,
+		tx: TransactionContext,
+	): Promise<boolean> {
+		const result = await tx.client.query<{ id: string; revision: string | number }>(
+			`SELECT id, revision
+			 FROM document.documents
+			 WHERE id = ANY($1::VARCHAR[])
+			 ORDER BY id
+			 FOR UPDATE;`,
+			[[parentDocumentId, sourceDocumentId]],
+		);
+		if (result.rows.length !== 2) return false;
+		const parent = result.rows.find((row) => row.id === parentDocumentId);
+		return parent !== undefined && Number(parent.revision) === expectedRevision;
 	}
 
 	async fetchDocumentsByStaff(staffId: string): Promise<Document[]> {

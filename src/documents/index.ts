@@ -47,7 +47,7 @@ import type { DocumentGovernancePolicyPort } from "../shared/application/port/in
 import type { DocumentGovernanceContextPort } from "../shared/application/port/intersubsystem/DocumentGovernanceContext.port.js";
 import DocumentGovernanceGuard from "./application/services/DocumentGovernanceGuard.service.js";
 import ManageDocumentAttachmentUseCase from "./application/usecases/document/ManageDocumentAttachment.usecase.js";
-import DocumentMediaRepositoryAdapter from "./infrastructure/persistence/DocumentMediaRepository.adapter.js";
+import DocumentAttachmentRepositoryAdapter from "./infrastructure/persistence/DocumentAttachmentRepository.adapter.js";
 import DocumentSignatureRepositoryAdapter from "./infrastructure/persistence/DocumentSignatureRepository.adapter.js";
 import SignDocumentAsUnitHeadUseCase from "./application/usecases/document/SignDocumentAsUnitHead.usecase.js";
 import type { DocumentGovernanceAuditPort } from "../shared/application/port/intersubsystem/DocumentGovernanceAudit.port.js";
@@ -92,7 +92,7 @@ export default async function DocumentSubsystem(
 	const corrSubjectRepository = new CorrespondenceSubjectRepoAdapter(postgres);
 	const bussFunctionRepository = new BusinessFunctionRepoAdapter(postgres);
 	const docTypeRepository = new DocTypeRepoAdapter(postgres);
-	const documentMediaRepository = new DocumentMediaRepositoryAdapter(postgres);
+	const documentAttachmentRepository = new DocumentAttachmentRepositoryAdapter(postgres);
 	const documentSignatureRepository = new DocumentSignatureRepositoryAdapter(postgres);
 	const documentGovernanceGrantRepository = new DocumentGovernanceGrantRepositoryAdapter(postgres);
 	const documentSensitivityChangeRepository = new DocumentSensitivityChangeRepositoryAdapter(postgres);
@@ -146,9 +146,10 @@ export default async function DocumentSubsystem(
 	);
 	const manageDocumentAttachmentUseCase = new ManageDocumentAttachmentUseCase(
 		documentRepository,
-		documentMediaRepository,
+		documentAttachmentRepository,
 		governanceGuard,
 		transactionManager,
+		idGenerator,
 	);
 	const signDocumentAsUnitHeadUseCase = new SignDocumentAsUnitHeadUseCase(
 		idGenerator,

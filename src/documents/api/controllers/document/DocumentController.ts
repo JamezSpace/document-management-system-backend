@@ -229,6 +229,52 @@ class DocumentController {
 		);
 	}
 
+	attachUploadedFile(
+		documentId: string,
+		mediaId: string,
+		actorStaffId: string,
+		expectedRevision: number,
+	) {
+		return this.manageDocumentAttachmentUseCase.attachUploaded({
+			parentDocumentId: documentId,
+			mediaId,
+			actorStaffId,
+			expectedRevision,
+		});
+	}
+
+	attachInternalDocument(
+		documentId: string,
+		sourceDocumentId: string,
+		sourceVersionId: string,
+		actorStaffId: string,
+		expectedRevision: number,
+	) {
+		return this.manageDocumentAttachmentUseCase.attachInternal({
+			parentDocumentId: documentId,
+			sourceDocumentId,
+			sourceVersionId,
+			actorStaffId,
+			expectedRevision,
+		});
+	}
+
+	attachmentCandidates(
+		documentId: string,
+		searchTerm: string,
+		actorStaffId: string,
+		limit?: number,
+		cursor?: string,
+	) {
+		return this.manageDocumentAttachmentUseCase.candidates(
+			documentId,
+			searchTerm,
+			actorStaffId,
+			limit,
+			cursor,
+		);
+	}
+
 	signAsEffectiveUnitHead(documentId: string, actorStaffId: string, expectedRevision: number) {
 		return this.signDocumentAsUnitHeadUseCase.execute(documentId, actorStaffId, expectedRevision);
 	}
