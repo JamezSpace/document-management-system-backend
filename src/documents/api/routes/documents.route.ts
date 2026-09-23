@@ -6,11 +6,9 @@ import {
     docStaffIdSchema,
     documentIdSchema,
 	createDocumentSchemaForCreation,
-    documentSchemaForSave,
 	saveDocumentContentCommandSchema,
     type DocStaffIdSchemaType,
     type DocumentIdSchemaType,
-    type DocumentSchemaForSaveType,
     type DocumentSchemaTypeForCreation,
 	type SaveDocumentContentCommandType,
 } from "../types/document.type.js";
@@ -490,46 +488,6 @@ async function documentRoutes(
 		},
 	);
 
-	// save document changes
-	fastify.post(
-		"/:docId/save",
-		{
-			config: {
-				authorization: routePolicies.capability(DocumentCapabilities.UPDATE),
-			},
-			schema: { params: documentIdSchema, body: documentSchemaForSave, headers: mutationHeadersSchema },
-		},
-		async (
-			request: FastifyRequest<{
-				Params: DocumentIdSchemaType;
-				Body: DocumentSchemaForSaveType;
-				Headers: MutationHeaders;
-			}>,
-			reply: FastifyReply,
-		) => {
-			const { docId } = request.params;
-			const { contentDelta } = request.body;
-			const actorStaffId = request.actor!.staffId;
-
-			const savedDoc = await documentController.saveDocumentContent(
-				docId,
-				contentDelta,
-				actorStaffId,
-				expectedRevision(request.headers),
-			);
-
-			if (!savedDoc)
-				throw new ApiError(ApiErrorEnum.NOT_FOUND, {
-					message: `Document with id: ${docId} doesn't exist`,
-				});
-
-			return reply.header("ETag", `\"${savedDoc.revision}\"`).status(200).send({
-				success: true,
-				data: savedDoc,
-			});
-		},
-	);
-
 	// Save editor content using the authenticated actor and server-owned document state.
 	fastify.patch(
 		"/:docId/content",
@@ -567,7 +525,7 @@ async function documentRoutes(
 		},
 	);
 
-	// Submit by resource id; actor identity and document state are server-owned.
+	// submit by resource id; actor identity and document state are server-owned.
 	fastify.post(
 		"/:docId/submit",
 		{

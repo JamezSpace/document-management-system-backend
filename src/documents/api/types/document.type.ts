@@ -129,15 +129,6 @@ const documentSchema = Type.Object({
 	updatedAt: Type.Union([Type.String({ format: "date-time" }), Type.Null()]),
 });
 
-const documentSchemaForSave = Type.Object(
-	{
-		contentDelta: Type.Unknown(),
-		// Deprecated compatibility field. The server never trusts or persists it.
-		document: Type.Optional(Type.Unknown()),
-	},
-	{ additionalProperties: false },
-);
-
 const saveDocumentContentCommandSchema = Type.Object(
 	{
 		contentDelta: Type.Unknown(),
@@ -148,7 +139,6 @@ const saveDocumentContentCommandSchema = Type.Object(
 type DocumentSchemaType = Static<typeof documentSchema>;
 type DocumentIdSchemaType = Static<typeof documentIdSchema>;
 type DocStaffIdSchemaType = Static<typeof docStaffIdSchema>;
-type DocumentSchemaForSaveType = Static<typeof documentSchemaForSave>;
 type SaveDocumentContentCommandType = Static<
 	typeof saveDocumentContentCommandSchema
 >;
@@ -162,12 +152,10 @@ export {
 	documentIdSchema,
 	documentSchema,
 	createDocumentSchemaForCreation,
-	documentSchemaForSave,
 	saveDocumentContentCommandSchema,
 	documentVersionSchema,
 	type DocStaffIdSchemaType,
 	type DocumentIdSchemaType,
-	type DocumentSchemaForSaveType,
 	type SaveDocumentContentCommandType,
 	type DocumentSchemaType,
 	type DocumentSchemaTypeForCreation,
