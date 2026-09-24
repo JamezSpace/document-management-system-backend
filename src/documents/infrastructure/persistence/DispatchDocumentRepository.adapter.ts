@@ -59,6 +59,7 @@ class DispatchDocumentAdapter implements DispatchDocumentPort {
 			title: row.title,
 			version,
 			referenceNumber: row.reference_number,
+			revision: Number(row.source_revision ?? row.revision ?? 1),
 			addressees,
 			correspondence: {
 				originatingUnitId: row.originating_unit_id,
@@ -94,7 +95,8 @@ class DispatchDocumentAdapter implements DispatchDocumentPort {
 	): Promise<DispatchDocumentEntity | null> {
 		try {
 			const query = `
-				SELECT details.*, source.governance_policy_key, source.governance_policy_version
+				SELECT details.*, source.revision AS source_revision,
+					source.governance_policy_key, source.governance_policy_version
 				FROM document.full_document_details details
 				JOIN document.documents source ON source.id = details.id
 				WHERE details.id = $1

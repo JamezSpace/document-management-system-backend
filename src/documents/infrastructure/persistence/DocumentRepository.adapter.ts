@@ -45,7 +45,7 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 			title: row.title,
 			version,
 			referenceNumber: row.reference_number,
-			revision: Number(row.revision ?? 1),
+			revision: Number(row.source_revision ?? row.revision ?? 1),
 
 			correspondence: {
 				originatingUnitId: row.originating_unit_id,
@@ -151,7 +151,8 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 	async findDocumentById(id: string, tx?: TransactionContext): Promise<Document | null> {
 		try {
 			const query = `
-				SELECT details.*, source.governance_policy_key, source.governance_policy_version
+				SELECT details.*, source.revision AS source_revision,
+					source.governance_policy_key, source.governance_policy_version
 				FROM document.full_document_details AS details
 				JOIN document.documents AS source ON source.id = details.id
 				WHERE details.id = $1
@@ -178,7 +179,8 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 	async discover(searchTerm: string, limit: number, cursor?: { createdAt: Date; id: string } | null): Promise<Document[]> {
 		try {
 			const result = await this.dbPool.query(
-				`SELECT details.*, source.governance_policy_key, source.governance_policy_version
+				`SELECT details.*, source.revision AS source_revision,
+					source.governance_policy_key, source.governance_policy_version
 				 FROM document.full_document_details AS details
 				 JOIN document.documents AS source ON source.id = details.id
 				 WHERE (details.title ILIKE $1 OR details.reference_number ILIKE $1)
@@ -330,7 +332,8 @@ class DocumentRepositoryAdapter implements DocumentRepositoryPort {
 	async fetchDocumentsByStaff(staffId: string): Promise<Document[]> {
 		try {
 			const query = `
-				SELECT details.*, source.governance_policy_key, source.governance_policy_version
+				SELECT details.*, source.revision AS source_revision,
+					source.governance_policy_key, source.governance_policy_version
 				FROM document.full_document_details AS details
 				JOIN document.documents AS source ON source.id = details.id
 				WHERE details.owner_id = $1;
