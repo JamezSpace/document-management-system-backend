@@ -800,8 +800,16 @@ CREATE TABLE document.document_attachments (
 CREATE TABLE document.document_unit_head_signatures (
 	id VARCHAR(80) PRIMARY KEY,
 	document_id VARCHAR(50) NOT NULL REFERENCES document.documents(id) ON DELETE CASCADE,
+	document_version_id VARCHAR(50) REFERENCES document.document_versions(id),
+	signed_revision BIGINT,
+	content_sha256 CHAR(64),
+	signature_media_id VARCHAR(50) REFERENCES media.media_assets(id),
+	signer_name VARCHAR(300),
+	signer_designation VARCHAR(200),
 	signed_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
 	signed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	invalidated_at TIMESTAMPTZ,
+	invalidation_reason TEXT,
 	revoked_by VARCHAR(50) REFERENCES identity.staff(id),
 	revoked_at TIMESTAMPTZ,
 	revocation_reason TEXT,
@@ -1799,7 +1807,10 @@ CREATE UNIQUE INDEX document_governance_global_rule_identity
 CREATE INDEX document_governance_rule_lookup
 	ON policy.document_governance_rules(governance_policy_id, sensitivity, action, priority);
 CREATE UNIQUE INDEX document_one_effective_unit_head_signature
-	ON document.document_unit_head_signatures(document_id) WHERE revoked_at IS NULL;
+	ON document.document_unit_head_signatures(document_id)
+	WHERE revoked_at IS NULL AND invalidated_at IS NULL;
+CREATE INDEX document_signature_history
+	ON document.document_unit_head_signatures(document_id, signed_at DESC, id DESC);
 CREATE UNIQUE INDEX document_attachments_one_internal_document
 	ON document.document_attachments(parent_document_id, source_document_id)
 	WHERE source_type = 'internal_document';

@@ -34,6 +34,7 @@ VALUES
     ('perm.document.delete','document.delete','delete document'),
     ('perm.document.submit','document.submit','submit document into workflow'),
     ('perm.document.approve','document.approve','approve document'),
+    ('perm.document.sign','document.sign','authorize and visibly sign a document'),
     ('perm.document.reject','document.reject','reject document'),
     ('perm.document.cancel','document.cancel','cancel document'),
     ('perm.document.activate','document.activate','activate document'),
@@ -147,6 +148,7 @@ VALUES
     -- reviewing officer
     ('role.reviewing_officer', 'perm.document.download'),
     ('role.reviewing_officer', 'perm.document.approve'),
+    ('role.reviewing_officer', 'perm.document.sign'),
     ('role.reviewing_officer', 'perm.document.reject'),
     ('role.reviewing_officer', 'perm.document.view'),
     ('role.reviewing_officer', 'perm.workflow.forward'),

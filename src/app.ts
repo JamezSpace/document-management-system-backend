@@ -30,6 +30,7 @@ import { dbConfig } from "./shared/infrastructure/persistence/primary/postgres.c
 import WorkflowSubsystem from "./workflow/index.js";
 import DocumentGovernanceAuditAdapter from "./audit/infrastructure/persistence/DocumentGovernanceAudit.adapter.js";
 import WorkManagementSubsystem from "./work-management/index.js";
+import CloudinaryMediaServiceAdapter from "./shared/infrastructure/adapters/services/media/CloudinaryMediaService.adapter.js";
 
 interface BuildAppOptions {
 	logger?: boolean;
@@ -92,6 +93,7 @@ function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 		const documentGovernanceContext =
 			new DocumentGovernanceContextAdapter(server.pg);
 		const documentGovernanceAudit = new DocumentGovernanceAuditAdapter(server.pg);
+		const mediaService = new CloudinaryMediaServiceAdapter();
 		const orchestrationDocumentRepository = new DocumentRepositoryAdapter(server.pg);
 		const orchestrationDocument = {
 			getDocument: (documentId: string) =>
@@ -104,6 +106,7 @@ function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 			documentGovernancePolicy,
 			documentGovernanceContext,
 			documentGovernanceAudit,
+			mediaService,
 			retentionService,
 			globalEventBus: eventBusAdapter,
 		});
