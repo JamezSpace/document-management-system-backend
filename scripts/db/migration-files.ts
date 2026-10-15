@@ -25,6 +25,13 @@ const developmentSeedPath = path.join(
 	"development.sql",
 );
 
+const historicalCompatibleChecksums: Readonly<Record<number, readonly string[]>> = {
+	// Original 0012 failed on databases whose VARCHAR partial indexes were
+	// rewritten with non-immutable enum-to-text predicates. Databases where it
+	// was already applied may safely reconcile to the repaired checksum.
+	12: ["9d5126edd9f7792b12654436d8653ea22f8356ae2dd13e5cd8f6b68955a510cc"],
+};
+
 async function loadMigrationFiles(): Promise<MigrationFile[]> {
 	const entries = await readdir(migrationsDirectory, { withFileTypes: true });
 	const candidates = entries
@@ -74,7 +81,13 @@ async function loadMigrationFiles(): Promise<MigrationFile[]> {
 			fileName,
 			path: migrationPath,
 			checksum,
-			compatibleChecksums: [...new Set([checksum, crlfChecksum])],
+			compatibleChecksums: [
+				...new Set([
+					checksum,
+					crlfChecksum,
+					...(historicalCompatibleChecksums[version] ?? []),
+				]),
+			],
 			sql,
 		});
 	}

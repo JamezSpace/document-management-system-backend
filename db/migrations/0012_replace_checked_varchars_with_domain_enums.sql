@@ -1,4 +1,11 @@
 -- Replace closed categorical VARCHAR domains with schema-owned PostgreSQL enums.
+-- These partial indexes contain VARCHAR-to-text predicates. Drop them before
+-- converting their predicate columns to enums so PostgreSQL does not attempt
+-- to rebuild them with the non-immutable enum-to-text cast.
+DROP INDEX IF EXISTS registry.uq_registry_scan_verification_accepted;
+DROP INDEX IF EXISTS policy.one_pending_sensitivity_change_per_document;
+DROP INDEX IF EXISTS policy.sensitivity_change_approval_queue;
+
 DO $$
 DECLARE
 	type_definition RECORD;
@@ -173,3 +180,15 @@ ALTER TABLE policy.document_sensitivity_change_requests
 ALTER TABLE policy.document_extractions
 	DROP CONSTRAINT document_extractions_extraction_action_check,
 	ALTER COLUMN extraction_action TYPE policy.extraction_action USING extraction_action::TEXT::policy.extraction_action;
+
+CREATE UNIQUE INDEX uq_registry_scan_verification_accepted
+	ON registry.scan_verifications(digitization_job_id)
+	WHERE outcome = 'accepted'::registry.verification_outcome;
+
+CREATE UNIQUE INDEX one_pending_sensitivity_change_per_document
+	ON policy.document_sensitivity_change_requests(document_id)
+	WHERE status = 'pending'::policy.sensitivity_change_status;
+
+CREATE INDEX sensitivity_change_approval_queue
+	ON policy.document_sensitivity_change_requests(status, requested_at, id)
+	WHERE status = 'pending'::policy.sensitivity_change_status;
