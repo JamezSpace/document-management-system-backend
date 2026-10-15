@@ -159,10 +159,27 @@ CREATE TYPE directive.registry_volume AS ENUM (
     'operations',
     'official'
 );
-CREATE TYPE directive.status AS ENUM (
-    'draft',
-    'active',
-    'cancelled'
+CREATE TYPE directive.lifecycle_status AS ENUM (
+    'draft', 'issued', 'withdrawn', 'completed'
+);
+CREATE TYPE directive.target_scope_type AS ENUM (
+    'organization', 'unit', 'office'
+);
+CREATE TYPE directive.event_actor_type AS ENUM (
+    'staff', 'system'
+);
+CREATE TYPE directive.event_type AS ENUM (
+    'created',
+    'revision_created',
+    'issued',
+    'audience_resolved',
+    'delivered',
+    'seen',
+    'acknowledged',
+    'amended',
+    'completion_evidence_added',
+    'completed',
+    'withdrawn'
 );
 
 -- NOTIFICATIONS SCHEMA TYPES
@@ -1125,92 +1142,218 @@ CREATE TABLE workflow.workflow_tasks (
 
 -- DIRECTIVES SCHEMA
 CREATE TABLE directive.directives (
-    id VARCHAR(50) PRIMARY KEY,
-
-    heading TEXT NOT NULL,
-    instruction TEXT NOT NULL,
-
-    issued_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
-
-    priority directive.priority NOT NULL,
-    registry_volume directive.registry_volume NOT NULL,
-
-    status directive.status NOT NULL DEFAULT 'draft',
-
+    id VARCHAR(80) PRIMARY KEY,
+    reference_number VARCHAR(120) UNIQUE,
+    status directive.lifecycle_status NOT NULL DEFAULT 'draft',
+    current_revision_id VARCHAR(80),
+    issued_by_staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    issued_under_assignment_id VARCHAR(50) REFERENCES identity.role_assignments(id) ON DELETE RESTRICT,
+    issuing_unit_id VARCHAR(50) REFERENCES identity.organizational_units(id) ON DELETE RESTRICT,
+    issuing_office_id VARCHAR(50) REFERENCES identity.offices(id) ON DELETE RESTRICT,
+    issuer_name_snapshot VARCHAR(300),
+    issuer_designation_snapshot VARCHAR(200),
+    issuer_unit_name_snapshot VARCHAR(200),
     issued_at TIMESTAMPTZ,
+    effective_from TIMESTAMPTZ,
+    effective_until TIMESTAMPTZ,
+    acknowledgement_required BOOLEAN NOT NULL DEFAULT FALSE,
+    completion_required BOOLEAN NOT NULL DEFAULT FALSE,
+    completed_at TIMESTAMPTZ,
+    completed_by_staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    withdrawn_at TIMESTAMPTZ,
+    withdrawn_by_staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    withdrawal_reason TEXT,
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ,
+    CHECK (effective_until IS NULL OR (effective_from IS NOT NULL AND effective_until > effective_from)),
+    CHECK (
+        status = 'draft'
+        OR (reference_number IS NOT NULL AND current_revision_id IS NOT NULL
+            AND issued_by_staff_id IS NOT NULL AND issuer_name_snapshot IS NOT NULL
+            AND issued_at IS NOT NULL AND effective_from IS NOT NULL)
+    ),
+    CHECK (
+        (status = 'completed' AND completed_at IS NOT NULL AND completed_by_staff_id IS NOT NULL)
+        OR (status <> 'completed' AND completed_at IS NULL AND completed_by_staff_id IS NULL)
+    ),
+    CHECK (
+        (status = 'withdrawn' AND withdrawn_at IS NOT NULL
+            AND withdrawn_by_staff_id IS NOT NULL
+            AND NULLIF(BTRIM(withdrawal_reason), '') IS NOT NULL)
+        OR (status <> 'withdrawn' AND withdrawn_at IS NULL
+            AND withdrawn_by_staff_id IS NULL AND withdrawal_reason IS NULL)
+    )
 );
 
-CREATE TABLE directive.directive_staff_recipients (
-    id VARCHAR(50) PRIMARY KEY,
+CREATE TABLE directive.directive_revisions (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_id VARCHAR(80) NOT NULL REFERENCES directive.directives(id) ON DELETE RESTRICT,
+    revision_number INTEGER NOT NULL CHECK (revision_number > 0),
+    heading TEXT NOT NULL CHECK (NULLIF(BTRIM(heading), '') IS NOT NULL),
+    instruction TEXT NOT NULL CHECK (NULLIF(BTRIM(instruction), '') IS NOT NULL),
+    expected_outcome TEXT,
+    priority directive.priority NOT NULL DEFAULT 'standard',
+    registry_volume directive.registry_volume NOT NULL DEFAULT 'official',
+    completion_due_at TIMESTAMPTZ,
+    source_document_version_id VARCHAR(50) REFERENCES document.document_versions(id) ON DELETE RESTRICT,
+    content_sha256 CHAR(64) CHECK (content_sha256 IS NULL OR content_sha256 ~ '^[0-9a-f]{64}$'),
+    supersedes_revision_id VARCHAR(80),
+    change_reason TEXT,
+    created_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (directive_id, revision_number),
+    UNIQUE (directive_id, id),
+    FOREIGN KEY (directive_id, supersedes_revision_id)
+        REFERENCES directive.directive_revisions(directive_id, id) ON DELETE RESTRICT,
+    CHECK (
+        (revision_number = 1 AND supersedes_revision_id IS NULL)
+        OR (revision_number > 1 AND supersedes_revision_id IS NOT NULL
+            AND NULLIF(BTRIM(change_reason), '') IS NOT NULL)
+    )
+);
 
-    directive_id VARCHAR(50)
-        REFERENCES directive.directives(id)
-        ON DELETE CASCADE
-        NOT NULL,
+ALTER TABLE directive.directives
+    ADD CONSTRAINT directive_current_revision_fk
+    FOREIGN KEY (id, current_revision_id)
+    REFERENCES directive.directive_revisions(directive_id, id)
+    ON DELETE RESTRICT;
 
-    staff_id VARCHAR(50)
-        REFERENCES identity.staff(id)
-        NOT NULL,
+CREATE TABLE directive.directive_revision_staff_targets (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL REFERENCES directive.directive_revisions(id) ON DELETE RESTRICT,
+    staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    created_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (directive_revision_id, staff_id),
+    UNIQUE (directive_revision_id, id)
+);
 
+CREATE TABLE directive.directive_revision_unit_targets (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL REFERENCES directive.directive_revisions(id) ON DELETE RESTRICT,
+    unit_id VARCHAR(50) NOT NULL REFERENCES identity.organizational_units(id) ON DELETE RESTRICT,
+    created_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (directive_revision_id, unit_id),
+    UNIQUE (directive_revision_id, id)
+);
+
+CREATE TABLE directive.directive_revision_office_targets (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL REFERENCES directive.directive_revisions(id) ON DELETE RESTRICT,
+    office_id VARCHAR(50) NOT NULL REFERENCES identity.offices(id) ON DELETE RESTRICT,
+    created_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (directive_revision_id, office_id),
+    UNIQUE (directive_revision_id, id)
+);
+
+CREATE TABLE directive.directive_revision_role_targets (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL REFERENCES directive.directive_revisions(id) ON DELETE RESTRICT,
+    role_id VARCHAR(50) NOT NULL REFERENCES identity.roles(id) ON DELETE RESTRICT,
+    scope_type directive.target_scope_type NOT NULL DEFAULT 'organization',
+    scope_unit_id VARCHAR(50) REFERENCES identity.organizational_units(id) ON DELETE RESTRICT,
+    scope_office_id VARCHAR(50) REFERENCES identity.offices(id) ON DELETE RESTRICT,
+    created_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE NULLS NOT DISTINCT (directive_revision_id, role_id, scope_type, scope_unit_id, scope_office_id),
+    UNIQUE (directive_revision_id, id),
+    CHECK (
+        (scope_type = 'organization' AND scope_unit_id IS NULL AND scope_office_id IS NULL)
+        OR (scope_type = 'unit' AND scope_unit_id IS NOT NULL AND scope_office_id IS NULL)
+        OR (scope_type = 'office' AND scope_unit_id IS NULL AND scope_office_id IS NOT NULL)
+    )
+);
+
+CREATE TABLE directive.directive_deliveries (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL REFERENCES directive.directive_revisions(id) ON DELETE RESTRICT,
+    staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    delivered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     seen_at TIMESTAMPTZ,
-    acknowledged_at TIMESTAMPTZ,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    UNIQUE (directive_id, staff_id)
+    UNIQUE (directive_revision_id, staff_id),
+    UNIQUE (directive_revision_id, id),
+    UNIQUE (directive_revision_id, id, staff_id),
+    CHECK (seen_at IS NULL OR seen_at >= delivered_at)
 );
 
-CREATE TABLE directive.directive_unit_targets (
-    id VARCHAR(50) PRIMARY KEY,
-
-    directive_id VARCHAR(50)
-        REFERENCES directive.directives(id)
-        ON DELETE CASCADE
-        NOT NULL,
-
-    unit_id VARCHAR(50)
-        REFERENCES identity.organizational_units(id)
-        NOT NULL,
-
+CREATE TABLE directive.directive_delivery_sources (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL,
+    delivery_id VARCHAR(80) NOT NULL,
+    staff_target_id VARCHAR(80),
+    unit_target_id VARCHAR(80),
+    office_target_id VARCHAR(80),
+    role_target_id VARCHAR(80),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    UNIQUE (directive_id, unit_id)
+    FOREIGN KEY (directive_revision_id, delivery_id)
+        REFERENCES directive.directive_deliveries(directive_revision_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (directive_revision_id, staff_target_id)
+        REFERENCES directive.directive_revision_staff_targets(directive_revision_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (directive_revision_id, unit_target_id)
+        REFERENCES directive.directive_revision_unit_targets(directive_revision_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (directive_revision_id, office_target_id)
+        REFERENCES directive.directive_revision_office_targets(directive_revision_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (directive_revision_id, role_target_id)
+        REFERENCES directive.directive_revision_role_targets(directive_revision_id, id) ON DELETE RESTRICT,
+    CHECK (num_nonnulls(staff_target_id, unit_target_id, office_target_id, role_target_id) = 1),
+    UNIQUE NULLS NOT DISTINCT (delivery_id, staff_target_id, unit_target_id, office_target_id, role_target_id)
 );
 
-CREATE TABLE directive.directive_office_targets (
-    id VARCHAR(50) PRIMARY KEY,
-
-    directive_id VARCHAR(50)
-        REFERENCES directive.directives(id)
-        ON DELETE CASCADE
-        NOT NULL,
-
-    office_id VARCHAR(50)
-        REFERENCES identity.offices(id)
-        NOT NULL,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    UNIQUE (directive_id, office_id)
+CREATE TABLE directive.directive_acknowledgements (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_revision_id VARCHAR(80) NOT NULL,
+    delivery_id VARCHAR(80) NOT NULL UNIQUE,
+    staff_id VARCHAR(50) NOT NULL,
+    statement_snapshot TEXT,
+    acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+    FOREIGN KEY (directive_revision_id, delivery_id, staff_id)
+        REFERENCES directive.directive_deliveries(directive_revision_id, id, staff_id) ON DELETE RESTRICT
 );
 
-CREATE TABLE directive.directive_role_targets (
-    id VARCHAR(50) PRIMARY KEY,
+CREATE TABLE directive.directive_events (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_id VARCHAR(80) NOT NULL REFERENCES directive.directives(id) ON DELETE RESTRICT,
+    directive_revision_id VARCHAR(80),
+    event_type directive.event_type NOT NULL,
+    actor_type directive.event_actor_type NOT NULL,
+    actor_staff_id VARCHAR(50) REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    actor_assignment_id VARCHAR(50) REFERENCES identity.role_assignments(id) ON DELETE RESTRICT,
+    correlation_id VARCHAR(100),
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(metadata) = 'object'),
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (directive_id, directive_revision_id)
+        REFERENCES directive.directive_revisions(directive_id, id) ON DELETE RESTRICT,
+    CHECK (
+        (actor_type = 'staff' AND actor_staff_id IS NOT NULL)
+        OR (actor_type = 'system' AND actor_staff_id IS NULL AND actor_assignment_id IS NULL)
+    )
+);
 
-    directive_id VARCHAR(50)
-        REFERENCES directive.directives(id)
-        ON DELETE CASCADE
-        NOT NULL,
+CREATE TABLE directive.directive_completion_evidence (
+    id VARCHAR(80) PRIMARY KEY,
+    directive_id VARCHAR(80) NOT NULL REFERENCES directive.directives(id) ON DELETE RESTRICT,
+    directive_revision_id VARCHAR(80) NOT NULL,
+    document_version_id VARCHAR(50) REFERENCES document.document_versions(id) ON DELETE RESTRICT,
+    media_asset_id VARCHAR(50) REFERENCES media.media_assets(id) ON DELETE RESTRICT,
+    description TEXT,
+    submitted_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (directive_id, directive_revision_id)
+        REFERENCES directive.directive_revisions(directive_id, id) ON DELETE RESTRICT,
+    CHECK (num_nonnulls(document_version_id, media_asset_id) = 1)
+);
 
-    role_id VARCHAR(50)
-        REFERENCES identity.roles(id)
-        NOT NULL,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    UNIQUE (directive_id, role_id)
+CREATE TABLE directive.directive_completion_evidence_acceptances (
+    id VARCHAR(80) PRIMARY KEY,
+    evidence_id VARCHAR(80) NOT NULL UNIQUE
+        REFERENCES directive.directive_completion_evidence(id) ON DELETE RESTRICT,
+    accepted_by_staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id) ON DELETE RESTRICT,
+    accepted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    note TEXT
 );
 
 
@@ -1279,6 +1422,69 @@ AS $$
 BEGIN
 	RAISE EXCEPTION '% is append-only; % is not permitted', TG_TABLE_NAME, TG_OP
 		USING ERRCODE = '55000';
+END
+$$;
+
+CREATE OR REPLACE FUNCTION directive.enforce_directive_transition()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	IF NEW.version <> OLD.version + 1 THEN
+		RAISE EXCEPTION 'directive version must increment by exactly one'
+			USING ERRCODE = '40001';
+	END IF;
+
+	IF OLD.status <> NEW.status AND NOT (
+		(OLD.status = 'draft' AND NEW.status = 'issued')
+		OR (OLD.status = 'issued' AND NEW.status IN ('withdrawn', 'completed'))
+	) THEN
+		RAISE EXCEPTION 'invalid directive lifecycle transition from % to %', OLD.status, NEW.status
+			USING ERRCODE = '23514';
+	END IF;
+
+	IF OLD.status <> 'draft' AND (
+		NEW.reference_number IS DISTINCT FROM OLD.reference_number
+		OR NEW.issued_by_staff_id IS DISTINCT FROM OLD.issued_by_staff_id
+		OR NEW.issued_under_assignment_id IS DISTINCT FROM OLD.issued_under_assignment_id
+		OR NEW.issuing_unit_id IS DISTINCT FROM OLD.issuing_unit_id
+		OR NEW.issuing_office_id IS DISTINCT FROM OLD.issuing_office_id
+		OR NEW.issuer_name_snapshot IS DISTINCT FROM OLD.issuer_name_snapshot
+		OR NEW.issuer_designation_snapshot IS DISTINCT FROM OLD.issuer_designation_snapshot
+		OR NEW.issuer_unit_name_snapshot IS DISTINCT FROM OLD.issuer_unit_name_snapshot
+		OR NEW.issued_at IS DISTINCT FROM OLD.issued_at
+		OR NEW.created_at IS DISTINCT FROM OLD.created_at
+	) THEN
+		RAISE EXCEPTION 'issued directive authority evidence is immutable'
+			USING ERRCODE = '55000';
+	END IF;
+
+	RETURN NEW;
+END
+$$;
+
+CREATE OR REPLACE FUNCTION directive.enforce_delivery_mutation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	IF TG_OP = 'DELETE' THEN
+		RAISE EXCEPTION 'directive_deliveries is append-only; DELETE is not permitted'
+			USING ERRCODE = '55000';
+	END IF;
+
+	IF NEW.id IS DISTINCT FROM OLD.id
+		OR NEW.directive_revision_id IS DISTINCT FROM OLD.directive_revision_id
+		OR NEW.staff_id IS DISTINCT FROM OLD.staff_id
+		OR NEW.delivered_at IS DISTINCT FROM OLD.delivered_at
+		OR OLD.seen_at IS NOT NULL
+		OR NEW.seen_at IS NULL
+	THEN
+		RAISE EXCEPTION 'only the first seen_at update is permitted on directive deliveries'
+			USING ERRCODE = '55000';
+	END IF;
+
+	RETURN NEW;
 END
 $$;
 
@@ -1839,6 +2045,42 @@ CREATE INDEX document_extractions_document_history
 
 
 -- APPEND-ONLY AND IMMUTABILITY TRIGGERS
+CREATE TRIGGER enforce_directive_transition
+	BEFORE UPDATE ON directive.directives
+	FOR EACH ROW EXECUTE FUNCTION directive.enforce_directive_transition();
+CREATE TRIGGER enforce_delivery_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_deliveries
+	FOR EACH ROW EXECUTE FUNCTION directive.enforce_delivery_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_revisions
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_revision_staff_targets
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_revision_unit_targets
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_revision_office_targets
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_revision_role_targets
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_delivery_sources
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_acknowledgements
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_events
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_completion_evidence
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
+CREATE TRIGGER prevent_mutation
+	BEFORE UPDATE OR DELETE ON directive.directive_completion_evidence_acceptances
+	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
 CREATE TRIGGER prevent_audit_event_mutation
 	BEFORE UPDATE OR DELETE ON audit.events
 	FOR EACH ROW EXECUTE FUNCTION audit.prevent_append_only_mutation();
@@ -1899,6 +2141,16 @@ CREATE TRIGGER prevent_document_extraction_mutation
 
 REVOKE UPDATE, DELETE, TRUNCATE ON audit.events FROM PUBLIC;
 REVOKE UPDATE, DELETE, TRUNCATE ON
+	directive.directive_revisions,
+	directive.directive_revision_staff_targets,
+	directive.directive_revision_unit_targets,
+	directive.directive_revision_office_targets,
+	directive.directive_revision_role_targets,
+	directive.directive_delivery_sources,
+	directive.directive_acknowledgements,
+	directive.directive_events,
+	directive.directive_completion_evidence,
+	directive.directive_completion_evidence_acceptances,
 	registry.reference_allocations,
 	registry.scan_pages,
 	registry.scan_verifications,
