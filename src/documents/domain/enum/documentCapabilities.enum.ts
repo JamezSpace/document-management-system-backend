@@ -6,6 +6,7 @@ enum DocumentCapabilities {
 	DELETE = "document.delete",
 	ROUTE = "document.route",
 	APPROVE = "document.approve",
+	SIGN = "document.sign",
 	REJECT = "document.reject",
 	CLASSIFICATION_MANAGE = "document.classification.manage",
 	TYPE_MANAGE = "document.type.manage",

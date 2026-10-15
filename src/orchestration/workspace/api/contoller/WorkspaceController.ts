@@ -22,6 +22,7 @@ class WorkspaceController {
 	async resolveWorkspacePermissions(
 		documentId: string,
 		actorStaffId: string,
+		actorCanSign = false,
 	) {
 		// fetch necessary items for workspace
 		const staffActor = { id: actorStaffId };
@@ -97,6 +98,7 @@ class WorkspaceController {
 			staffActor.id,
 			governanceContext,
 			this.documentGovernancePolicy,
+			actorCanSign,
 		);
         
 		const canvasProjection = await DocumentCanvasProjector.project(

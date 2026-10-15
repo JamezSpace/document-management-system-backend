@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import type { UploadApiOptions, UploadApiResponse } from "cloudinary";
 import type {
+	MediaReadOptions,
 	MediaServicePort,
 	UploadedMediaMap,
 } from "../../../../application/port/services/mediaService.port.js";
@@ -76,6 +77,7 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 				this.uploadBuffer(mediaUploads.signatureFile, {
 					folder: `staff/${staffId}`,
 					resource_type: "image",
+					allowed_formats: ["svg"],
 					public_id: "signature",
 					overwrite: true,
 				}),
@@ -114,6 +116,7 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 			const result = await this.uploadBuffer(mediaUploads.signatureFile, {
 				folder: `onboarding/${sessionId}`,
 				resource_type: "image",
+				allowed_formats: ["svg"],
 				public_id: "signature",
 				overwrite: true,
 			});
@@ -140,6 +143,29 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 		if (!objectKey || !format) return null;
 
 		return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${objectKey}.${format}`;
+	}
+
+	async readMedia(
+		mediaDetailsFromDB: { objectKey: string; format: string },
+		options?: MediaReadOptions,
+	): Promise<Buffer | null> {
+		const url = options?.outputFormat === "png"
+			? this.resolvePngRenditionURL(mediaDetailsFromDB)
+			: this.resolveMediaToPublicURL(mediaDetailsFromDB);
+		if (!url) return null;
+		const response = await fetch(url);
+		if (!response.ok) return null;
+		return Buffer.from(await response.arrayBuffer());
+	}
+
+	private resolvePngRenditionURL(mediaDetailsFromDB: {
+		objectKey: string;
+		format: string;
+	}): string | null {
+		const { objectKey, format } = mediaDetailsFromDB;
+		const { cloudName } = this.getCloudinaryDetails();
+		if (!cloudName || !objectKey || !format) return null;
+		return `https://res.cloudinary.com/${cloudName}/image/upload/f_png/${objectKey}.${format}`;
 	}
 
 }

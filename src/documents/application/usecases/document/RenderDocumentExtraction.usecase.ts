@@ -10,6 +10,8 @@ import NexusError from "../../../../shared/errors/NexusError.js";
 import type DocumentGovernanceGuard from "../../services/DocumentGovernanceGuard.service.js";
 import DocumentPdfRenderer from "../../services/DocumentPdfRenderer.service.js";
 import { LifecycleState } from "../../../domain/enum/lifecycleState.enum.js";
+import type { DocumentSignatureRepositoryPort } from "../../ports/repos/DocumentSignatureRepository.port.js";
+import type { MediaServicePort } from "../../../../shared/application/port/services/mediaService.port.js";
 
 class RenderDocumentExtractionUseCase {
 	constructor(
@@ -19,6 +21,8 @@ class RenderDocumentExtractionUseCase {
 		private readonly extractions: DocumentExtractionRepositoryPort,
 		private readonly governance: DocumentGovernanceGuard,
 		private readonly transactions: TransactionManager,
+		private readonly signatures?: DocumentSignatureRepositoryPort,
+		private readonly media?: MediaServicePort,
 	) {}
 
 	async execute(documentId: string, actorStaffId: string, action: "export" | "print", expectedRevision: number) {
@@ -42,7 +46,29 @@ class RenderDocumentExtractionUseCase {
 		const obligations = authorization.decision.obligations;
 		const renderedAt = new Date();
 		const watermarkText = this.watermark(obligations, actorStaffId, documentId, renderedAt);
-		const artifact = DocumentPdfRenderer.render(document, watermarkText);
+		const currentVersion = document.getCurrentVersion()!;
+		const signature = this.signatures
+			? await this.signatures.findEffectiveByDocument(documentId, currentVersion.id)
+			: null;
+		let visibleSignature = null;
+		if (signature?.signatureMedia && this.media) {
+			const image = await this.media.readMedia(signature.signatureMedia, {
+				outputFormat: "png",
+			});
+			if (!image) throw new ApplicationError(ApplicationErrorEnum.MEDIA_NOT_FOUND, {
+				message: "The captured signature image could not be loaded for export",
+				details: { signatureId: signature.id },
+			});
+			visibleSignature = {
+				image,
+				format: "png",
+				signerName: signature.signerName,
+				signerDesignation: signature.signerDesignation,
+				signedAt: signature.signedAt,
+				contentSha256: signature.contentSha256,
+			};
+		}
+		const artifact = DocumentPdfRenderer.render(document, watermarkText, visibleSignature);
 		const artifactSha256 = createHash("sha256").update(artifact).digest("hex");
 
 		const consumption = await this.transactions.execute(async (tx) => {

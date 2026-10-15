@@ -59,12 +59,14 @@ import ManageDocumentSensitivityUseCase from "./application/usecases/document/Ma
 import DiscoverDocumentsUseCase from "./application/usecases/document/DiscoverDocuments.usecase.js";
 import RenderDocumentExtractionUseCase from "./application/usecases/document/RenderDocumentExtraction.usecase.js";
 import DocumentExtractionRepositoryAdapter from "./infrastructure/persistence/DocumentExtractionRepository.adapter.js";
+import type { MediaServicePort } from "../shared/application/port/services/mediaService.port.js";
 
 interface DocumentSubsystemDependencies {
     documentIdentityAdapter: DocumentIdentityPort;
 	documentGovernancePolicy: DocumentGovernancePolicyPort;
 	documentGovernanceContext: DocumentGovernanceContextPort;
 	documentGovernanceAudit: DocumentGovernanceAuditPort;
+	mediaService: MediaServicePort;
 	retentionService: RetentionServicePort;
     globalEventBus: EventBusPort
 }
@@ -133,6 +135,7 @@ export default async function DocumentSubsystem(
 		dependencies.documentGovernancePolicy,
 		dependencies.documentGovernanceContext,
 		transactionManager,
+		documentSignatureRepository,
 	);
 
 	const getAllDocsByStaffUseCase = new GetAllDocumentsByStaffUseCase(
@@ -158,6 +161,8 @@ export default async function DocumentSubsystem(
 		dependencies.documentGovernanceContext,
 		transactionManager,
 		dependencies.documentGovernanceAudit,
+		governanceGuard,
+		dependencies.mediaService,
 	);
 	const manageDocumentGovernanceGrantUseCase = new ManageDocumentGovernanceGrantUseCase(
 		idGenerator,
@@ -187,6 +192,8 @@ export default async function DocumentSubsystem(
 		documentExtractionRepository,
 		governanceGuard,
 		transactionManager,
+		documentSignatureRepository,
+		dependencies.mediaService,
 	);
 
 	const submitDocumentUseCase = new DocumentSubmissionUseCase(

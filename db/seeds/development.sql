@@ -89,6 +89,7 @@ VALUES
 	('perm.audit.event.view', 'audit.event.view', 'View audit events within the assigned scope'),
 	('perm.document.classification.manage', 'document.classification.manage', 'Create and maintain document classification reference data'),
 	('perm.document.type.manage', 'document.type.manage', 'Create and maintain document types'),
+	('perm.document.sign', 'document.sign', 'Authorize and visibly sign a document'),
 	('perm.organization.manage', 'organization.manage', 'Create and maintain organizational units, offices, and designations')
 ON CONFLICT (id) DO UPDATE SET
 	code = EXCLUDED.code,
@@ -146,6 +147,7 @@ WITH mappings(role_name, capability_code) AS (
 		('auditor', 'audit.event.view'),
 		('document_configuration_manager', 'document.classification.manage'),
 		('document_configuration_manager', 'document.type.manage'),
+		('reviewing_officer', 'document.sign'),
 		('organization_administrator', 'organization.manage')
 )
 INSERT INTO identity.role_permissions (role_id, permission_id)

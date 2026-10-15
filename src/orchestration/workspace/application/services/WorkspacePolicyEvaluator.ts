@@ -163,6 +163,7 @@ class WorkspacePolicyEvaluator {
 		actorStaffId: string,
 		governanceContext: ResolvedDocumentGovernanceContext,
 		documentGovernancePolicy: DocumentGovernancePolicyPort,
+		actorCanSign = true,
 	) {
 		// find if actor is author
 		const isActorTheAuthor = document.ownerId === actorStaffId;
@@ -194,6 +195,12 @@ class WorkspacePolicyEvaluator {
 		if (await this.canAttach(document, governanceContext, documentGovernancePolicy, policyReference))
 			authorizedActions.push(WorkspaceActions.ATTACH);
 
+		const isEffectiveUnitHead = governanceContext.relationships.includes("unit_head") ||
+			governanceContext.relationships.includes("delegated_unit_head");
+		const canSign = actorCanSign && Boolean(document.getCurrentVersion()) && isEffectiveUnitHead &&
+			!governanceContext.hasEffectiveUnitHeadSignature;
+		if (canSign) authorizedActions.push(WorkspaceActions.SIGN);
+
 		const [exportDecision, printDecision] = await Promise.all([
 			documentGovernancePolicy.evaluateAction("export", {
 				sensitivity: document.classification.sensitivity,
@@ -220,6 +227,14 @@ class WorkspacePolicyEvaluator {
 			workflow: workflowContext,
 			governance: {
 				...policyReference,
+				signature: {
+					status: governanceContext.unitHeadSignature?.status ?? "unsigned",
+					requiredFor: document.correspondence.direction === DocumentCorrespondenceDirection.INTERNAL
+						? ["attach_internal_document"]
+						: [],
+					canSign,
+					current: governanceContext.unitHeadSignature ?? null,
+				},
 				extraction: {
 					export: extractionDirective(exportDecision),
 					print: extractionDirective(printDecision),

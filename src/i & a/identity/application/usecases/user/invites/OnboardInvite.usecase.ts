@@ -15,6 +15,22 @@ import type { OnboardingSessionInit } from "../../../types/user/onboardingSessio
 
 type UpdatableInviteField = Exclude<keyof Invite, "id" | "createdAt">;
 
+function isSvgImage(file: Buffer): boolean {
+	if (file.length === 0 || file.includes(0)) return false;
+	let source = file.toString("utf8").replace(/^\uFEFF/, "").trimStart();
+
+	while (true) {
+		const declaration = source.match(/^<\?xml[\s\S]*?\?>\s*/i)?.[0];
+		const comment = source.match(/^<!--[\s\S]*?-->\s*/)?.[0];
+		const doctype = source.match(/^<!DOCTYPE[\s\S]*?>\s*/i)?.[0];
+		const prefix = declaration ?? comment ?? doctype;
+		if (!prefix) break;
+		source = source.slice(prefix.length).trimStart();
+	}
+
+	return /^<svg(?:\s|>)/i.test(source) && /<\/svg\s*>\s*$/i.test(source);
+}
+
 class OnboardingInviteUseCase {
 	constructor(
 		private readonly idGenerator: IdGeneratorPort,
@@ -271,6 +287,16 @@ class OnboardingInviteUseCase {
 			);
 		}
 
+		if (payload.signatureFile) {
+			const mimeType = payload.signatureFile.mimeType?.toLowerCase();
+			if ((mimeType && mimeType !== "image/svg+xml") || !isSvgImage(payload.signatureFile.buffer)) {
+				throw new ApplicationError(
+					ApplicationErrorEnum.INCOMPLETE_REQUEST,
+					{ message: "Signature files must be valid SVG images." },
+				);
+			}
+		}
+
 		const session =
 			await this.onboardingSessionRepo.findSessionById(sessionId);
 		if (!session) {
@@ -325,10 +351,8 @@ class OnboardingInviteUseCase {
 				storageProvider: uploadedMedia.signatureFile.storageProvider,
 				bucketName: uploadedMedia.signatureFile.bucketName ?? null,
 				objectKey: uploadedMedia.signatureFile.objectKey,
-				format: uploadedMedia.signatureFile.format,
-				mimeType:
-					payload.signatureFile.mimeType ??
-					"application/octet-stream",
+				format: "svg",
+				mimeType: "image/svg+xml",
 				sizeBytes:
 					uploadedMedia.signatureFile.sizeBytes ??
 					payload.signatureFile.buffer.length,

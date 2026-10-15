@@ -16,6 +16,16 @@ interface GovernanceContextRow {
 	is_primary_authorizing_desk: boolean;
 	has_required_clearance: boolean;
 	has_effective_unit_head_signature: boolean;
+	signature_id: string | null;
+	signature_status: "signed" | "revoked" | "invalidated" | null;
+	signature_document_version_id: string | null;
+	signature_signed_revision: string | number | null;
+	signature_content_sha256: string | null;
+	signature_signed_by: string | null;
+	signature_signer_name: string | null;
+	signature_signer_designation: string | null;
+	signature_signed_at: Date | null;
+	signature_media_id: string | null;
 	has_active_guest_reader_grant: boolean;
 	guest_reader_grant_status: "active" | "expired" | "revoked" | null;
 	export_grant_active: boolean;
@@ -146,10 +156,17 @@ class DocumentGovernanceContextAdapter
 							AND ra.revoked_at IS NULL
 							AND permission.code = 'document.restricted.view'
 					) AS has_required_clearance,
-					EXISTS (
-						SELECT 1 FROM document.document_unit_head_signatures signature
-						WHERE signature.document_id = $1 AND signature.revoked_at IS NULL
-					) AS has_effective_unit_head_signature,
+					COALESCE(signature_record.status = 'signed', FALSE) AS has_effective_unit_head_signature,
+					signature_record.id AS signature_id,
+					signature_record.status AS signature_status,
+					signature_record.document_version_id AS signature_document_version_id,
+					signature_record.signed_revision AS signature_signed_revision,
+					signature_record.content_sha256 AS signature_content_sha256,
+					signature_record.signed_by AS signature_signed_by,
+					signature_record.signer_name AS signature_signer_name,
+					signature_record.signer_designation AS signature_signer_designation,
+					signature_record.signed_at AS signature_signed_at,
+					signature_record.signature_media_id AS signature_media_id,
 					COALESCE(guest_reader_grant.status = 'active', FALSE) AS has_active_guest_reader_grant,
 					guest_reader_grant.status AS guest_reader_grant_status,
 					COALESCE(export_grant.active, FALSE) AS export_grant_active,
@@ -184,7 +201,33 @@ class DocumentGovernanceContextAdapter
 						AND (grant_record.remaining_uses IS NULL OR grant_record.remaining_uses > 0)
 					ORDER BY grant_record.valid_to NULLS LAST
 					LIMIT 1
-				) export_grant ON TRUE;
+				) export_grant ON TRUE
+				LEFT JOIN LATERAL (
+					SELECT signature.id, signature.document_version_id, signature.signed_revision,
+						signature.content_sha256, signature.signed_by,
+						COALESCE(signature.signer_name,
+							NULLIF(CONCAT_WS(' ', signer_user.first_name, signer_user.middle_name, signer_user.last_name), '')
+						) AS signer_name,
+						COALESCE(signature.signer_designation, designation.title) AS signer_designation,
+						signature.signed_at,
+						signature.signature_media_id,
+						CASE
+							WHEN signature.revoked_at IS NOT NULL THEN 'revoked'
+							WHEN signature.invalidated_at IS NOT NULL OR signature.document_version_id IS DISTINCT FROM document.current_version_id THEN 'invalidated'
+							ELSE 'signed'
+						END AS status
+					FROM document.document_unit_head_signatures signature
+					JOIN document.documents document ON document.id = signature.document_id
+					JOIN identity.staff signer ON signer.id = signature.signed_by
+					JOIN identity.users signer_user ON signer_user.id = signer.identity_id
+					LEFT JOIN identity.designations designation ON designation.id = signer.designation_id
+					WHERE signature.document_id = $1
+					ORDER BY
+						(signature.revoked_at IS NULL AND signature.invalidated_at IS NULL
+							AND signature.document_version_id = document.current_version_id) DESC,
+						signature.signed_at DESC
+					LIMIT 1
+				) signature_record ON TRUE;
 			`,
 			[documentId, actorStaffId],
 		);
@@ -208,6 +251,22 @@ class DocumentGovernanceContextAdapter
 			hasActiveGuestReaderGrant: row.has_active_guest_reader_grant,
 			guestReaderGrantStatus: row.guest_reader_grant_status,
 			hasEffectiveUnitHeadSignature: row.has_effective_unit_head_signature,
+			unitHeadSignature: row.signature_id && row.signature_status && row.signature_signed_by && row.signature_signer_name && row.signature_signed_at
+				? {
+					id: row.signature_id,
+					status: row.signature_status,
+					documentVersionId: row.signature_document_version_id,
+					signedRevision: row.signature_signed_revision === null ? null : Number(row.signature_signed_revision),
+					contentSha256: row.signature_content_sha256,
+					signedBy: row.signature_signed_by,
+					signerName: row.signature_signer_name,
+					signerDesignation: row.signature_signer_designation,
+					signedAt: row.signature_signed_at,
+					imageEndpoint: row.signature_media_id
+						? `/api/document/${encodeURIComponent(documentId)}/signatures/${encodeURIComponent(row.signature_id)}/image`
+						: null,
+				}
+				: null,
 			exportGrant: row.export_grant_active && row.export_grant_granted_by
 				? {
 					active: true,

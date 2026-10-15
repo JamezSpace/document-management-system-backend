@@ -12,6 +12,10 @@ interface UploadedMediaMap {
 	profilePic?: UploadedMediaStorageDetails;
 }
 
+interface MediaReadOptions {
+	outputFormat?: "png";
+}
+
 interface MediaServicePort {
 	uploadDoc(file: Buffer, ownerId: string): Promise<{ mediaId: string }>;
 
@@ -36,6 +40,11 @@ interface MediaServicePort {
         format: string | null;
 	}): string | null;
 
+	readMedia(mediaDetailsFromDB: {
+		objectKey: string;
+		format: string;
+	}, options?: MediaReadOptions): Promise<Buffer | null>;
+
 }
 
-export type { MediaServicePort, UploadedMediaMap, UploadedMediaStorageDetails };
+export type { MediaReadOptions, MediaServicePort, UploadedMediaMap, UploadedMediaStorageDetails };

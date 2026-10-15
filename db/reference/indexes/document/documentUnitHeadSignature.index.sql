@@ -4,4 +4,7 @@
 
 CREATE UNIQUE INDEX document_one_effective_unit_head_signature
 	ON document.document_unit_head_signatures(document_id)
-	WHERE revoked_at IS NULL;
+	WHERE revoked_at IS NULL AND invalidated_at IS NULL;
+
+CREATE INDEX document_signature_history
+	ON document.document_unit_head_signatures(document_id, signed_at DESC, id DESC);

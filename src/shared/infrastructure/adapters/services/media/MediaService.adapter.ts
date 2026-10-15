@@ -5,6 +5,13 @@ import type {
 
 class MediaServiceAdapter implements MediaServicePort {
 	private detectFormat(file: Buffer): string {
+		const textStart = file
+			.subarray(0, Math.min(file.length, 4096))
+			.toString("utf8")
+			.replace(/^\uFEFF/, "")
+			.trimStart();
+		if (/<svg(?:\s|>)/i.test(textStart)) return "svg";
+
 		if (
 			file.length >= 8 &&
 			file.subarray(0, 8).equals(
@@ -99,6 +106,10 @@ class MediaServiceAdapter implements MediaServicePort {
 			.join("/");
 
 		return `${normalizedBaseUrl}/${encodedObjectKey}.${encodeURIComponent(format)}`;
+	}
+
+	async readMedia(): Promise<Buffer | null> {
+		return null;
 	}
 }
 

@@ -135,3 +135,24 @@ test("workspace fails closed for legacy documents without a policy binding", asy
 		(error: any) => error.errorCode === "policy_not_found",
 	);
 });
+
+test("workspace advertises signing only to an effective Unit Head when the current version is unsigned", async () => {
+	const document = documentFixture(GovernanceSensitivityLevel.INTERNAL, LifecycleState.DRAFT);
+	document.correspondence.direction = "internal";
+	const workspace = await WorkspacePolicyEvaluator.eval(
+		document,
+		null,
+		"UNIT-HEAD-1",
+		{
+			...authorContext,
+			relationships: ["unit_head"],
+			hasEffectiveUnitHeadSignature: false,
+			unitHeadSignature: null,
+		},
+		documentGovernancePolicy,
+	);
+	assert.equal(workspace.authorizedActions.includes(WorkspaceActions.SIGN), true);
+	assert.equal(workspace.governance.signature.canSign, true);
+	assert.equal(workspace.governance.signature.status, "unsigned");
+	assert.deepEqual(workspace.governance.signature.requiredFor, ["attach_internal_document"]);
+});

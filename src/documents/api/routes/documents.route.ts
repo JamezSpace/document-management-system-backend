@@ -62,11 +62,16 @@ const sensitivityRequestParamsSchema = Type.Object({
 	docId: Type.String({ minLength: 1 }),
 	requestId: Type.String({ minLength: 1 }),
 });
+const signatureParamsSchema = Type.Object({
+	docId: Type.String({ minLength: 1 }),
+	signatureId: Type.String({ minLength: 1 }),
+});
 type DiscoveryQuery = Static<typeof discoveryQuerySchema>;
 type GovernanceGrantBody = Static<typeof governanceGrantSchema>;
 type GrantParams = Static<typeof grantParamsSchema>;
 type ReasonBody = Static<typeof reasonSchema>;
 type SensitivityRequestParams = Static<typeof sensitivityRequestParamsSchema>;
+type SignatureParams = Static<typeof signatureParamsSchema>;
 const mutationHeadersSchema = Type.Object({
 	"if-match": Type.String({ minLength: 1 }),
 }, { additionalProperties: true });
@@ -210,9 +215,9 @@ async function documentRoutes(
 	);
 
 	fastify.post(
-		"/:docId/unit-head-signature",
+		"/:docId/signatures/unit-head",
 		{
-			config: { authorization: routePolicies.capability(DocumentCapabilities.UPDATE) },
+			config: { authorization: routePolicies.capability(DocumentCapabilities.SIGN) },
 			schema: { params: documentIdSchema, headers: mutationHeadersSchema },
 		},
 		async (
@@ -224,7 +229,61 @@ async function documentRoutes(
 				request.actor!.staffId,
 				expectedRevision(request.headers),
 			);
-			return reply.header("ETag", `\"${signature.documentRevision}\"`).code(201).send({ success: true, data: signature });
+			return reply.header("ETag", `\"${signature.documentRevision}\"`).code(signature.created ? 201 : 200).send({ success: true, data: signature });
+		},
+	);
+
+	fastify.get(
+		"/:docId/signatures",
+		{
+			config: { authorization: routePolicies.capability(DocumentCapabilities.VIEW) },
+			schema: { params: documentIdSchema },
+		},
+		async (request: FastifyRequest<{ Params: DocumentIdSchemaType }>, reply: FastifyReply) => {
+			const signatures = await documentController.listSignatures(
+				request.params.docId,
+				request.actor!.staffId,
+			);
+			return reply.code(200).send({ success: true, data: signatures });
+		},
+	);
+
+	fastify.get(
+		"/:docId/signatures/:signatureId/image",
+		{
+			config: { authorization: routePolicies.capability(DocumentCapabilities.VIEW) },
+			schema: { params: signatureParamsSchema },
+		},
+		async (request: FastifyRequest<{ Params: SignatureParams }>, reply: FastifyReply) => {
+			const result = await documentController.getSignatureImage(
+				request.params.docId,
+				request.params.signatureId,
+				request.actor!.staffId,
+			);
+			return reply
+				.header("Content-Type", result.contentType)
+				.header("Cache-Control", "private, max-age=300")
+				.header("Content-Security-Policy", "default-src 'none'; sandbox")
+				.header("X-Content-Type-Options", "nosniff")
+				.send(result.image);
+		},
+	);
+
+	fastify.delete(
+		"/:docId/signatures/:signatureId",
+		{
+			config: { authorization: routePolicies.capability(DocumentCapabilities.SIGN) },
+			schema: { params: signatureParamsSchema, body: reasonSchema, headers: mutationHeadersSchema },
+		},
+		async (request: FastifyRequest<{ Params: SignatureParams; Body: ReasonBody; Headers: MutationHeaders }>, reply: FastifyReply) => {
+			const result = await documentController.revokeSignature(
+				request.params.docId,
+				request.params.signatureId,
+				request.body.reason,
+				request.actor!.staffId,
+				expectedRevision(request.headers),
+			);
+			return reply.header("ETag", `\"${result.documentRevision}\"`).code(200).send({ success: true, data: result });
 		},
 	);
 

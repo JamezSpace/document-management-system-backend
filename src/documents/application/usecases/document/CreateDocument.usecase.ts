@@ -13,6 +13,8 @@ import type { DocumentAddresseeRepositoryPort } from "../../ports/repos/Document
 import type { DocumentRepositoryPort } from "../../ports/repos/DocumentRepository.port.js";
 import type { DocumentTypeRepositoryPort } from "../../ports/repos/DocumentTypeRepo.port.js";
 import type { DocumentVersionRepositoryPort } from "../../ports/repos/DocumentVersionRepository.port.js";
+import type { DocumentSignatureRepositoryPort } from "../../ports/repos/DocumentSignatureRepository.port.js";
+import { documentContentSha256 } from "../../services/DocumentContentIntegrity.service.js";
 import type { LifecycleHistoryRepositoryPort } from "../../ports/repos/LifecycleHistoryRepository.port.js";
 import type { ReferenceNumberServicePort } from "../../ports/services/ReferenceNumberService.port.js";
 import type { RetentionServicePort } from "../../ports/services/RetentionService.port.js";
@@ -33,6 +35,7 @@ class DocumentCreationUseCase {
 		private readonly documentGovernancePolicy: DocumentGovernancePolicyPort,
 		private readonly documentGovernanceContext: DocumentGovernanceContextPort,
 		private readonly transactionManager: TransactionManager,
+		private readonly documentSignatureRepo: DocumentSignatureRepositoryPort,
 	) {}
 
 	async execute(payload: DocumentTypeForCreation) {
@@ -218,6 +221,14 @@ class DocumentCreationUseCase {
 					message: "Document revision no longer matches the supplied If-Match value",
 					details: { documentId: document.id, expectedRevision },
 				});
+
+				await this.documentSignatureRepo.invalidateOutdated(
+					document.id,
+					savedVersionedDoc.id,
+					documentContentSha256(savedVersionedDoc.contentDelta),
+					new Date(),
+					transactionInstance,
+				);
 
 				await this.documentAddresseeRepo.deleteByDocumentId(
 					document.id,

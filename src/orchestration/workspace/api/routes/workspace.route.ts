@@ -33,6 +33,7 @@ async function workspaceRoutes(
 				await workspaceController.resolveWorkspacePermissions(
 					documentId,
 					request.actor!.staffId,
+					request.actor!.grants.some((grant) => grant.capability === DocumentCapabilities.SIGN),
 				);
 
 			return reply.header("ETag", `\"${result.metadata.document.revision}\"`).code(200).send({
