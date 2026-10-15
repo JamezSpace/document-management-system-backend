@@ -111,6 +111,18 @@ export const ApplicationErrorEnum = {
 		category: ErrorCategory.CONFLICT,
 		retryable: false,
 	},
+	DIRECTIVE_NOT_FOUND: {
+		codeName: "directive_not_found",
+		httpStatusCode: StatusCodes.NOT_FOUND,
+		category: ErrorCategory.NOT_FOUND,
+		retryable: false,
+	},
+	DIRECTIVE_EVIDENCE_NOT_FOUND: {
+		codeName: "directive_evidence_not_found",
+		httpStatusCode: StatusCodes.NOT_FOUND,
+		category: ErrorCategory.NOT_FOUND,
+		retryable: false,
+	},
 	GRANT_EXPIRED: {
 		codeName: "governance_grant_expired",
 		httpStatusCode: StatusCodes.GONE,

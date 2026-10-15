@@ -167,6 +167,7 @@ VALUES
     ('role.directive_authority', 'perm.directive.cancel'),
     ('role.directive_authority', 'perm.directive.view'),
     ('role.directive_authority', 'perm.directive.route'),
+    ('role.directive_authority', 'perm.directive.enforce'),
     -- system admin
     ('role.sys_admin', 'perm.role.create'),
     ('role.sys_admin', 'perm.role.assign'),

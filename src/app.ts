@@ -4,6 +4,7 @@ import { fastifyPostgres } from "@fastify/postgres";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import fastify, { type FastifyInstance } from "fastify";
 import DispatchSubsystem from "./dispatch/index.js";
+import DirectiveSubsystem from "./directives/index.js";
 import DocumentSubsystem from "./documents/index.js";
 import DispatchDocumentAdapter from "./documents/infrastructure/persistence/DispatchDocumentRepository.adapter.js";
 import WorkflowDocumentAdapter from "./documents/infrastructure/persistence/WorkflowDocument.adapter.js";
@@ -128,6 +129,7 @@ function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 			globalEventBus: eventBusAdapter,
 		});
 		server.register(WorkManagementSubsystem, { prefix: "/api/work-items" });
+		server.register(DirectiveSubsystem, { prefix: "/api/directives" });
 		server.register(DispatchSubsystem, {
 			globalEventBus: eventBusAdapter,
 			dispatchStaffAdapter,
