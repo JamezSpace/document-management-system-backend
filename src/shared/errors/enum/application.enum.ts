@@ -153,6 +153,12 @@ export const ApplicationErrorEnum = {
 		category: ErrorCategory.CONFLICT,
 		retryable: true,
 	},
+	REVISION_CONFLICT: {
+		codeName: "identity_revision_conflict",
+		httpStatusCode: StatusCodes.CONFLICT,
+		category: ErrorCategory.CONFLICT,
+		retryable: true,
+	},
 	USER_NOT_AUTHENTICATED: {
 		codeName: "user_not_authenticated",
 		httpStatusCode: StatusCodes.UNAUTHORIZED,

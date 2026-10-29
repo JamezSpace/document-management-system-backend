@@ -298,7 +298,8 @@ create table identity.users (
 	phone_number varchar(25) not null,
 	status identity.user_status NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL,
-	updated_at TIMESTAMPTZ
+	updated_at TIMESTAMPTZ,
+	revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0)
 );
 
 -- invite table
@@ -543,6 +544,29 @@ CREATE TABLE identity.staff_media_assets (
 
     PRIMARY KEY (staff_id, media_id),
     CONSTRAINT unique_staff_media UNIQUE (staff_id, media_id)
+);
+
+CREATE TABLE identity.identity_change_requests (
+	id VARCHAR(80) PRIMARY KEY,
+	request_group_id VARCHAR(80) NOT NULL,
+	identity_id VARCHAR(50) NOT NULL REFERENCES identity.users(id),
+	staff_id VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	field_name VARCHAR(80) NOT NULL,
+	previous_value JSONB NOT NULL,
+	requested_value JSONB NOT NULL,
+	reason TEXT NOT NULL CHECK (length(trim(reason)) >= 2),
+	evidence_media_ids VARCHAR(80)[] NOT NULL DEFAULT ARRAY[]::VARCHAR(80)[],
+	status VARCHAR(30) NOT NULL CHECK (
+		status IN ('pending', 'approved', 'rejected', 'applied', 'cancelled')
+	),
+	policy_key VARCHAR(100) NOT NULL,
+	policy_version INT NOT NULL CHECK (policy_version > 0),
+	decision_reason_code VARCHAR(120) NOT NULL,
+	requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	reviewed_by VARCHAR(50) REFERENCES identity.staff(id),
+	reviewed_at TIMESTAMPTZ,
+	review_reason TEXT,
+	applied_at TIMESTAMPTZ
 );
 
 -- failure records
@@ -1016,6 +1040,40 @@ CREATE TABLE policy.document_governance_rules (
 	priority INT NOT NULL DEFAULT 100 CHECK(priority >= 0),
 	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE policy.identity_governance_policies (
+	id VARCHAR(80) PRIMARY KEY,
+	policy_key VARCHAR(100) NOT NULL,
+	policy_version INT NOT NULL CHECK (policy_version > 0),
+	schema_version INT NOT NULL CHECK (schema_version > 0),
+	status VARCHAR(20) NOT NULL CHECK (status IN ('draft', 'active', 'retired')),
+	effective_from TIMESTAMPTZ NOT NULL,
+	effective_to TIMESTAMPTZ,
+	definition_checksum CHAR(64) NOT NULL,
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	approved_by VARCHAR(50) REFERENCES identity.staff(id),
+	approval_reason TEXT,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	approved_at TIMESTAMPTZ,
+	metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+	UNIQUE (policy_key, policy_version)
+);
+
+CREATE TABLE policy.identity_governance_rules (
+	id VARCHAR(80) PRIMARY KEY,
+	governance_policy_id VARCHAR(80) NOT NULL
+		REFERENCES policy.identity_governance_policies(id) ON DELETE CASCADE,
+	field_name VARCHAR(80) NOT NULL,
+	mode VARCHAR(30) NOT NULL CHECK (
+		mode IN ('direct', 'verification_required', 'approval_required', 'read_only')
+	),
+	requirements TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+	reason_code VARCHAR(120) NOT NULL,
+	priority INT NOT NULL DEFAULT 100 CHECK (priority >= 0),
+	created_by VARCHAR(50) NOT NULL REFERENCES identity.staff(id),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (governance_policy_id, field_name)
 );
 
 CREATE TABLE policy.document_governance_grants (
@@ -2012,6 +2070,16 @@ CREATE UNIQUE INDEX document_governance_global_rule_identity
 	WHERE sensitivity IS NULL;
 CREATE INDEX document_governance_rule_lookup
 	ON policy.document_governance_rules(governance_policy_id, sensitivity, action, priority);
+CREATE UNIQUE INDEX identity_governance_one_active_policy
+	ON policy.identity_governance_policies(policy_key) WHERE status = 'active';
+CREATE INDEX identity_governance_rule_lookup
+	ON policy.identity_governance_rules(governance_policy_id, field_name, priority);
+CREATE UNIQUE INDEX identity_one_pending_change_per_field
+	ON identity.identity_change_requests(identity_id, field_name) WHERE status = 'pending';
+CREATE INDEX identity_change_request_owner_history
+	ON identity.identity_change_requests(identity_id, requested_at DESC, id DESC);
+CREATE UNIQUE INDEX unique_active_staff_media_role
+	ON identity.staff_media_assets(staff_id, asset_role) WHERE is_active = TRUE;
 CREATE UNIQUE INDEX document_one_effective_unit_head_signature
 	ON document.document_unit_head_signatures(document_id)
 	WHERE revoked_at IS NULL AND invalidated_at IS NULL;

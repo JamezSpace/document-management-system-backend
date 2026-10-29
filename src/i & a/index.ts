@@ -1,4 +1,6 @@
 import type { FastifyInstance } from "fastify";
+import AuditEventRepositoryAdapter from "../audit/infrastructure/persistence/AuditEventRepository.adapter.js";
+import type { IdentityGovernancePolicyPort } from "../shared/application/port/intersubsystem/IdentityGovernancePolicy.port.js";
 import NodemailerEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/NodemailerEmailService.adapter.js";
 import ResendEmailServiceAdapter from "../shared/infrastructure/adapters/services/email/ResendEmailService.adapter.js";
 import CloudinaryMediaServiceAdapter from "../shared/infrastructure/adapters/services/media/CloudinaryMediaService.adapter.js";
@@ -25,6 +27,7 @@ import StaffController from "./identity/api/controllers/staff/Staff.controller.j
 import StaffClassificationController from "./identity/api/controllers/staff/StaffClassification.controller.js";
 import AuthenticationController from "./identity/api/controllers/user/Authentication.controller.js";
 import InvitesController from "./identity/api/controllers/user/Invites.controller.js";
+import SelfServiceController from "./identity/api/controllers/user/SelfService.controller.js";
 import officeDesignationRoutes from "./identity/api/routes/office/designation.route.js";
 import officeRoutes from "./identity/api/routes/office/office.route.js";
 import staffRoutes from "./identity/api/routes/staff/staff.route.js";
@@ -32,6 +35,7 @@ import staffClassificationRoutes from "./identity/api/routes/staff/staffClass.ro
 import orgUnitRoutes from "./identity/api/routes/unit/orgUnits.route.js";
 import identityRoutes from "./identity/api/routes/user/identity.route.js";
 import inviteRoutes from "./identity/api/routes/user/invites.route.js";
+import selfServiceRoutes from "./identity/api/routes/user/selfService.route.js";
 import AddNewDesignationUseCase from "./identity/application/usecases/office/AddNewDesignation.usecase.js";
 import AddNewOfficeUseCase from "./identity/application/usecases/office/AddNewOffice.usecase.js";
 import GetAllDesignationUseCase from "./identity/application/usecases/office/GetAllDesignations.usecase.js";
@@ -53,6 +57,12 @@ import ActivatePendingUserUseCase from "./identity/application/usecases/user/Act
 import AddNewUserUseCase from "./identity/application/usecases/user/AddNewUser.usecase.js";
 import AuthenticateUserUseCase from "./identity/application/usecases/user/AuthenticateUser.usecase.js";
 import GetAllUsersUseCase from "./identity/application/usecases/user/GetAllUsers.usecase.js";
+import GetOwnSettingsUseCase from "./identity/application/usecases/user/selfService/GetOwnSettings.usecase.js";
+import ListOwnIdentityChangesUseCase from "./identity/application/usecases/user/selfService/ListOwnIdentityChanges.usecase.js";
+import ReplaceOwnProfilePictureUseCase from "./identity/application/usecases/user/selfService/ReplaceOwnProfilePicture.usecase.js";
+import RequestIdentityChangeUseCase from "./identity/application/usecases/user/selfService/RequestIdentityChange.usecase.js";
+import UpdateOwnProfileUseCase from "./identity/application/usecases/user/selfService/UpdateOwnProfile.usecase.js";
+import UploadIdentityChangeMediaUseCase from "./identity/application/usecases/user/selfService/UploadIdentityChangeMedia.usecase.js";
 import CreateInviteUseCase from "./identity/application/usecases/user/invites/CreateInvite.usecase.js";
 import GetAllInvitesUecase from "./identity/application/usecases/user/invites/GetAllInvites.usecase.js";
 import NudgeInviteUsecase from "./identity/application/usecases/user/invites/NudgeInvite.usecase.js";
@@ -74,6 +84,8 @@ import OrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/enti
 import IdentityRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/IdentityRepository.adapter.js";
 import OnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/OnboardingSessionRepository.adapter.js";
 import InviteRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/InviteRepository.adapter.js";
+import IdentityChangeRequestRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/IdentityChangeRequestRepository.adapter.js";
+import SelfServiceRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/SelfServiceRepository.adapter.js";
 import CapRoleRepositoryAdapter from "./identity/infrastructure/persistence/mappings/CapRoleRepository.adapter.js";
 import DesigCapClassRepositoryAdapter from "./identity/infrastructure/persistence/mappings/DesigCapClassRepository.adapter.js";
 import OfficeDesignationRepositoryAdapter from "./identity/infrastructure/persistence/mappings/OfficeDesignationRepository.adapter.js";
@@ -85,7 +97,8 @@ import RoleServiceAdapter from "./identity/infrastructure/services/RoleService.a
 
 
 export default async function IdentityAccessSubsystem(
-	fastify: FastifyInstance
+	fastify: FastifyInstance,
+	options: { identityGovernancePolicy: IdentityGovernancePolicyPort },
 ) {
 	// infrastructure Layer
 	const postgres = fastify.pg;
@@ -122,6 +135,10 @@ export default async function IdentityAccessSubsystem(
 	const staffMediaAssetRepository = new StaffMediaRepositoryAdapter(postgres);
     const activationFailureRepository = new StaffActivationFailureRepositoryAdapter(postgres);
 	const recoveryTaskRepository = new RecoveryTaskRepositoryAdapter(postgres);
+	const selfServiceRepository = new SelfServiceRepositoryAdapter(postgres);
+	const identityChangeRequestRepository =
+		new IdentityChangeRequestRepositoryAdapter(postgres);
+	const auditEventRepository = new AuditEventRepositoryAdapter(postgres);
 
 	//  all module event adapters in identity subsystem
 	const accessEventsAdapter = new AccessEventsAdapter(globalEventBus);
@@ -303,6 +320,48 @@ export default async function IdentityAccessSubsystem(
 
     const resolveStaffAuthority = new ResolveStaffAuthorityUseCase(roleAssignmentsRepository);
 
+	const getOwnSettingsUseCase = new GetOwnSettingsUseCase(
+		selfServiceRepository,
+		identityChangeRequestRepository,
+		options.identityGovernancePolicy,
+		mediaService,
+	);
+	const updateOwnProfileUseCase = new UpdateOwnProfileUseCase(
+		selfServiceRepository,
+		options.identityGovernancePolicy,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+	const replaceOwnProfilePictureUseCase = new ReplaceOwnProfilePictureUseCase(
+		selfServiceRepository,
+		mediaAssetRepository,
+		staffMediaRepository,
+		options.identityGovernancePolicy,
+		mediaService,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+	const requestIdentityChangeUseCase = new RequestIdentityChangeUseCase(
+		selfServiceRepository,
+		identityChangeRequestRepository,
+		options.identityGovernancePolicy,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+	const listOwnIdentityChangesUseCase = new ListOwnIdentityChangesUseCase(
+		identityChangeRequestRepository,
+	);
+	const uploadIdentityChangeMediaUseCase = new UploadIdentityChangeMediaUseCase(
+		mediaAssetRepository,
+		mediaService,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+
 	// controller Layer
 	const authenticationController = new AuthenticationController(
 		onboardInviteUseCase,
@@ -348,6 +407,20 @@ export default async function IdentityAccessSubsystem(
 		editStaffClassificationMetadataUseCase,
 		closeStaffClassificationUseCase,
 	);
+
+	const selfServiceController = new SelfServiceController(
+		getOwnSettingsUseCase,
+		updateOwnProfileUseCase,
+		replaceOwnProfilePictureUseCase,
+		requestIdentityChangeUseCase,
+		listOwnIdentityChangesUseCase,
+		uploadIdentityChangeMediaUseCase,
+		resolveStaffAuthority,
+	);
+
+	await fastify.register(selfServiceRoutes, {
+		controller: selfServiceController,
+	});
 
 	await fastify.register(identityRoutes, {
 		controller: authenticationController

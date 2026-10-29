@@ -1,4 +1,5 @@
 import type {
+	IdentityChangeMediaPurpose,
 	MediaServicePort,
 	UploadedMediaMap,
 } from "../../../../application/port/services/mediaService.port.js";
@@ -60,6 +61,30 @@ class MediaServiceAdapter implements MediaServicePort {
     async uploadStaffMedia(staffId: string, mediaUploads: { signatureFile?: Buffer; profilePic?: Buffer; }): Promise<void> {
         return;
     }
+
+	async uploadProfilePicture(staffId: string, file: Buffer) {
+		return {
+			storageProvider: "LOCAL",
+			bucketName: "mock",
+			objectKey: `staff/${staffId}/profile_picture_${Date.now()}`,
+			sizeBytes: file.length,
+			format: this.detectFormat(file),
+		};
+	}
+
+	async uploadIdentityChangeMedia(
+		staffId: string,
+		file: Buffer,
+		purpose: IdentityChangeMediaPurpose,
+	) {
+		return {
+			storageProvider: "LOCAL",
+			bucketName: "mock",
+			objectKey: `staff/${staffId}/identity_change_${purpose}/${Date.now()}`,
+			sizeBytes: file.length,
+			format: this.detectFormat(file),
+		};
+	}
 
 	async uploadOnboardingMedia(
 		sessionId: string,

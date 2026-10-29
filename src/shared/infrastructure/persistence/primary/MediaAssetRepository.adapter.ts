@@ -11,6 +11,7 @@ import {
 } from "../../../errors/enum/infrastructure.enum.js";
 import InfrastructureError from "../../../errors/InfrastructureError.error.js";
 import { mapPostgresError } from "./helpers/mapPostgresError.helper.js";
+import type { TransactionContext } from "./postgres.js";
 
 class MediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 	constructor(private readonly dbPool: PostgresDb) {}
@@ -31,7 +32,7 @@ class MediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 		};
 	}
 
-	async save(payload: CreateMediaAssetPayload): Promise<MediaAssetRecord> {
+	async save(payload: CreateMediaAssetPayload, tx?: TransactionContext): Promise<MediaAssetRecord> {
 		try {
 			const query = `
 				INSERT INTO media.media_assets (
@@ -51,7 +52,8 @@ class MediaAssetRepositoryAdapter implements MediaAssetRepositoryPort {
 				RETURNING id, storage_provider, bucket_name, object_key, format, mime_type, size_bytes, checksum, uploaded_at, uploaded_by, uploaded_by_type
 			`;
 
-			const result = await this.dbPool.query(query, [
+			const executor = tx?.client ?? this.dbPool;
+			const result = await executor.query(query, [
 				payload.id,
 				payload.storageProvider,
 				payload.bucketName ?? null,

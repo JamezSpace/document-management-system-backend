@@ -11,7 +11,11 @@ interface SaveStaffMediaPayload {
 interface StaffMediaRepositoryPort {
 	save(payload: SaveStaffMediaPayload, tx?: TransactionContext): Promise<void>;
 
-	deactivateByRole(staffId: string, assetRole: string): Promise<void>;
+	deactivateByRole(
+		staffId: string,
+		assetRole: string,
+		tx?: TransactionContext,
+	): Promise<void>;
 }
 
 export type { SaveStaffMediaPayload, StaffMediaRepositoryPort };

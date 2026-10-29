@@ -3,6 +3,12 @@ import type { ErrorDefinition } from "../model/errorDefinition.model.js";
 import { ErrorCategory } from "./errorCategory.enum.js";
 
 export const IdentityDomainErrors = {
+	INVALID_GOVERNANCE_POLICY: {
+		codeName: "invalid_identity_governance_policy",
+		httpStatusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+		category: ErrorCategory.POLICY,
+		retryable: false,
+	},
 	USER_NOT_ACTIVE: {
 		codeName: "user_not_active",
 		httpStatusCode: StatusCodes.FORBIDDEN,

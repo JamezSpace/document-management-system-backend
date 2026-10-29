@@ -12,6 +12,8 @@ interface UploadedMediaMap {
 	profilePic?: UploadedMediaStorageDetails;
 }
 
+type IdentityChangeMediaPurpose = "evidence" | "signature";
+
 interface MediaReadOptions {
 	outputFormat?: "png";
 }
@@ -26,6 +28,17 @@ interface MediaServicePort {
 			profilePic?: Buffer;
 		},
 	): Promise<void>;
+
+	uploadProfilePicture(
+		staffId: string,
+		file: Buffer,
+	): Promise<UploadedMediaStorageDetails>;
+
+	uploadIdentityChangeMedia(
+		staffId: string,
+		file: Buffer,
+		purpose: IdentityChangeMediaPurpose,
+	): Promise<UploadedMediaStorageDetails>;
 
 	uploadOnboardingMedia(
 		sessionId: string,
@@ -47,4 +60,10 @@ interface MediaServicePort {
 
 }
 
-export type { MediaReadOptions, MediaServicePort, UploadedMediaMap, UploadedMediaStorageDetails };
+export type {
+	IdentityChangeMediaPurpose,
+	MediaReadOptions,
+	MediaServicePort,
+	UploadedMediaMap,
+	UploadedMediaStorageDetails,
+};

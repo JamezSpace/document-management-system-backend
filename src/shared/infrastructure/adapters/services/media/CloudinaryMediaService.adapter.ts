@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import type { UploadApiOptions, UploadApiResponse } from "cloudinary";
 import type {
+	IdentityChangeMediaPurpose,
 	MediaReadOptions,
 	MediaServicePort,
 	UploadedMediaMap,
@@ -87,6 +88,50 @@ class CloudinaryMediaServiceAdapter implements MediaServicePort {
 		if (uploads.length === 0) return;
 
 		await Promise.all(uploads);
+	}
+
+	async uploadProfilePicture(
+		staffId: string,
+		file: Buffer,
+	) {
+		const result = await this.uploadBuffer(file, {
+			folder: `staff/${staffId}`,
+			resource_type: "image",
+			allowed_formats: ["jpg", "jpeg", "png", "webp"],
+			public_id: `profile_picture_${Date.now()}`,
+			overwrite: false,
+		});
+		return {
+			storageProvider: "cloudinary",
+			bucketName: result.folder ?? null,
+			objectKey: result.public_id,
+			sizeBytes: result.bytes,
+			format: result.format,
+		};
+	}
+
+	async uploadIdentityChangeMedia(
+		staffId: string,
+		file: Buffer,
+		purpose: IdentityChangeMediaPurpose,
+	) {
+		const result = await this.uploadBuffer(file, {
+			folder: `staff/${staffId}/identity_change_${purpose}`,
+			resource_type: purpose === "signature" ? "image" : "auto",
+			allowed_formats:
+				purpose === "signature"
+					? ["svg"]
+					: ["jpg", "jpeg", "png", "webp", "pdf"],
+			public_id: `${purpose}_${Date.now()}`,
+			overwrite: false,
+		});
+		return {
+			storageProvider: "cloudinary",
+			bucketName: result.folder ?? null,
+			objectKey: result.public_id,
+			sizeBytes: result.bytes,
+			format: result.format,
+		};
 	}
 
 	async uploadOnboardingMedia(

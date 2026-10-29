@@ -10,12 +10,23 @@ import DocumentRetentionPolicyEventsAdapter from "./infrastructre/adapters/DocRe
 import DocumentRetentionPolicyAdapter from "./infrastructre/persistence/DocRetentionPolicy.adapter.js";
 import DocumentGovernancePolicyService from "./application/services/DocumentGovernancePolicy.service.js";
 import DocumentGovernancePolicyRepositoryAdapter from "./infrastructre/persistence/DocumentGovernancePolicyRepository.adapter.js";
+import type { IdentityGovernancePolicyPort } from "../shared/application/port/intersubsystem/IdentityGovernancePolicy.port.js";
+import IdentityGovernancePolicyService from "./application/services/IdentityGovernancePolicy.service.js";
+import IdentityGovernancePolicyRepositoryAdapter from "./infrastructre/persistence/IdentityGovernancePolicyRepository.adapter.js";
 
 function createDocumentGovernancePolicyPort(
 	postgres: PostgresDb,
 ): DocumentGovernancePolicyPort {
 	return new DocumentGovernancePolicyService(
 		new DocumentGovernancePolicyRepositoryAdapter(postgres),
+	);
+}
+
+function createIdentityGovernancePolicyPort(
+	postgres: PostgresDb,
+): IdentityGovernancePolicyPort {
+	return new IdentityGovernancePolicyService(
+		new IdentityGovernancePolicyRepositoryAdapter(postgres),
 	);
 }
 
@@ -53,4 +64,4 @@ export default async function PolicySubsystem(fastify: FastifyInstance) {
     });
 }
 
-export { createDocumentGovernancePolicyPort };
+export { createDocumentGovernancePolicyPort, createIdentityGovernancePolicyPort };

@@ -18,7 +18,11 @@ import DocumentRepositoryAdapter from "./documents/infrastructure/persistence/Do
 import FirebaseAuthAdapter from "./i & a/identity/infrastructure/services/auth/FirebaseAuth.adapter.js";
 import NotificationSubsystem from "./notifications/index.js";
 import OrchestrationSubsystem from "./orchestration/workspace/index.js";
-import PolicySubsystem, { createDocumentGovernancePolicyPort } from "./policy/index.js";
+import PolicySubsystem, {
+	createDocumentGovernancePolicyPort,
+	createIdentityGovernancePolicyPort,
+} from "./policy/index.js";
+import type { IdentityGovernancePolicyPort } from "./shared/application/port/intersubsystem/IdentityGovernancePolicy.port.js";
 import DocumentRetentionPolicyAdapter from "./policy/infrastructre/persistence/DocRetentionPolicy.adapter.js";
 import WorkflowPolicyAdapter from "./policy/infrastructre/persistence/WorkflowPolicy.adapter.js";
 import { registerAuthorizationHooks } from "./security/api/authorization.hooks.js";
@@ -78,7 +82,22 @@ function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 
 	const eventBusAdapter = new InMemoryEventBusAdapter();
 
-	server.register(IdentityAccessSubsystem, { prefix: "/api/identity" });
+	let identityGovernancePolicyInstance: IdentityGovernancePolicyPort | null = null;
+	const getIdentityGovernancePolicy = () => {
+		identityGovernancePolicyInstance ??=
+			createIdentityGovernancePolicyPort(server.pg);
+		return identityGovernancePolicyInstance;
+	};
+	const identityGovernancePolicy: IdentityGovernancePolicyPort = {
+		getActivePolicy: () => getIdentityGovernancePolicy().getActivePolicy(),
+		evaluateField: (field) =>
+			getIdentityGovernancePolicy().evaluateField(field),
+	};
+
+	server.register(IdentityAccessSubsystem, {
+		prefix: "/api/identity",
+		identityGovernancePolicy,
+	});
 
 	server.after(() => {
 		const documentPolicyAdapter = new DocumentRetentionPolicyAdapter(server.pg);

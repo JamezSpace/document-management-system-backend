@@ -53,7 +53,11 @@ class StaffMediaRepositoryAdapter implements StaffMediaRepositoryPort {
 		}
 	}
 
-	async deactivateByRole(staffId: string, assetRole: string): Promise<void> {
+	async deactivateByRole(
+		staffId: string,
+		assetRole: string,
+		tx?: TransactionContext,
+	): Promise<void> {
 		try {
 			const query = `
 				UPDATE identity.staff_media_assets
@@ -61,7 +65,8 @@ class StaffMediaRepositoryAdapter implements StaffMediaRepositoryPort {
 				WHERE staff_id = $1 AND asset_role = $2
 			`;
 
-			await this.dbPool.query(query, [staffId, assetRole]);
+			const executor = tx?.client ?? this.dbPool;
+			await executor.query(query, [staffId, assetRole]);
 		} catch (error: any) {
 			throw new InfrastructureError(
 				GlobalInfrastructureErrors.persistence.UNREGISTERED_ERROR,
