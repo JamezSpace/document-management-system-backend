@@ -3,22 +3,35 @@ import { routePolicies } from "../../../../../security/application/type/authoriz
 import ApplicationError from "../../../../../shared/errors/ApplicationError.error.js";
 import { ApplicationErrorEnum } from "../../../../../shared/errors/enum/application.enum.js";
 import type StaffController from "../../controllers/staff/Staff.controller.js";
+import type StaffAdministrationController from "../../controllers/staff/StaffAdministration.controller.js";
 import {
-    editStaffSchema,
     staffIdSchema,
     unitIdSchema,
-    type EditStaffType,
     type StaffIdType,
     type UnitIdType
 } from "../../types/staff/staff.type.js";
+import {
+	administrativeStaffListQuerySchema,
+	administrativeStaffUpdateSchema,
+	staffRevisionHeadersSchema,
+	staffStatusTransitionSchema,
+	type AdministrativeStaffListQuery,
+	type AdministrativeStaffUpdateBody,
+	type StaffRevisionHeaders,
+	type StaffStatusTransitionBody,
+} from "../../types/staff/staffAdministration.type.js";
 import { inviteIdSchema, type InviteIdType } from "../../types/user/user.type.js";
 import { IdentityCapabilities } from "../../../domain/enum/identityCapabilities.enum.js";
 
 async function staffRoutes(
 	fastify: FastifyInstance,
-	options: { controller: StaffController },
+	options: {
+		controller: StaffController;
+		administrationController: StaffAdministrationController;
+	},
 ) {
 	const staffController = options.controller;
+	const administrationController = options.administrationController;
 
 	// activate an accepted invite and create the corresponding staff record
 	fastify.post(
@@ -115,7 +128,11 @@ async function staffRoutes(
 	fastify.patch(
 		"/staff/:staffId",
 		{
-			schema: { params: staffIdSchema, body: editStaffSchema },
+			schema: {
+				params: staffIdSchema,
+				headers: staffRevisionHeadersSchema,
+				body: administrativeStaffUpdateSchema,
+			},
 			config: {
 				authorization: routePolicies.capability(
 					IdentityCapabilities.STAFF_UPDATE,
@@ -125,24 +142,24 @@ async function staffRoutes(
 		async (
 			request: FastifyRequest<{
 				Params: StaffIdType;
-				Body: EditStaffType;
+				Headers: StaffRevisionHeaders;
+				Body: AdministrativeStaffUpdateBody;
 			}>,
 			reply: FastifyReply,
 		) => {
-			// extract information from request body
-			const { staffId } = request.params;
-			const editToMakeOnStaff = request.body;
-
-			// call controller
-			const updatedStaff = await staffController.updateExistingStaff(
-				staffId,
-				editToMakeOnStaff,
+			const updatedStaff = await administrationController.updateStaff(
+				request.actor!,
+				request.params.staffId,
+				request.body.changes,
+				request.body.reason,
+				parseStaffRevision(request.headers["if-match"]),
+				request.id,
 			);
 
-			return reply.code(200).send({
-				success: true,
-				updatedStaff,
-			});
+			return reply
+				.header("ETag", `"staff-${updatedStaff.revision}"`)
+				.code(200)
+				.send({ success: true, data: updatedStaff });
 		},
 	);
 
@@ -163,39 +180,50 @@ async function staffRoutes(
 		) => {
 			const { staffId } = request.params;
 
-			const existingStaff =
-				await staffController.fetchExistingStaff(staffId);
+			const existingStaff = await administrationController.getStaff(staffId);
 
-			return reply.code(200).send({
-				success: true,
-				data: existingStaff,
-			});
+			return reply
+				.header("ETag", `"staff-${existingStaff.revision}"`)
+				.code(200)
+				.send({ success: true, data: existingStaff });
 		},
 	);
 
-	// delete a staff member
-	fastify.delete(
-		"/staff/:staffId",
+	fastify.post(
+		"/staff/:staffId/status-transitions",
 		{
-			schema: { params: staffIdSchema },
+			schema: {
+				params: staffIdSchema,
+				headers: staffRevisionHeadersSchema,
+				body: staffStatusTransitionSchema,
+			},
 			config: {
-				authorization: routePolicies.capability(
+				authorization: routePolicies.anyCapability(
+					IdentityCapabilities.STAFF_ACTIVATE,
 					IdentityCapabilities.STAFF_DEACTIVATE,
 				),
 			},
 		},
 		async (
-			request: FastifyRequest<{ Params: StaffIdType }>,
+			request: FastifyRequest<{
+				Params: StaffIdType;
+				Headers: StaffRevisionHeaders;
+				Body: StaffStatusTransitionBody;
+			}>,
 			reply: FastifyReply,
 		) => {
-			const { staffId } = request.params;
-
-			await staffController.deleteExistingStaff(staffId);
-
-			return reply.code(200).send({
-				success: true,
-				message: "Staff deleted successfully",
-			});
+			const updatedStaff = await administrationController.transitionStatus(
+				request.actor!,
+				request.params.staffId,
+				request.body.toStatus,
+				request.body.reason,
+				parseStaffRevision(request.headers["if-match"]),
+				request.id,
+			);
+			return reply
+				.header("ETag", `"staff-${updatedStaff.revision}"`)
+				.code(200)
+				.send({ success: true, data: updatedStaff });
 		},
 	);
 
@@ -203,6 +231,7 @@ async function staffRoutes(
     fastify.get(
 		"/staff",
 		{
+			schema: { querystring: administrativeStaffListQuerySchema },
 			config: {
 				authorization: routePolicies.capability(
 					IdentityCapabilities.STAFF_LIST,
@@ -210,19 +239,10 @@ async function staffRoutes(
 			},
 		},
 		async (
-			request: FastifyRequest,
+			request: FastifyRequest<{ Querystring: AdministrativeStaffListQuery }>,
 			reply: FastifyReply,
 		) => {
-			const { uid } = request.user!;
-
-			if (!uid)
-				return reply.code(401).send({
-					success: true,
-					message: "No uid extracted from access token",
-				});
-
-			const allStaff =
-				await staffController.fetchAllNonDeletedStaff();
+			const allStaff = await administrationController.listStaff(request.query);
 
 				return reply.code(200).send({
 					success: true,
@@ -256,3 +276,7 @@ async function staffRoutes(
 }
 
 export default staffRoutes;
+
+function parseStaffRevision(value: string): number {
+	return Number(/^"staff-(\d+)"$/.exec(value)?.[1]);
+}

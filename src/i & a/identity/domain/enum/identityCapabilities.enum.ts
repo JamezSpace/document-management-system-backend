@@ -5,6 +5,7 @@ enum IdentityCapabilities {
 	STAFF_UPDATE = "staff.update",
 	STAFF_ACTIVATE = "staff.activate",
 	STAFF_DEACTIVATE = "staff.deactivate",
+	IDENTITY_CHANGE_REVIEW = "identity.change.review",
 	STAFF_PENDING_ACTIVATION_LIST = "staff.pending_activation.list",
 	CLASSIFICATION_ASSIGN = "classification.assign",
 	CLASSIFICATION_UPDATE = "classification.update",

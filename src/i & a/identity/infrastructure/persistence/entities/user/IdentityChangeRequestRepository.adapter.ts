@@ -67,7 +67,68 @@ class IdentityChangeRequestRepositoryAdapter
 			 ORDER BY requested_at DESC, id DESC`,
 			[identityId],
 		);
-		return result.rows.map((row) => ({
+		return result.rows.map((row) => this.map(row));
+	}
+
+	async findById(requestId: string, tx?: TransactionContext) {
+		const executor = tx?.client ?? this.dbPool;
+		const result = await executor.query(
+			`SELECT *
+			 FROM identity.identity_change_requests
+			 WHERE id = $1
+			 LIMIT 1${tx ? " FOR UPDATE" : ""}`,
+			[requestId],
+		);
+		return result.rows[0] ? this.map(result.rows[0]) : null;
+	}
+
+	async listForReview(filters: {
+		status?: IdentityChangeRequestRecord["status"];
+		limit: number;
+		offset: number;
+	}) {
+		const values: unknown[] = [];
+		const where = filters.status
+			? (values.push(filters.status), `WHERE status = $${values.length}`)
+			: "";
+		values.push(filters.limit, filters.offset);
+		const result = await this.dbPool.query(
+			`SELECT *, COUNT(*) OVER() AS total_count
+			 FROM identity.identity_change_requests
+			 ${where}
+			 ORDER BY requested_at DESC, id DESC
+			 LIMIT $${values.length - 1} OFFSET $${values.length}`,
+			values,
+		);
+		return {
+			items: result.rows.map((row) => this.map(row)),
+			total: Number(result.rows[0]?.total_count ?? 0),
+		};
+	}
+
+	async completeReview(
+		requestId: string,
+		decision: "rejected" | "applied",
+		reviewerId: string,
+		reviewReason: string,
+		tx: TransactionContext,
+	): Promise<boolean> {
+		const result = await tx.client.query(
+			`UPDATE identity.identity_change_requests
+			 SET status = $1,
+			     reviewed_by = $2,
+			     reviewed_at = NOW(),
+			     review_reason = $3,
+			     applied_at = CASE WHEN $1 = 'applied' THEN NOW() ELSE NULL END
+			 WHERE id = $4 AND status = 'pending'
+			 RETURNING id`,
+			[decision, reviewerId, reviewReason, requestId],
+		);
+		return result.rows.length > 0;
+	}
+
+	private map(row: any): IdentityChangeRequestRecord {
+		return {
 			id: row.id,
 			requestGroupId: row.request_group_id,
 			identityId: row.identity_id,
@@ -86,7 +147,7 @@ class IdentityChangeRequestRepositoryAdapter
 			reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
 			reviewReason: row.review_reason,
 			appliedAt: row.applied_at ? new Date(row.applied_at) : null,
-		}));
+		};
 	}
 }
 

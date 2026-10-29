@@ -5,7 +5,7 @@
 -- staff
 INSERT INTO identity.staff 
 VALUES 
-	('staff.system', NULL, 0, 'permanent', NULL, NULL, NULL, 'active', NOW(), 'staff.system', 'staff.system', NOW());
+	('staff.system', NULL, 0, 'permanent', NULL, NULL, NULL, 'active', NOW(), 'staff.system', 'staff.system', NOW(), NULL, 1);
 	-- add hr record and staff activator with reference to 'staff.system' as created_by
 
 
@@ -59,6 +59,7 @@ VALUES
     ('perm.staff.update','staff.update','update staff record'),
     ('perm.staff.activate','staff.activate','activate staff record'),
     ('perm.staff.deactivate','staff.deactivate','deactivate staff record'),
+	('perm.identity.change.review','identity.change.review','review and apply governed identity change requests'),
     -- staff classification data
     ('perm.classification.assign','classification.assign','assign staff classification'),
     ('perm.classification.update','classification.update','update staff classification'),
@@ -125,6 +126,7 @@ VALUES
     ('role.staff_admin', 'perm.staff.update'),
     ('role.staff_admin', 'perm.staff.view'),
     ('role.staff_admin', 'perm.staff.list'),
+	('role.staff_admin', 'perm.identity.change.review'),
     ('role.staff_activation_officer', 'perm.staff.deactivate'),
     ('role.staff_admin', 'perm.classification.assign'),
     ('role.staff_admin', 'perm.classification.update'),
@@ -177,7 +179,8 @@ VALUES
     ('role.sys_admin', 'perm.staff.create'),
     ('role.sys_admin', 'perm.staff.update'),
     ('role.sys_admin', 'perm.staff.activate'),
-    ('role.sys_admin', 'perm.staff.deactivate');
+	('role.sys_admin', 'perm.staff.deactivate'),
+	('role.sys_admin', 'perm.identity.change.review');
 
 -- capability_role_mappings
 INSERT INTO identity.capability_role_mappings (capability_class_id, role_id)

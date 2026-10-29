@@ -24,9 +24,12 @@ function createDocumentGovernancePolicyPort(
 
 function createIdentityGovernancePolicyPort(
 	postgres: PostgresDb,
+	policyKey = "nexusfons_identity_governance",
 ): IdentityGovernancePolicyPort {
 	return new IdentityGovernancePolicyService(
 		new IdentityGovernancePolicyRepositoryAdapter(postgres),
+		5_000,
+		policyKey,
 	);
 }
 

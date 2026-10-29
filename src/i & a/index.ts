@@ -24,6 +24,7 @@ import DesignationController from "./identity/api/controllers/office/Designation
 import OfficeController from "./identity/api/controllers/office/Office.controller.js";
 import OrgUnitController from "./identity/api/controllers/organizationalUnit/OrganizationUnit.controller.js";
 import StaffController from "./identity/api/controllers/staff/Staff.controller.js";
+import StaffAdministrationController from "./identity/api/controllers/staff/StaffAdministration.controller.js";
 import StaffClassificationController from "./identity/api/controllers/staff/StaffClassification.controller.js";
 import AuthenticationController from "./identity/api/controllers/user/Authentication.controller.js";
 import InvitesController from "./identity/api/controllers/user/Invites.controller.js";
@@ -31,6 +32,7 @@ import SelfServiceController from "./identity/api/controllers/user/SelfService.c
 import officeDesignationRoutes from "./identity/api/routes/office/designation.route.js";
 import officeRoutes from "./identity/api/routes/office/office.route.js";
 import staffRoutes from "./identity/api/routes/staff/staff.route.js";
+import staffAdministrationRoutes from "./identity/api/routes/staff/staffAdministration.route.js";
 import staffClassificationRoutes from "./identity/api/routes/staff/staffClass.route.js";
 import orgUnitRoutes from "./identity/api/routes/unit/orgUnits.route.js";
 import identityRoutes from "./identity/api/routes/user/identity.route.js";
@@ -49,10 +51,14 @@ import CloseStaffClassificationUseCase from "./identity/application/usecases/sta
 import CreateStaffClassificationUseCase from "./identity/application/usecases/staff/classification/CreateStaffClassification.usecase.js";
 import EditStaffClassificationMetadataUseCase from "./identity/application/usecases/staff/classification/EditClassificationMetadata.usecase.js";
 import CreateStaffViaInviteUseCase from "./identity/application/usecases/staff/CreateStaffViaInvite.usecase.js";
-import DeleteStaffUseCase from "./identity/application/usecases/staff/DeleteStaff.usecase.js";
-import EditExistingStaffUseCase from "./identity/application/usecases/staff/EditExistingStaff.usecase.js";
 import FetchStaffRecordUsecase from "./identity/application/usecases/staff/FetchStaffRecord.usecase.js";
 import GetAllStaffUseCase from "./identity/application/usecases/staff/GetAllStaff.usecase.js";
+import GetAdministrativeStaffUseCase from "./identity/application/usecases/staff/administration/GetAdministrativeStaff.usecase.js";
+import ListAdministrativeStaffUseCase from "./identity/application/usecases/staff/administration/ListAdministrativeStaff.usecase.js";
+import ListIdentityChangeReviewsUseCase from "./identity/application/usecases/staff/administration/ListIdentityChangeReviews.usecase.js";
+import ReviewIdentityChangeUseCase from "./identity/application/usecases/staff/administration/ReviewIdentityChange.usecase.js";
+import TransitionStaffStatusUseCase from "./identity/application/usecases/staff/administration/TransitionStaffStatus.usecase.js";
+import UpdateAdministrativeStaffUseCase from "./identity/application/usecases/staff/administration/UpdateAdministrativeStaff.usecase.js";
 import ActivatePendingUserUseCase from "./identity/application/usecases/user/ActivatePendingUser.usercase.js";
 import AddNewUserUseCase from "./identity/application/usecases/user/AddNewUser.usecase.js";
 import AuthenticateUserUseCase from "./identity/application/usecases/user/AuthenticateUser.usecase.js";
@@ -80,6 +86,7 @@ import StaffCapabilityClassRepositoryAdapter from "./identity/infrastructure/per
 import StaffClassificationRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffClassificationRepositoryAdapter.adapter.js";
 import StaffMediaRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffMediaRepository.adapter.js";
 import StaffRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffRepositoryAdapter.adapter.js";
+import StaffAdministrationRepositoryAdapter from "./identity/infrastructure/persistence/entities/staff/StaffAdministrationRepository.adapter.js";
 import OrgUnitRepositoryAdapter from "./identity/infrastructure/persistence/entities/unit/OrgUnitRepository.adapter.js";
 import IdentityRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/IdentityRepository.adapter.js";
 import OnboardingSessionRepositoryAdapter from "./identity/infrastructure/persistence/entities/user/OnboardingSessionRepository.adapter.js";
@@ -98,7 +105,10 @@ import RoleServiceAdapter from "./identity/infrastructure/services/RoleService.a
 
 export default async function IdentityAccessSubsystem(
 	fastify: FastifyInstance,
-	options: { identityGovernancePolicy: IdentityGovernancePolicyPort },
+	options: {
+		identityGovernancePolicy: IdentityGovernancePolicyPort;
+		staffAdministrationPolicy: IdentityGovernancePolicyPort;
+	},
 ) {
 	// infrastructure Layer
 	const postgres = fastify.pg;
@@ -124,6 +134,8 @@ export default async function IdentityAccessSubsystem(
 		postgres,
 		mediaService,
 	);
+	const staffAdministrationRepository =
+		new StaffAdministrationRepositoryAdapter(postgres);
 	const staffMediaRepository = new StaffMediaRepositoryAdapter(postgres);
 	const staffClassificationRepository =
 		new StaffClassificationRepositoryAdapter(postgres);
@@ -153,6 +165,7 @@ export default async function IdentityAccessSubsystem(
 
 	// service layer
 	const identityEmailService = new IdentityEmailServiceAdapter(globalResendEmailService);
+	const authService = new FirebaseAuthAdapter();
 
     const tokenService = new OpaqueTokenServiceAdapter();
 	const cloudinaryMediaService = new CloudinaryMediaServiceAdapter();
@@ -223,12 +236,6 @@ export default async function IdentityAccessSubsystem(
 	// application layer - staff
 	const getAllStaffUseCase = new GetAllStaffUseCase(staffRepositoryAdapter);
 
-	const editStaffUseCase = new EditExistingStaffUseCase(
-		staffEventsAdapter,
-		staffRepositoryAdapter,
-	);
-	const deleteStaffUseCase = new DeleteStaffUseCase(staffRepositoryAdapter);
-
 	const addNewStaffUseCase = new AddNewStaffUseCase(
 		idGenerator,
 		staffEventsAdapter,
@@ -292,7 +299,7 @@ export default async function IdentityAccessSubsystem(
 		onboardingSessionRepo,
 		recoveryTaskRepository,
 		addNewStaffUseCase,
-		new FirebaseAuthAdapter(),
+		authService,
 		identityEmailService,
 		transactionManager,
 	);
@@ -362,6 +369,40 @@ export default async function IdentityAccessSubsystem(
 		idGenerator,
 	);
 
+	const getAdministrativeStaffUseCase = new GetAdministrativeStaffUseCase(
+		staffAdministrationRepository,
+	);
+	const listAdministrativeStaffUseCase = new ListAdministrativeStaffUseCase(
+		staffAdministrationRepository,
+	);
+	const updateAdministrativeStaffUseCase = new UpdateAdministrativeStaffUseCase(
+		staffAdministrationRepository,
+		options.staffAdministrationPolicy,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+	const transitionStaffStatusUseCase = new TransitionStaffStatusUseCase(
+		staffAdministrationRepository,
+		options.staffAdministrationPolicy,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+	const listIdentityChangeReviewsUseCase = new ListIdentityChangeReviewsUseCase(
+		identityChangeRequestRepository,
+	);
+	const reviewIdentityChangeUseCase = new ReviewIdentityChangeUseCase(
+		identityChangeRequestRepository,
+		staffAdministrationRepository,
+		staffMediaRepository,
+		authService,
+		options.identityGovernancePolicy,
+		auditEventRepository,
+		transactionManager,
+		idGenerator,
+	);
+
 	// controller Layer
 	const authenticationController = new AuthenticationController(
 		onboardInviteUseCase,
@@ -396,8 +437,6 @@ export default async function IdentityAccessSubsystem(
 		getAllStaffUseCase,
 		createStaffViaInviteUseCase,
 		activationOrchestratorUseCase,
-		editStaffUseCase,
-		deleteStaffUseCase,
 		fetchStaffUseCase,
         resolveStaffAuthority
 	);
@@ -416,6 +455,14 @@ export default async function IdentityAccessSubsystem(
 		listOwnIdentityChangesUseCase,
 		uploadIdentityChangeMediaUseCase,
 		resolveStaffAuthority,
+	);
+	const staffAdministrationController = new StaffAdministrationController(
+		getAdministrativeStaffUseCase,
+		listAdministrativeStaffUseCase,
+		updateAdministrativeStaffUseCase,
+		transitionStaffStatusUseCase,
+		listIdentityChangeReviewsUseCase,
+		reviewIdentityChangeUseCase,
 	);
 
 	await fastify.register(selfServiceRoutes, {
@@ -443,7 +490,12 @@ export default async function IdentityAccessSubsystem(
 	});
 
 	await fastify.register(staffRoutes, {
-		controller: staffController
+		controller: staffController,
+		administrationController: staffAdministrationController,
+	});
+
+	await fastify.register(staffAdministrationRoutes, {
+		controller: staffAdministrationController,
 	});
 
 	await fastify.register(staffClassificationRoutes, {

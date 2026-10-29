@@ -25,7 +25,6 @@ interface StaffRepositoryPort {
 
 	fetchAllStaffWithMedia(): Promise<StaffDetailsWithMedia[]>;
 
-	deleteStaff(staffId: string): Promise<void>;
 }
 
 export type { StaffRepositoryPort };

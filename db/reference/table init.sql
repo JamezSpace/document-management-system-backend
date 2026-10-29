@@ -401,6 +401,7 @@ CREATE TABLE identity.staff(
 	activated_by VARCHAR(50) REFERENCES identity.staff(id),
 	activated_at TIMESTAMPTZ,
 	updated_at TIMESTAMPTZ,
+	revision BIGINT NOT NULL DEFAULT 1 CHECK (revision > 0),
 
     CONSTRAINT fk_staff_office_designation 
         FOREIGN KEY (office_id, designation_id) 
@@ -2078,6 +2079,8 @@ CREATE UNIQUE INDEX identity_one_pending_change_per_field
 	ON identity.identity_change_requests(identity_id, field_name) WHERE status = 'pending';
 CREATE INDEX identity_change_request_owner_history
 	ON identity.identity_change_requests(identity_id, requested_at DESC, id DESC);
+CREATE INDEX identity_change_request_review_queue
+	ON identity.identity_change_requests(status, requested_at DESC, id DESC);
 CREATE UNIQUE INDEX unique_active_staff_media_role
 	ON identity.staff_media_assets(staff_id, asset_role) WHERE is_active = TRUE;
 CREATE UNIQUE INDEX document_one_effective_unit_head_signature

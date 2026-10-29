@@ -94,6 +94,20 @@ function registerAuthorizationHooks(
 				{ message: `Missing capability: ${policy.capability}` },
 			);
 		}
+
+		if (
+			policy.kind === "any-capability" &&
+			!policy.capabilities.some((capability) =>
+				authorizationService.hasCapability(actor, capability),
+			)
+		) {
+			throw new ApplicationError(
+				ApplicationErrorEnum.USER_NOT_AUTHORIZED,
+				{
+					message: `Missing one of the required capabilities: ${policy.capabilities.join(", ")}`,
+				},
+			);
+		}
 	});
 }
 

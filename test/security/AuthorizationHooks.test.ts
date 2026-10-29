@@ -28,6 +28,8 @@ class FakeAuthService implements AuthServicePort {
 		return { authProviderId: this.authProviderId };
 	}
 
+	async updateUserEmail(): Promise<void> {}
+
 	async generatePasswordSetupLink(): Promise<string> {
 		return "https://example.test/password-setup";
 	}
@@ -263,4 +265,49 @@ test("capability policy accepts an active actor with the required grant", async 
 
 	assert.equal(response.statusCode, 200);
 	assert.deepEqual(response.json(), { staffId: "staff-1" });
+});
+
+test("any-capability policy accepts one matching grant and rejects unrelated grants", async (t) => {
+	const accepted = authorizationTestApp(
+		new FakeAuthService(),
+		new FakeActorRepository(activeResolution(["staff.activate"])),
+	);
+	const rejected = authorizationTestApp(
+		new FakeAuthService(),
+		new FakeActorRepository(activeResolution(["staff.view"])),
+	);
+	t.after(async () => {
+		await accepted.close();
+		await rejected.close();
+	});
+
+	for (const app of [accepted, rejected]) {
+		app.post(
+			"/staff/status-transition",
+			{
+				config: {
+					authorization: routePolicies.anyCapability(
+						"staff.activate",
+						"staff.deactivate",
+					),
+				},
+			},
+			async () => ({ ok: true }),
+		);
+	}
+
+	const headers = { authorization: "Bearer firebase-token" };
+	const acceptedResponse = await accepted.inject({
+		method: "POST",
+		url: "/staff/status-transition",
+		headers,
+	});
+	const rejectedResponse = await rejected.inject({
+		method: "POST",
+		url: "/staff/status-transition",
+		headers,
+	});
+
+	assert.equal(acceptedResponse.statusCode, 200);
+	assert.equal(rejectedResponse.statusCode, 403);
 });

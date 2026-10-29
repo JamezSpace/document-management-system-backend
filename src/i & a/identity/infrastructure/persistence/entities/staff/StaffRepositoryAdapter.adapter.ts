@@ -303,34 +303,6 @@ class StaffRepositoryAdapter implements StaffRepositoryPort {
 		}
 	}
 
-	async deleteStaff(staffId: string): Promise<void> {
-		try {
-			const query =
-				"UPDATE identity.staff SET status = 'deleted' WHERE id = $1 RETURNING id";
-			const result = await this.dbPool.query(query, [staffId]);
-
-			if (result.rows.length === 0) {
-				throw new InfrastructureError(
-					GlobalInfrastructureErrors.persistence.NOT_FOUND,
-					{
-						category: Category.PERSISTENCE,
-						message: "No staff record found for deletion",
-					},
-				);
-			}
-		} catch (error: any) {
-			console.error("Error deleting staff", error);
-
-			const postgresError = mapPostgresError(error);
-
-			throw new InfrastructureError(postgresError.summary, {
-				category: Category.PERSISTENCE,
-				message: postgresError.details?.message ?? error.message,
-				table: postgresError.details?.table,
-			});
-		}
-	}
-
 	async save(staff: Staff, tx?: TransactionContext): Promise<Staff> {
 		try {
 			const query = `
@@ -429,6 +401,7 @@ class StaffRepositoryAdapter implements StaffRepositoryPort {
 			if (updates.length === 0) {
 				return new Staff({ id: staffId } as any);
 			}
+			updates.push("revision = revision + 1");
 
 			values.push(staffId);
 			const query = `UPDATE identity.staff SET ${updates.join(", ")} WHERE id = $${paramCount} RETURNING *`;

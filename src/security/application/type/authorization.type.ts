@@ -41,7 +41,8 @@ type RouteAuthorizationPolicy =
 	| { kind: "public" }
 	| { kind: "authenticated-identity" }
 	| { kind: "authenticated-self" }
-	| { kind: "capability"; capability: string };
+	| { kind: "capability"; capability: string }
+	| { kind: "any-capability"; capabilities: string[] };
 
 const routePolicies = {
 	public: { kind: "public" } as const,
@@ -50,6 +51,10 @@ const routePolicies = {
 	capability: (capability: string): RouteAuthorizationPolicy => ({
 		kind: "capability",
 		capability,
+	}),
+	anyCapability: (...capabilities: string[]): RouteAuthorizationPolicy => ({
+		kind: "any-capability",
+		capabilities,
 	}),
 };
 

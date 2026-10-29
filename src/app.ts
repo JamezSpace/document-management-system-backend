@@ -93,10 +93,23 @@ function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 		evaluateField: (field) =>
 			getIdentityGovernancePolicy().evaluateField(field),
 	};
+	let staffAdministrationPolicyInstance: IdentityGovernancePolicyPort | null = null;
+	const getStaffAdministrationPolicy = () => {
+		staffAdministrationPolicyInstance ??= createIdentityGovernancePolicyPort(
+			server.pg,
+			"nexusfons_staff_administration",
+		);
+		return staffAdministrationPolicyInstance;
+	};
+	const staffAdministrationPolicy: IdentityGovernancePolicyPort = {
+		getActivePolicy: () => getStaffAdministrationPolicy().getActivePolicy(),
+		evaluateField: (field) => getStaffAdministrationPolicy().evaluateField(field),
+	};
 
 	server.register(IdentityAccessSubsystem, {
 		prefix: "/api/identity",
 		identityGovernancePolicy,
+		staffAdministrationPolicy,
 	});
 
 	server.after(() => {

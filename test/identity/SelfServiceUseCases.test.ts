@@ -78,6 +78,39 @@ class FakeChangeRequestRepository implements IdentityChangeRequestRepositoryPort
 	async listByIdentity() {
 		return [...this.requests];
 	}
+
+	async findById(requestId: string) {
+		return this.requests.find((request) => request.id === requestId) ?? null;
+	}
+
+	async listForReview(filters: {
+		status?: IdentityChangeRequestRecord["status"];
+		limit: number;
+		offset: number;
+	}) {
+		const requests = filters.status
+			? this.requests.filter((request) => request.status === filters.status)
+			: this.requests;
+		return {
+			items: requests.slice(filters.offset, filters.offset + filters.limit),
+			total: requests.length,
+		};
+	}
+
+	async completeReview(
+		requestId: string,
+		decision: "rejected" | "applied",
+		reviewerId: string,
+		reviewReason: string,
+	) {
+		const request = this.requests.find((item) => item.id === requestId);
+		if (!request || request.status !== "pending") return false;
+		request.status = decision;
+		request.reviewedBy = reviewerId;
+		request.reviewReason = reviewReason;
+		request.reviewedAt = new Date();
+		return true;
+	}
 }
 
 class FakeAuditRepository implements AuditEventRepositoryPort {

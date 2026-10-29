@@ -56,6 +56,20 @@ class FirebaseAuthAdapter implements AuthServicePort {
 		}
 	}
 
+	async updateUserEmail(authProviderId: string, email: string): Promise<void> {
+		try {
+			await this.authInstance.updateUser(authProviderId, { email });
+		} catch (error: unknown) {
+			const message = error instanceof Error
+				? error.message
+				: "Firebase identity email could not be updated";
+			throw new InfrastructureError(
+				GlobalInfrastructureErrors.auth.EMAIL_ALREADY_EXISTS,
+				{ category: Category.AUTH, message, cause: error },
+			);
+		}
+	}
+
 	async generatePasswordSetupLink(email: string, details: {staffId: string, inviteId: string}) {
 		const link = await this.authInstance.generatePasswordResetLink(email);
 

@@ -11,6 +11,7 @@ class IdentityGovernancePolicyService implements IdentityGovernancePolicyPort {
 	constructor(
 		private readonly repository: IdentityGovernancePolicyRepositoryPort,
 		private readonly cacheTtlMs = 5_000,
+		private readonly policyKey = IDENTITY_GOVERNANCE_POLICY_KEY,
 	) {}
 
 	async getActivePolicy() {
@@ -32,7 +33,7 @@ class IdentityGovernancePolicyService implements IdentityGovernancePolicyPort {
 		}
 
 		const policy = await this.repository.findActive(
-			IDENTITY_GOVERNANCE_POLICY_KEY,
+			this.policyKey,
 			new Date(),
 		);
 		if (!policy) {
