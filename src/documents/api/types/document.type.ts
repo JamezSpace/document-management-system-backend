@@ -8,10 +8,6 @@ const documentIdSchema = Type.Object({
 	docId: Type.String(),
 });
 
-const docStaffIdSchema = Type.Object({
-	staffId: Type.String(),
-});
-
 const documentVersionSchema = Type.Object({
 	ownerId: Type.String(),
 	title: Type.String(),
@@ -138,7 +134,6 @@ const saveDocumentContentCommandSchema = Type.Object(
 
 type DocumentSchemaType = Static<typeof documentSchema>;
 type DocumentIdSchemaType = Static<typeof documentIdSchema>;
-type DocStaffIdSchemaType = Static<typeof docStaffIdSchema>;
 type SaveDocumentContentCommandType = Static<
 	typeof saveDocumentContentCommandSchema
 >;
@@ -148,13 +143,11 @@ type DocumentSchemaTypeForCreation = Static<
 >;
 
 export {
-	docStaffIdSchema,
 	documentIdSchema,
 	documentSchema,
 	createDocumentSchemaForCreation,
 	saveDocumentContentCommandSchema,
 	documentVersionSchema,
-	type DocStaffIdSchemaType,
 	type DocumentIdSchemaType,
 	type SaveDocumentContentCommandType,
 	type DocumentSchemaType,

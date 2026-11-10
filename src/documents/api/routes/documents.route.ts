@@ -3,11 +3,9 @@ import ApiError from "../../../shared/errors/NexusError.js";
 import { ApiErrorEnum } from "../../../shared/errors/enum/api.enum.js";
 import type DocumentController from "../controllers/document/DocumentController.js";
 import {
-    docStaffIdSchema,
     documentIdSchema,
 	createDocumentSchemaForCreation,
 	saveDocumentContentCommandSchema,
-    type DocStaffIdSchemaType,
     type DocumentIdSchemaType,
     type DocumentSchemaTypeForCreation,
 	type SaveDocumentContentCommandType,
@@ -485,25 +483,15 @@ async function documentRoutes(
 		},
 	);
 
-	// fetch all docs authored by staff
+	// fetch documents for the authenticated actor. The subject is server-owned;
+	// callers must never supply a staff identifier for a self-scoped collection.
 	fastify.get(
-		"/documents/:staffId",
+		"/documents/me",
 		{
 			config: { authorization: routePolicies.authenticatedSelf },
-			schema: { params: docStaffIdSchema },
 		},
-		async (
-			request: FastifyRequest<{ Params: DocStaffIdSchemaType }>,
-			reply: FastifyReply,
-		) => {
-			const { staffId } = request.params;
-
-			if (request.actor!.staffId !== staffId)
-				throw new ApiError(ApiErrorEnum.NOT_ALLOWED, {
-					message: "Staff may only access their own documents",
-				});
-
-			// fetch documents by staff
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const staffId = request.actor!.staffId;
 			const docsByStaff =
 				await documentController.fetchAllDocsByStaff(staffId);
 
